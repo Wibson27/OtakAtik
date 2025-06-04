@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'sign_in_screen.dart'; // Sesuaikan dengan path file kamu
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -17,13 +18,13 @@ class SignUpScreen extends StatelessWidget {
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
-          child: _buildMainContent(screenWidth, screenHeight),
+          child: _buildMainContent(context, screenWidth, screenHeight),
         ),
       ),
     );
   }
 
-  Widget _buildMainContent(double screenWidth, double screenHeight) {
+  Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFFFFFFF),
@@ -78,14 +79,14 @@ class SignUpScreen extends StatelessWidget {
           Positioned(
             top: 134, 
             left: (screenWidth - 360) / 2, 
-            child: _buildSignUpForm(screenWidth),
+            child: _buildSignUpForm(context, screenWidth),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSignUpForm(double screenWidth) {
+  Widget _buildSignUpForm(BuildContext context, double screenWidth) {
     return Container(
       width: 360,
       height: 665, 
@@ -155,19 +156,29 @@ class SignUpScreen extends StatelessWidget {
                     
                     const SizedBox(height: 18), 
                     
-                    // Google icon
+                    // Google icon dengan navigasi
                     Container(
                       width: 239, // Sama dengan width input fields
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          // Google icon - sejajar kiri dengan input fields
-                          Container(
-                            width: 98, 
-                            height: 33, 
-                            child: Image.asset(
-                              'assets/images/google_icon.png',
-                              fit: BoxFit.contain,
+                          // Google icon - sejajar kiri dengan input fields + NAVIGASI
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignInScreen(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 98, 
+                              height: 33, 
+                              child: Image.asset(
+                                'assets/images/google_icon.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ],
@@ -177,16 +188,26 @@ class SignUpScreen extends StatelessWidget {
                 ),
               ),
               
-              // Login button 
+              // Login button dengan NAVIGASI
               Positioned(
                 bottom: 0, 
                 right: 0, 
-                child: Container(
-                  width: 126, 
-                  height: 46, 
-                  child: Image.asset(
-                    'assets/images/login_button.png',
-                    fit: BoxFit.contain,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignInScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 126, 
+                    height: 46, 
+                    child: Image.asset(
+                      'assets/images/login_button.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -209,23 +230,24 @@ class SignUpScreen extends StatelessWidget {
                     fontSize: 24,
                   ),
                 ),
-                // Builder widget untuk context
-                Builder(
-                  builder: (BuildContext context) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); 
-                      },
-                      child: const Text(
-                        'Sign in',
-                        style: TextStyle(
-                          color: Color(0xFF103DCF),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                // Text "Sign in" dengan NAVIGASI
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignInScreen(),
                       ),
                     );
                   },
+                  child: const Text(
+                    'Sign in',
+                    style: TextStyle(
+                      color: Color(0xFF103DCF),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
