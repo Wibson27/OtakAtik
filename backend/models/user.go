@@ -25,15 +25,15 @@ type User struct {
 	Credentials       *UserCredentials     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"credentials,omitempty"`
 	Preferences       *UserPreferences     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"preferences,omitempty"`
 	Sessions          []UserSession        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"sessions,omitempty"`
-	// ChatSessions      []ChatSession        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"chatSessions,omitempty"`
-	// VocalEntries      []VocalJournalEntry  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"vocalEntries,omitempty"`
-	// CommunityPosts    []CommunityPost      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"communityPosts,omitempty"`
-	// PostReplies       []CommunityPostReply `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"postReplies,omitempty"`
-	// Reactions         []CommunityReaction  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"reactions,omitempty"`
-	// SocialAccounts    []SocialMediaAccount `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"socialAccounts,omitempty"`
-	// Notifications     []Notification       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"notifications,omitempty"`
-	// ProgressMetrics   []UserProgressMetric `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"progressMetrics,omitempty"`
-	// ScheduledCheckins []ScheduledCheckin   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"scheduledCheckins,omitempty"`
+	ChatSessions      []ChatSession        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"chatSessions,omitempty"`
+	VocalEntries      []VocalJournalEntry  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"vocalEntries,omitempty"`
+	CommunityPosts    []CommunityPost      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"communityPosts,omitempty"`
+	PostReplies       []CommunityPostReply `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"postReplies,omitempty"`
+	Reactions         []CommunityReaction  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"reactions,omitempty"`
+	SocialAccounts    []SocialMediaAccount `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"socialAccounts,omitempty"`
+	Notifications     []Notification       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"notifications,omitempty"`
+	ProgressMetrics   []UserProgressMetric `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"progressMetrics,omitempty"`
+	ScheduledCheckins []ScheduledCheckin   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"scheduledCheckins,omitempty"`
 }
 
 type UserCredentials struct {
