@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart'; 
 import 'package:frontend/common/app_route.dart'; 
+import 'package:frontend/common/screen_utils.dart';
 
 class ForumDiscussionScreen extends StatelessWidget {
   const ForumDiscussionScreen({super.key});
@@ -217,18 +218,5 @@ class ForumDiscussionScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-extension ScreenUtils on BuildContext {
-  double get screenWidth => MediaQuery.of(this).size.width;
-  double get screenHeight => MediaQuery.of(this).size.height;
-
-  double scaleWidth(double figmaWidth) {
-    return (screenWidth / 430.25) * figmaWidth;
-  }
-
-  double scaleHeight(double figmaHeight) {
-    return (screenHeight / 932) * figmaHeight;
   }
 }

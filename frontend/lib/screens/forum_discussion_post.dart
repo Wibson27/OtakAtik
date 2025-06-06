@@ -8,6 +8,7 @@ import 'package:frontend/data/models/chat_message.dart';
 import 'package:frontend/data/models/attachment_file.dart';
 import 'package:frontend/data/models/discussion.dart';
 import 'package:frontend/common/enums.dart'; 
+import 'package:frontend/common/screen_utils.dart';
 
 // Time formatter 
 class TimeFormatter {
@@ -1225,19 +1226,5 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     } else {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     }
-  }
-}
-
-// Extension untuk responsive design
-extension ScreenUtils on BuildContext {
-  double get screenWidth => MediaQuery.of(this).size.width;
-  double get screenHeight => MediaQuery.of(this).size.height;
-
-  double scaleWidth(double figmaWidth) {
-    return (screenWidth / 430.25) * figmaWidth;
-  }
-
-  double scaleHeight(double figmaHeight) {
-    return (screenHeight / 932) * figmaHeight;
   }
 }

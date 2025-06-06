@@ -1,92 +1,135 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
-import 'package:frontend/common/app_route.dart'; 
+import 'package:frontend/common/app_route.dart';
+import 'package:frontend/common/screen_utils.dart'; 
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = context.screenWidth;
+    final double screenHeight = context.screenHeight;
+
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
-      appBar: AppBar(
-        title: Text(
-          'Dashboard',
-          style: GoogleFonts.fredoka(
-            color: AppColor.navyText,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: SizedBox(
+          width: screenWidth,
+          height: screenHeight,
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Image.asset(
+                  'assets/images/wave_dashboard_background.png',
+                  width: context.scaleWidth(450),
+                  height: context.scaleHeight(832.9),
+                  fit: BoxFit.fill, 
+                ),
+              ),
+
+              Positioned(
+                top: context.scaleHeight(224),
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start, 
+                  crossAxisAlignment: CrossAxisAlignment.center, 
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoute.forumDiscussList);
+                      },
+                      child: Image.asset(
+                        'assets/images/menu_forum_discussion.png',
+                        width: context.scaleWidth(213),
+                        height: context.scaleHeight(90),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+
+                    SizedBox(height: context.scaleHeight(43)),
+
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoute.voiceSentiment);
+                      },
+                      child: Image.asset(
+                        'assets/images/menu_voice_sentiment.png',
+                        width: context.scaleWidth(213),
+                        height: context.scaleHeight(90),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+
+                    SizedBox(height: context.scaleHeight(43)),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoute.chatbot);
+                      },
+                      child: Image.asset(
+                        'assets/images/menu_chatbot.png',
+                        width: context.scaleWidth(213),
+                        height: context.scaleHeight(90),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: context.scaleHeight(100), 
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColor.putihNormal,
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.black, 
+                        width: 1.0, 
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                bottom: context.scaleHeight(23), 
+                left: context.scaleWidth(107),  
+                child: GestureDetector(
+                  onTap: () {
+                  },
+                  child: Image.asset(
+                    'assets/images/home_button.png',
+                    width: context.scaleWidth(46),
+                    height: context.scaleHeight(50),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                bottom: context.scaleHeight(16), 
+                right: context.scaleWidth(76),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoute.profile);
+                  },
+                  child: Image.asset(
+                    'assets/images/profile_button.png',
+                    width: context.scaleWidth(68),
+                    height: context.scaleHeight(68),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        backgroundColor: AppColor.hijauTosca,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Selamat Datang di Tenang.in!',
-              style: GoogleFonts.fredoka(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColor.navyElement,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Ini adalah halaman Dashboard Anda.',
-              style: GoogleFonts.poppinsTextTheme().bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                //navigasi ke Forum Discuss
-                Navigator.pushNamed(context, AppRoute.forumDiscussList);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.kuning,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Pergi ke Forum Diskusi',
-                style: GoogleFonts.fredoka(
-                  color: AppColor.navyText,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                //
-                Navigator.pushNamed(context, AppRoute.profile);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.biruNormal,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Lihat Profil',
-                style: GoogleFonts.fredoka(
-                  color: AppColor.putihNormal,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
