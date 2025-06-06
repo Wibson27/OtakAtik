@@ -1,0 +1,38 @@
+# .gitignore untuk proyek Go (Gin + GORM)
+
+# File binary hasil kompilasi (executable)
+# Ganti nama file binary yang dihasilkan saat `go build`
+/backend
+*.exe
+*.out
+
+# Direktori dependensi (jika menggunakan go vendor)
+# go.mod dan go.sum HARUS tetap di-commit
+/vendor/
+
+# ===================================================================
+# BAGIAN YANG DISESUAIKAN 
+# ===================================================================
+# Folder konfigurasi yang berisi file-file sensitif
+# Mengabaikan SEMUA file dan folder di dalam backend/config/
+backend/config/
+
+# KECUALI file template/contoh
+# Hapus tanda # di bawah ini dan sesuaikan namanya jika memiliki file contoh.
+# !backend/config/config.example.json
+# !backend/config/settings.example.yml
+# ===================================================================
+
+# File log
+*.log
+*.log.*
+
+# File hasil testing
+coverage.out
+coverage.html
+
+# File spesifik IDE dan Sistem Operasi
+/.idea/         # GoLand / JetBrains IDEs
+/.vscode/       # Visual Studio Code
+.DS_Store     # macOS
+Thumbs.db     # Windows
