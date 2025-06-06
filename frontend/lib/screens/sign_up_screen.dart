@@ -52,7 +52,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final double screenHeight = context.screenHeight;
 
     return Scaffold(
-      backgroundColor: AppColor.navyElement,
+      backgroundColor: AppColor.hijauTosca,
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             height: context.scaleHeight(144),
             child: Center(
               child: Text(
-                'SIGNUP',
+                'SIGN UP',
                 style: GoogleFonts.fredoka(
                   color: AppColor.hijauTosca,
                   fontSize: 64,
