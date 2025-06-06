@@ -1,132 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/common/app_route.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:frontend/data/models/chat_message.dart'; 
+import 'package:frontend/data/models/attachment_file.dart';
+import 'package:frontend/data/models/discussion.dart';
+import 'package:frontend/common/enums.dart'; 
+import 'package:frontend/common/screen_utils.dart';
 
-
-// Model untuk pesan chat - seperti blueprint untuk setiap pesan
-class ChatMessage {
-  final String id;
-  final String text;
-  final String senderId;
-  final String senderName;
-  final DateTime timestamp;
-  final MessageType type;
-  final bool isOwner;
-  final List<AttachmentFile> attachments;
-
-  ChatMessage({
-    required this.id,
-    required this.text,
-    required this.senderId,
-    required this.senderName,
-    required this.timestamp,
-    this.type = MessageType.text,
-    required this.isOwner,
-    this.attachments = const [],
-  });
-}
-
-// Model untuk file attachment
-class AttachmentFile {
-  final String name;
-  final String path;
-  final AttachmentType type;
-  final int? size;
-
-  AttachmentFile({
-    required this.name,
-    required this.path,
-    required this.type,
-    this.size,
-  });
-}
-
-// Enum untuk jenis pesan dan attachment
-enum MessageType { text, image, file, emoji }
-enum AttachmentType { image, document, unknown }
-
-// Model untuk diskusi utama - tetap sama seperti kode original
-class Discussion {
-  final String id;
-  final String title;
-  final String content;
-  final String authorName;
-  final DateTime createdAt;
-
-  Discussion({
-    required this.id,
-    required this.title,
-    required this.content,
-    required this.authorName,
-    required this.createdAt,
-  });
-}
-
-// Data Service untuk mengelola data chat
-class ChatDataService {
-  static final ChatDataService _instance = ChatDataService._internal();
-  factory ChatDataService() => _instance;
-  ChatDataService._internal();
-
-  // Data dari kode original Anda, tapi dinormalisasi
-  final Discussion _currentDiscussion = Discussion(
-    id: "disc_001",
-    title: "Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?",
-    content: "Akhir-akhir ini sering ngalamin lesu pagi-pagi, padahal udah tidur awal tapi tetep aja susah bangun. Kadang sampe alarm udah bunyi berkali-kali baru bisa bangun, terus pas bangun badan tu lemes dan ga semangat buat mulai hari. Ada yang punya pengalaman serupa? Gimana cara ngatasinnya ya? Mungkin ada tips?",
-    authorName: "Saya",
-    createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-  );
-
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: "msg_001",
-      text: "Aku banget ini! Kadang sampe telat kerja karena susah bangun. Coba deh sleep hygiene-nya diperbaiki dulu, kayak matiin gadget 1 jam sebelum tidur. Terus juga coba atur jadwal tidur yang konsisten setiap hari.",
-      senderId: "user_001",
-      senderName: "Sarah",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
-      isOwner: false,
-    ),
-    ChatMessage(
-      id: "msg_002",
-      text: "Setuju sama yang di atas! Plus coba rutin olahraga ringan sore hari, ngaruh banget ke kualitas tidur. Terus jangan lupa sarapan yang bergizi. Aku dulu juga gitu, tapi setelah rutin olahraga dan makan teratur, sekarang udah lebih gampang bangun pagi.",
-      senderId: "user_002",
-      senderName: "Ahmad",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      isOwner: false,
-    ),
-    ChatMessage(
-      id: "msg_003",
-      text: "Aku pake teknik 5 detik rule pas alarm bunyi langsung berdiri. Awalnya susah tapi lama-lama jadi kebiasaan. Sama lamp yang simulasi sunrise juga membantu! Oh iya, coba juga taruh alarm jauh dari tempat tidur biar terpaksa bangun.",
-      senderId: "user_003",
-      senderName: "Dina",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      isOwner: false,
-    ),
-    ChatMessage(
-      id: "msg_004",
-      text: "Wah makasih semuanya! Aku coba deh step by step. Semoga bisa konsisten ngjalanin tipsnya 🙏 Bakal aku update lagi nanti gimana hasilnya.",
-      senderId: "user_main",
-      senderName: "Saya",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      isOwner: true,
-    ),
-  ];
-
-  Discussion get currentDiscussion => _currentDiscussion;
-  List<ChatMessage> get messages => List.unmodifiable(_messages);
-
-  void addMessage(ChatMessage message) {
-    _messages.add(message);
-  }
-
-  String generateMessageId() {
-    return "msg_${DateTime.now().millisecondsSinceEpoch}";
-  }
-}
-
-// Time formatter helper - sistem waktu yang lebih baik
+// Time formatter 
 class TimeFormatter {
   static String formatTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -155,8 +39,79 @@ class TimeFormatter {
   }
 }
 
+// Data Service untuk mengelola data chat (memakai model yang sudah dipindahkan)
+class ChatDataService {
+  static final ChatDataService _instance = ChatDataService._internal();
+  factory ChatDataService() => _instance;
+  ChatDataService._internal();
+
+  // Data dari kode original Anda, tapi sekarang menggunakan model Discussion
+  final Discussion _currentDiscussion = Discussion(
+    id: "disc_001",
+    title: "Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?",
+    content: "Akhir-akhir ini sering ngalamin lesu pagi-pagi, padahal udah tidur awal tapi tetep aja susah bangun. Kadang sampe alarm udah bunyi berkali-kali baru bisa bangun, terus pas bangun badan tu lemes dan ga semangat buat mulai hari. Ada yang punya pengalaman serupa? Gimana cara ngatasinnya ya? Mungkin ada tips?",
+    authorName: "Saya",
+    createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+  );
+
+  // Menggunakan model ChatMessage yang sudah dimodifikasi (figma)
+  final List<ChatMessage> _messages = [
+    ChatMessage(
+      id: "msg_001",
+      chatSessionId: "session_001",
+      senderType: "ai_bot", 
+      messageContent: "Aku banget ini! Kadang sampe telat kerja karena susah bangun. Coba deh sleep hygiene-nya diperbaiki dulu, kayak matiin gadget 1 jam sebelum tidur. Terus juga coba atur jadwal tidur yang konsisten setiap hari.",
+      senderId: "user_001",
+      senderName: "Sarah",
+      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
+      isOwner: false,
+    ),
+    ChatMessage(
+      id: "msg_002",
+      chatSessionId: "session_001",
+      senderType: "user",
+      messageContent: "Setuju sama yang di atas! Plus coba rutin olahraga ringan sore hari, ngaruh banget ke kualitas tidur. Terus jangan lupa sarapan yang bergizi. Aku dulu juga gitu, tapi setelah rutin olahraga dan makan teratur, sekarang udah lebih gampang bangun pagi.",
+      senderId: "user_002",
+      senderName: "Ahmad",
+      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+      isOwner: false,
+    ),
+    ChatMessage(
+      id: "msg_003",
+      chatSessionId: "session_001",
+      senderType: "user",
+      messageContent: "Aku pake teknik 5 detik rule pas alarm bunyi langsung berdiri. Awalnya susah tapi lama-lama jadi kebiasaan. Sama lamp yang simulasi sunrise juga membantu! Oh iya, coba juga taruh alarm jauh dari tempat tidur biar terpaksa bangun.",
+      senderId: "user_003",
+      senderName: "Dina",
+      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+      isOwner: false,
+    ),
+    ChatMessage(
+      id: "msg_004",
+      chatSessionId: "session_001",
+      senderType: "user",
+      messageContent: "Wah makasih semuanya! Aku coba deh step by step. Semoga bisa konsisten ngjalanin tipsnya 🙏 Bakal aku update lagi nanti gimana hasilnya.",
+      senderId: "user_main",
+      senderName: "Saya",
+      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+      isOwner: true,
+    ),
+  ];
+
+  Discussion get currentDiscussion => _currentDiscussion;
+  List<ChatMessage> get messages => List.unmodifiable(_messages);
+
+  void addMessage(ChatMessage message) {
+    _messages.add(message);
+  }
+
+  String generateMessageId() {
+    return "msg_${DateTime.now().millisecondsSinceEpoch}";
+  }
+}
+
 class ForumDiscussionPostScreen extends StatefulWidget {
-  const ForumDiscussionPostScreen({Key? key}) : super(key: key);
+  const ForumDiscussionPostScreen({super.key});
 
   @override
   State<ForumDiscussionPostScreen> createState() => _ForumDiscussionPostScreenState();
@@ -167,20 +122,20 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
-  
+
   // Data service - sistem baru untuk data management
   final ChatDataService _dataService = ChatDataService();
-  
+
   // State variables
   bool _isTyping = false;
   bool _showEmojiPicker = false;
   String _currentMessage = '';
   List<ChatMessage> _messages = [];
-  List<AttachmentFile> _pendingAttachments = [];
-  
+  final List<AttachmentFile> _pendingAttachments = [];
+
   // File picker instances
   final ImagePicker _imagePicker = ImagePicker();
-  
+
   // Emoji list dari kode original Anda
   final List<String> _emojiList = [
     '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
@@ -211,7 +166,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     setState(() {
       _messages = _dataService.messages;
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -230,7 +185,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     final screenSize = MediaQuery.of(context).size;
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       resizeToAvoidBottomInset: true,
@@ -247,21 +202,21 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
     return Stack(
       children: [
-        // Background blur 
+        // Background blur
         _buildBlurBackground(),
-        
+
         // Scroll content area
         _buildScrollableContent(context),
-        
-        // Bottom message input 
+
+        // Bottom message input
         _buildBottomMessageArea(),
-        
-        // Simple emoji picker 
+
+        // Simple emoji picker
         if (_showEmojiPicker) _buildSimpleEmojiPicker(),
-        
-        // Arrow button 
+
+        // Arrow button
         _buildArrowButton(context),
-        
+
         // Loading overlay untuk file upload
         if (_pendingAttachments.isNotEmpty) _buildUploadingIndicator(),
       ],
@@ -302,10 +257,10 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
 
   Widget _buildMainDiscussionCard() {
     final discussion = _dataService.currentDiscussion;
-    
+
     return Container(
       width: 348,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration( 
         image: DecorationImage(
           image: AssetImage('assets/images/kotak_hijau_tosca.png'),
           fit: BoxFit.fill,
@@ -315,24 +270,24 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 19),
-          
-          // Title Section
+
+          // Title 
           Padding(
             padding: const EdgeInsets.only(left: 15, right: 16),
             child: _buildTitleSection(discussion.title),
           ),
-          
+
           const SizedBox(height: 29),
-          
-          // Question Section  
+
+          // Question 
           Padding(
             padding: const EdgeInsets.only(left: 15, right: 16),
             child: _buildQuestionSection(discussion.content),
           ),
-          
+
           const SizedBox(height: 8),
-          
-          // Timestamp section - BARU!
+
+          // Timestamp 
           Padding(
             padding: const EdgeInsets.only(left: 15, right: 16, bottom: 14),
             child: Row(
@@ -365,7 +320,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   Widget _buildTitleSection(String title) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration( 
         image: DecorationImage(
           image: AssetImage('assets/images/title_box.png'),
           fit: BoxFit.fill,
@@ -387,7 +342,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   Widget _buildQuestionSection(String content) {
     return Container(
       width: 317,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration( 
         image: DecorationImage(
           image: AssetImage('assets/images/question_box.png'),
           fit: BoxFit.fill,
@@ -413,8 +368,8 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
               textAlign: TextAlign.left,
             ),
           ),
-          
-          // Ellips 
+
+          // Ellips
           Positioned(
             right: 14,
             bottom: 6,
@@ -433,17 +388,17 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     return _messages.asMap().entries.map((entry) {
       final index = entry.key;
       final message = entry.value;
-      
+
       return Container(
         margin: EdgeInsets.only(
           bottom: index == _messages.length - 1 ? 0 : 20,
         ),
         child: Column(
-          crossAxisAlignment: message.isOwner 
-              ? CrossAxisAlignment.end 
+          crossAxisAlignment: message.isOwner
+              ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
-            // Sender name dan timestamp - BARU!
+            // Sender name dan timestamp
             if (!message.isOwner || _shouldShowSenderInfo(index))
               Padding(
                 padding: EdgeInsets.only(
@@ -452,8 +407,8 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                   bottom: 4,
                 ),
                 child: Row(
-                  mainAxisAlignment: message.isOwner 
-                      ? MainAxisAlignment.end 
+                  mainAxisAlignment: message.isOwner
+                      ? MainAxisAlignment.end
                       : MainAxisAlignment.start,
                   children: [
                     if (!message.isOwner) ...[
@@ -489,11 +444,11 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                   ],
                 ),
               ),
-            
+
             // Message bubble
             _buildDiscussionMessage(message),
-            
-            // Attachments - BARU!
+
+            // Attachments
             if (message.attachments.isNotEmpty)
               _buildAttachmentsDisplay(message.attachments, message.isOwner),
           ],
@@ -504,35 +459,35 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
 
   bool _shouldShowSenderInfo(int index) {
     if (index == 0) return true;
-    
+
     final currentMessage = _messages[index];
     final previousMessage = _messages[index - 1];
-    
+
     return currentMessage.senderId != previousMessage.senderId ||
-           currentMessage.timestamp.difference(previousMessage.timestamp).inMinutes > 5;
+        currentMessage.timestamp.difference(previousMessage.timestamp).inMinutes > 5;
   }
 
   Widget _buildDiscussionMessage(ChatMessage message) {
     return Align(
       alignment: message.isOwner ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(
-          maxWidth: 250, 
+        constraints: const BoxConstraints( 
+          maxWidth: 250,
           minWidth: 100,
         ),
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(
-              message.isOwner 
-                ? 'assets/images/yellow_discussion_box.png'
-                : 'assets/images/green_discussion_box.png'
+              message.isOwner
+                  ? 'assets/images/yellow_discussion_box.png'
+                  : 'assets/images/green_discussion_box.png',
             ),
             fit: BoxFit.fill,
           ),
         ),
         padding: const EdgeInsets.all(25),
         child: Text(
-          message.text,
+          message.messageContent, 
           style: GoogleFonts.fredoka(
             fontSize: 12,
             fontWeight: FontWeight.w400,
@@ -574,8 +529,8 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            attachment.type == AttachmentType.image 
-                ? Icons.image 
+            attachment.type == AttachmentType.image
+                ? Icons.image
                 : Icons.attach_file,
             size: 16,
             color: const Color(0xFF001F3F).withOpacity(0.7),
@@ -610,7 +565,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
 
   Widget _buildBottomMessageArea() {
     double dynamicHeight = _calculateMessageBoxHeight();
-    
+
     return Positioned(
       bottom: 16,
       left: 10,
@@ -622,7 +577,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            Container(
+            SizedBox(
               width: 417,
               height: dynamicHeight,
               child: Image.asset(
@@ -632,7 +587,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                 fit: BoxFit.fill,
               ),
             ),
-            
+
             // Pending attachments preview
             if (_pendingAttachments.isNotEmpty)
               Positioned(
@@ -641,34 +596,32 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                 bottom: dynamicHeight - 25,
                 child: _buildPendingAttachmentsPreview(),
               ),
-            
+
             // Text inputan
             if (_isTyping || _messageFocusNode.hasFocus)
               Positioned(
-                left: 140, // Space for happy emoji
-                right: 70, // Space for send button
+                left: 140, 
+                right: 70, 
                 bottom: 10,
                 top: _pendingAttachments.isNotEmpty ? 35 : 0,
-                child: Container(
-                  child: TextField(
-                    controller: _messageController,
-                    focusNode: _messageFocusNode,
-                    maxLines: null,
-                    style: GoogleFonts.fredoka(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF001F3F),
-                    ),
-                    textAlign: TextAlign.left,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Ketik pesan...',
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                child: TextField( 
+                  controller: _messageController,
+                  focusNode: _messageFocusNode,
+                  maxLines: null,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF001F3F),
+                  ),
+                  textAlign: TextAlign.left,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Ketik pesan...',
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
-            
+
             // happy_emoji.png
             Positioned(
               left: 14,
@@ -682,30 +635,28 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                 ),
               ),
             ),
-            
-            // paper_clip.png 
+
+            // paper_clip.png
             Positioned(
               left: 87,
               bottom: 9,
               child: GestureDetector(
                 onTap: _showAttachmentDialog,
-                child: Container(
-                  child: Image.asset(
-                    'assets/images/paper_clip.png',
-                    width: 30,
-                    height: 30,
-                  ),
+                child: Image.asset( 
+                  'assets/images/paper_clip.png',
+                  width: 30,
+                  height: 30,
                 ),
               ),
             ),
-            
+
             // polygon_button.png (send button)
             Positioned(
               right: 24,
               bottom: 8,
               child: GestureDetector(
                 onTap: _sendMessage,
-                child: Image.asset(
+                child: Image.asset( 
                   'assets/images/polygon_button.png',
                   width: 34,
                   height: 32,
@@ -719,7 +670,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   }
 
   Widget _buildPendingAttachmentsPreview() {
-    return Container(
+    return SizedBox( 
       height: 30,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -741,15 +692,15 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  attachment.type == AttachmentType.image 
-                      ? Icons.image 
+                  attachment.type == AttachmentType.image
+                      ? Icons.image
                       : Icons.attach_file,
                   size: 12,
                   color: const Color(0xFF4CAF50),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  attachment.name.length > 10 
+                  attachment.name.length > 10
                       ? '${attachment.name.substring(0, 10)}...'
                       : attachment.name,
                   style: GoogleFonts.fredoka(
@@ -757,6 +708,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF001F3F),
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
@@ -777,13 +729,13 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
 
   double _calculateMessageBoxHeight() {
     double baseHeight = 50;
-    
+
     if (!_isTyping && !_messageFocusNode.hasFocus && _pendingAttachments.isEmpty) {
       return baseHeight;
     }
 
     double attachmentHeight = _pendingAttachments.isNotEmpty ? 35 : 0;
-    
+
     final textPainter = TextPainter(
       text: TextSpan(
         text: _currentMessage.isEmpty ? 'Ketik pesan...' : _currentMessage,
@@ -795,15 +747,22 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
       maxLines: null,
       textDirection: TextDirection.ltr,
     );
-    
-    double availableWidth = 417 - 60 - 70 - 20; 
+
+    double availableWidth = 417 - 140 - 70; 
+    if (availableWidth <= 0) availableWidth = 100; 
+
     textPainter.layout(maxWidth: availableWidth);
-    
-    double textHeight = textPainter.height > 15 ? textPainter.height - 15 : 0;
+
+    double textHeight = textPainter.height;
+    if (_currentMessage.isNotEmpty) {
+      textHeight += 20; 
+    }
+
     double calculatedHeight = baseHeight + attachmentHeight + textHeight;
-    
+
     return calculatedHeight.clamp(50, 200);
   }
+
 
   Widget _buildSimpleEmojiPicker() {
     return Positioned(
@@ -877,7 +836,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
       left: 8,
       child: GestureDetector(
         onTap: () {
-          Navigator.pushReplacementNamed(context, '/main_screen');
+          Navigator.pushReplacementNamed(context, AppRoute.dashboard); 
         },
         child: Image.asset(
           'assets/images/arrow.png',
@@ -936,16 +895,16 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
   void _sendMessage() async {
     if (_currentMessage.trim().isEmpty && _pendingAttachments.isEmpty) return;
 
-    final messageText = _currentMessage.trim().isEmpty 
-        ? (_pendingAttachments.isNotEmpty ? '' : '') 
-        : _currentMessage.trim();
+    final messageText = _currentMessage.trim();
 
-    // Create new message with attachments
+    // message baru dengan attachments
     final newMessage = ChatMessage(
       id: _dataService.generateMessageId(),
-      text: messageText,
-      senderId: "user_main",
-      senderName: "Saya",
+      chatSessionId: _dataService.currentDiscussion.id, 
+      senderType: "user", 
+      messageContent: messageText,
+      senderId: "user_main", 
+      senderName: "Saya", 
       timestamp: DateTime.now(),
       isOwner: true,
       attachments: List.from(_pendingAttachments),
@@ -958,14 +917,14 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
       _currentMessage = '';
       _isTyping = false;
       _showEmojiPicker = false;
-      _pendingAttachments.clear(); 
+      _pendingAttachments.clear();
     });
 
     _messageFocusNode.unfocus();
     _scrollToBottom();
   }
 
-  // ATTACHMENT HANDLING 
+  // ATTACHMENT HANDLING
 
   void _showAttachmentDialog() {
     showDialog(
@@ -1020,7 +979,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                   _pickImageFromCamera();
                 },
               ),
-              
+
               // Gallery option
               ListTile(
                 leading: Container(
@@ -1055,7 +1014,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
                   _pickImageFromGallery();
                 },
               ),
-              
+
               // File option
               ListTile(
                 leading: Container(
@@ -1157,8 +1116,8 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
       if (result != null && result.files.single.path != null) {
         final file = result.files.single;
         AttachmentType type = AttachmentType.document;
-        
-        // Determine file type
+
+        // file type
         if (file.extension != null) {
           final ext = file.extension!.toLowerCase();
           if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(ext)) {
@@ -1178,7 +1137,7 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     final fileName = file.path.split('/').last;
     final size = fileSize ?? await file.length();
 
-    // Check file size limit (max 10MB)
+    // Check batas size filenya (max 10MB)
     if (size > 10 * 1024 * 1024) {
       _showErrorSnackbar('File terlalu besar. Maksimal 10MB.');
       return;
@@ -1193,10 +1152,10 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
 
     setState(() {
       _pendingAttachments.add(attachment);
-      _isTyping = true; 
+      _isTyping = true;
     });
 
-    // Show success 
+    // kalo success
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -1267,19 +1226,5 @@ class _ForumDiscussionPostScreenState extends State<ForumDiscussionPostScreen> {
     } else {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     }
-  }
-}
-
-// Extension untuk responsive design
-extension ScreenUtils on BuildContext {
-  double get screenWidth => MediaQuery.of(this).size.width;
-  double get screenHeight => MediaQuery.of(this).size.height;
-  
-  double scaleWidth(double figmaWidth) {
-    return (screenWidth / 430.25) * figmaWidth; 
-  }
-  
-  double scaleHeight(double figmaHeight) {
-    return (screenHeight / 932) * figmaHeight; 
   }
 }

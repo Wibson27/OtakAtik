@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.frontend"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21  // Explicit minimum SDK
+        minSdk = 23
         targetSdk = 35  // Update target SDK ke 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
