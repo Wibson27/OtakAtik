@@ -2,7 +2,7 @@ class ScheduledCheckin {
   final String id;
   final String userId;
   final String? scheduleName;
-  final String timeOfDay; // Menyimpan sebagai String HH:MM:SS
+  final String timeOfDay; // (String HH:MM:SS)
   final List<int> daysOfWeek;
   final bool? isActive;
   final String? greetingTemplate;
@@ -30,7 +30,7 @@ class ScheduledCheckin {
       id: json['id'],
       userId: json['user_id'],
       scheduleName: json['schedule_name'],
-      timeOfDay: json['time_of_day'], // Baca langsung sebagai String
+      timeOfDay: json['time_of_day'], 
       daysOfWeek: List<int>.from(json['days_of_week']),
       isActive: json['is_active'],
       greetingTemplate: json['greeting_template'],
@@ -46,7 +46,7 @@ class ScheduledCheckin {
       'id': id,
       'user_id': userId,
       'schedule_name': scheduleName,
-      'time_of_day': timeOfDay, // Kirim langsung sebagai String
+      'time_of_day': timeOfDay, 
       'days_of_week': daysOfWeek,
       'is_active': isActive,
       'greeting_template': greetingTemplate,

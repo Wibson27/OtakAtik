@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; //  <-- Import yang benar untuk BlocProvider dan MultiBlocProvider
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'package:frontend/common/app_color.dart';
+import 'package:frontend/common/app_route.dart';
 import 'package:frontend/presentation/bloc/user/user_cubit.dart';
-import 'package:frontend/screens/sign_up_screen.dart'; // Pastikan path ini benar
+import 'package:frontend/screens/sign_up_screen.dart';
+import 'package:frontend/screens/sign_in_screen.dart';
+import 'package:frontend/screens/dashboard_screen.dart';
+import 'package:frontend/screens/forum_discussion_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then(
+    (_) {
+      runApp(const MyApp());
+    },
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,17 +28,48 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<UserCubit>(
-          create: (context) => UserCubit(), // 
+          create: (context) => UserCubit(),
         ),
       ],
-
-      child: MaterialApp( //  <-- MaterialApp dibungkus sebagai child
-        title: 'Tenang.in', // 
-        theme: ThemeData( // 
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple), // 
-          useMaterial3: true, // Opsional, untuk Material Design 3
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.light,
+        title: 'Tenang.in',
+        theme: ThemeData.light(useMaterial3: true).copyWith(
+          primaryColor: AppColor.hijauTosca,
+          colorScheme: const ColorScheme.light(
+            primary: AppColor.hijauTosca,
+            secondary: AppColor.kuning,
+          ),
+          scaffoldBackgroundColor: AppColor.putihNormal,
+          textTheme: GoogleFonts.poppinsTextTheme(),
+          appBarTheme: AppBarTheme(
+            surfaceTintColor: AppColor.hijauTosca,
+            backgroundColor: AppColor.hijauTosca,
+            foregroundColor: AppColor.whiteText,
+            titleTextStyle: GoogleFonts.fredoka(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppColor.whiteText,
+            ),
+          ),
+          popupMenuTheme: const PopupMenuThemeData( 
+            color: AppColor.putihNormal,
+            surfaceTintColor: AppColor.putihNormal,
+          ),
+          dialogTheme: const DialogThemeData( 
+            surfaceTintColor: AppColor.putihNormal,
+            backgroundColor: AppColor.putihNormal,
+          ),
         ),
-        home: const SignUpScreen(), //  <-- Halaman awal aplikasi
+        initialRoute: AppRoute.splash,
+        routes: {
+          AppRoute.splash: (context) => const SignUpScreen(),
+          AppRoute.signUp: (context) => const SignUpScreen(),
+          AppRoute.signIn: (context) => const SignInScreen(),
+          AppRoute.dashboard: (context) => const DashboardScreen(),
+          AppRoute.forumDiscussList: (context) => const ForumDiscussionScreen(),
+        },
       ),
     );
   }

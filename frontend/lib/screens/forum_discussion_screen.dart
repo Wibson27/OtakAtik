@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/common/app_color.dart'; 
+import 'package:frontend/common/app_route.dart'; 
 
 class ForumDiscussionScreen extends StatelessWidget {
-  const ForumDiscussionScreen({Key? key}) : super(key: key);
+  const ForumDiscussionScreen({super.key});
 
-  // Sample data untuk demonstrasi 
+  // Sample data 
   final List<Map<String, String>> discussionTopics = const [
     {
       'title': 'Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?',
@@ -33,23 +35,22 @@ class ForumDiscussionScreen extends StatelessWidget {
     final screenSize = MediaQuery.of(context).size;
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
-    
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: AppColor.putihNormal, 
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
-          child: _buildMainContent(screenWidth, screenHeight),
+          child: _buildMainContent(context, screenWidth, screenHeight), 
         ),
       ),
     );
   }
 
-  Widget _buildMainContent(double screenWidth, double screenHeight) {
+  Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
     return Stack(
       children: [
-        // Background kuning 
         Positioned(
           top: 0,
           left: 0,
@@ -62,8 +63,6 @@ class ForumDiscussionScreen extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-        
-        // Blur top 
         Positioned(
           top: 0,
           left: 0,
@@ -75,31 +74,23 @@ class ForumDiscussionScreen extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-        
-        // Arrow button 
         Positioned(
           top: 16,
           left: 8,
-          child: Builder(
-            builder: (BuildContext context) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  width: 66,
-                  height: 66,
-                  child: Image.asset(
-                    'assets/images/arrow.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              );
+          child: GestureDetector(
+            onTap: () {
+              Navigator.pop(context); 
             },
+            child: SizedBox(
+              width: 66,
+              height: 66,
+              child: Image.asset(
+                'assets/images/arrow.png',
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
-        
-        // Title "Forum Discuss" 
         Positioned(
           top: 16,
           left: 0,
@@ -108,17 +99,15 @@ class ForumDiscussionScreen extends StatelessWidget {
             child: Text(
               'Forum Discuss',
               style: GoogleFonts.fredoka(
-                color: const Color(0xFF001F3F),
+                color: AppColor.navyText, 
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ),
-        
-        // Scroll
         Positioned(
-          top: 94, // 88 (blur_top height) + 6 (spacing)
+          top: 94,
           left: 40,
           right: 41,
           bottom: 0,
@@ -133,12 +122,18 @@ class ForumDiscussionScreen extends StatelessWidget {
                     margin: EdgeInsets.only(
                       bottom: index == discussionTopics.length - 1 ? 20 : 12,
                     ),
-                    child: _buildDiscussionCard(
-                      topic['title']!,
-                      topic['description']!,
+                    child: GestureDetector( 
+                      onTap: () {
+                        // navigasi ke detail post (dengan id)
+                        Navigator.pushNamed(context, AppRoute.forumDiscussDetail);
+                      },
+                      child: _buildDiscussionCard(
+                        topic['title']!,
+                        topic['description']!,
+                      ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -147,12 +142,11 @@ class ForumDiscussionScreen extends StatelessWidget {
     );
   }
 
-  // Fungsi untuk card
   Widget _buildDiscussionCard(String title, String description) {
     return Container(
       width: 348,
       decoration: BoxDecoration(
-        color: const Color(0xFF6EBAB3),
+        color: AppColor.hijauTosca.withOpacity(0.8), 
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -167,12 +161,11 @@ class ForumDiscussionScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kotak putih besar (untuk title)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: AppColor.putihNormal,
                 borderRadius: BorderRadius.circular(3),
                 boxShadow: [
                   BoxShadow(
@@ -185,7 +178,7 @@ class ForumDiscussionScreen extends StatelessWidget {
               child: Text(
                 title,
                 style: GoogleFonts.fredoka(
-                  color: const Color(0xFF001F3F),
+                  color: AppColor.navyText, 
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
                   height: 1.2,
@@ -193,16 +186,13 @@ class ForumDiscussionScreen extends StatelessWidget {
                 textAlign: TextAlign.left,
               ),
             ),
-            
-            const SizedBox(height: 12), 
-            
-            // Container putih kecil (untuk description)
+            const SizedBox(height: 12),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(6),
-              margin: const EdgeInsets.only(left: 17), 
+              margin: const EdgeInsets.only(left: 17),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: AppColor.putihNormal,
                 borderRadius: BorderRadius.circular(3),
                 boxShadow: [
                   BoxShadow(
@@ -215,7 +205,7 @@ class ForumDiscussionScreen extends StatelessWidget {
               child: Text(
                 description,
                 style: GoogleFonts.fredoka(
-                  color: const Color(0xFF001F3F),
+                  color: AppColor.navyText, 
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   height: 1.2,
@@ -230,16 +220,15 @@ class ForumDiscussionScreen extends StatelessWidget {
   }
 }
 
-// Extension untuk responsive design 
 extension ScreenUtils on BuildContext {
   double get screenWidth => MediaQuery.of(this).size.width;
   double get screenHeight => MediaQuery.of(this).size.height;
-  
+
   double scaleWidth(double figmaWidth) {
-    return (screenWidth / 430.25) * figmaWidth; 
+    return (screenWidth / 430.25) * figmaWidth;
   }
-  
+
   double scaleHeight(double figmaHeight) {
-    return (screenHeight / 932) * figmaHeight; 
+    return (screenHeight / 932) * figmaHeight;
   }
 }
