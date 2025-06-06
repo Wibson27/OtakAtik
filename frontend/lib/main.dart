@@ -18,9 +18,7 @@ class MyApp extends StatelessWidget {
           create: (context) => UserCubit(), // 
         ),
       ],
-      // 
-      // MultiBlocProvider harus memiliki 'child' yang merupakan widget aplikasi utama Anda (MaterialApp)
-      // Properti 'title', 'theme', dan 'home' adalah milik MaterialApp, bukan MultiBlocProvider.
+
       child: MaterialApp( //  <-- MaterialApp dibungkus sebagai child
         title: 'Tenang.in', // 
         theme: ThemeData( // 
@@ -33,10 +31,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Bagian MyHomePage dan _MyHomePageState yang merupakan template default Flutter
-// Saya biarkan tetap ada di sini seperti format yang Anda berikan,
-// meskipun tidak digunakan dalam MaterialApp di atas.
-// Anda bisa menghapusnya jika memang tidak akan digunakan.
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
