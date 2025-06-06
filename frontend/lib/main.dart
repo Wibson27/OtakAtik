@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/common/app_color.dart';
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: AppRoute.splash,
         routes: {
-          AppRoute.splash: (context) => const SignUpScreen(),
+          AppRoute.splash: (context) => const SplashScreen(), 
           AppRoute.signUp: (context) => const SignUpScreen(),
           AppRoute.signIn: (context) => const SignInScreen(),
           AppRoute.dashboard: (context) => const DashboardScreen(),
