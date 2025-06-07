@@ -5,28 +5,38 @@ import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  // Track expanded card index
+  int? expandedIndex;
 
   //function warna skor
   Color _getScoreColor(double score) {
     if (score >= 7.0) {
-      return AppColor.hijauSuccess; 
+      return AppColor.hijauSuccess;
     } else if (score >= 4.0) {
-      return AppColor.kuning; 
+      return AppColor.kuning;
     } else {
-      return AppColor.merahError; 
+      return AppColor.merahError;
     }
   }
 
-  // sample data 
+  // sample data
   final List<VocalSentimentAnalysis> historyData = [
     VocalSentimentAnalysis(
       id: 'history_001',
       vocalEntryId: 'entry_001',
       overallWellbeingScore: 5.5,
-      wellbeingCategory: 'Menghadapi beberapa tantangan yang sangat panjang dan mungkin memerlukan dukungan',
-      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan.',
+      wellbeingCategory:
+          'Menghadapi beberapa tantangan yang sangat panjang dan mungkin memerlukan dukungan',
+      reflectionPrompt:
+          'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan. Kami menemukan beberapa tema yang berulang dalam nada suara Anda dan kepuasan dalam percakapan Anda. Ini adalah indikasi yang baik dari well-being Anda.',
       createdAt: DateTime.parse('2025-06-06T10:00:00Z'),
       emotionalValence: 0.1,
       emotionalArousal: 0.2,
@@ -39,7 +49,8 @@ class HistoryScreen extends StatelessWidget {
       vocalEntryId: 'entry_002',
       overallWellbeingScore: 8.2,
       wellbeingCategory: 'Sangat Positif dan Penuh Semangat',
-      reflectionPrompt: 'Rekaman suara Anda memancarkan energi positif dan antusiasme yang tinggi. Terus pertahankan energi positif ini dengan melakukan aktivitas yang Anda sukai, seperti hobi atau olahraga rutin. Selamat!',
+      reflectionPrompt:
+          'Rekaman suara Anda memancarkan energi positif dan antusiasme yang tinggi. Terus pertahankan energi positif ini dengan melakukan aktivitas yang Anda sukai, seperti hobi atau olahraga rutin. Selamat!',
       createdAt: DateTime.parse('2025-06-05T14:30:00Z'),
       emotionalValence: 0.8,
       emotionalArousal: 0.7,
@@ -52,7 +63,8 @@ class HistoryScreen extends StatelessWidget {
       vocalEntryId: 'entry_003',
       overallWellbeingScore: 3.1,
       wellbeingCategory: 'Mengalami Beberapa Kesulitan Emosional Cukup Serius',
-      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa kesulitan emosional. Kami sarankan untuk mencari dukungan atau melakukan aktivitas relaksasi seperti meditasi atau yoga. Penting untuk istirahat cukup dan menjaga diri.',
+      reflectionPrompt:
+          'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa kesulitan emosional. Kami sarankan untuk mencari dukungan atau melakukan aktivitas relaksasi seperti meditasi atau yoga. Penting untuk istirahat cukup dan menjaga diri.',
       createdAt: DateTime.parse('2025-06-04T09:15:00Z'),
       emotionalValence: -0.5,
       emotionalArousal: -0.3,
@@ -65,7 +77,8 @@ class HistoryScreen extends StatelessWidget {
       vocalEntryId: 'entry_004',
       overallWellbeingScore: 6.8,
       wellbeingCategory: 'Kesejahteraan Cukup Baik',
-      reflectionPrompt: 'Analisis suara Anda menunjukkan kesejahteraan yang cukup baik, namun ada ruang untuk peningkatan. Coba eksplorasi aktivitas baru yang menstimulasi pikiran Anda dan tetap jaga komunikasi dengan orang sekitar.',
+      reflectionPrompt:
+          'Analisis suara Anda menunjukkan kesejahteraan yang cukup baik, namun ada ruang untuk peningkatan. Coba eksplorasi aktivitas baru yang menstimulasi pikiran Anda dan tetap jaga komunikasi dengan orang sekitar.',
       createdAt: DateTime.parse('2025-06-03T11:00:00Z'),
       emotionalValence: 0.3,
       emotionalArousal: 0.4,
@@ -78,7 +91,8 @@ class HistoryScreen extends StatelessWidget {
       vocalEntryId: 'entry_005',
       overallWellbeingScore: 2.1,
       wellbeingCategory: 'Memerlukan Perhatian & Dukungan Mendesak',
-      reflectionPrompt: 'Kami mendeteksi adanya beban emosional yang signifikan dari rekaman suara Anda. Kami sangat menyarankan untuk segera mencari bantuan profesional atau berbicara dengan orang yang Anda percayai. Jangan hadapi ini sendirian, ada banyak dukungan yang tersedia.',
+      reflectionPrompt:
+          'Kami mendeteksi adanya beban emosional yang signifikan dari rekaman suara Anda. Kami sangat menyarankan untuk segera mencari bantuan profesional atau berbicara dengan orang yang Anda percayai. Jangan hadapi ini sendirian, ada banyak dukungan yang tersedia.',
       createdAt: DateTime.parse('2025-06-02T16:45:00Z'),
       emotionalValence: -0.8,
       emotionalArousal: -0.7,
@@ -106,7 +120,8 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
+  Widget _buildMainContent(
+      BuildContext context, double screenWidth, double screenHeight) {
     return Stack(
       children: [
         Positioned(
@@ -119,7 +134,6 @@ class HistoryScreen extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-
         Positioned(
           top: 0,
           left: 0,
@@ -131,13 +145,12 @@ class HistoryScreen extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-
         Positioned(
           top: 16,
           left: 8,
           child: GestureDetector(
             onTap: () {
-              Navigator.pop(context); 
+              Navigator.pop(context);
             },
             child: SizedBox(
               width: 66,
@@ -149,7 +162,6 @@ class HistoryScreen extends StatelessWidget {
             ),
           ),
         ),
-
         Positioned(
           top: 94,
           left: 16,
@@ -160,16 +172,26 @@ class HistoryScreen extends StatelessWidget {
               0,
               8,
               0,
-              24, 
+              24,
             ),
             itemCount: historyData.length,
             itemBuilder: (context, index) {
               final item = historyData[index];
+              final isExpanded = expandedIndex == index;
+
               return Padding(
                 padding: EdgeInsets.only(bottom: 16),
-                child: HistoryCardItem(
-                  item: item,
-                  getScoreColor: _getScoreColor,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      expandedIndex = isExpanded ? null : index;
+                    });
+                  },
+                  child: HistoryCardItem(
+                    item: item,
+                    getScoreColor: _getScoreColor,
+                    isExpanded: isExpanded,
+                  ),
                 ),
               );
             },
@@ -180,15 +202,17 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-// --- widget card
+// --- widget card dengan animasi expand
 class HistoryCardItem extends StatelessWidget {
   final VocalSentimentAnalysis item;
   final Function(double) getScoreColor;
+  final bool isExpanded;
 
   const HistoryCardItem({
     Key? key,
     required this.item,
     required this.getScoreColor,
+    required this.isExpanded,
   }) : super(key: key);
 
   @override
@@ -200,97 +224,101 @@ class HistoryCardItem extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: context.scaleHeight(140),
-      ),
-      child: IntrinsicHeight(
-        child: Container(
-          padding: EdgeInsets.all(context.scaleWidth(16)),
-          decoration: BoxDecoration(
-            color: itemColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: itemColor,
-              width: 2,
-            ),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Color(0xFF80C2BC), // Warna hijau Tosca dengan hex code 80C2BC
+        borderRadius: BorderRadius.circular(16),
+        // Menghapus border dan menggantinya dengan boxShadow
+        boxShadow: [
+          BoxShadow(
+            color: itemColor.withOpacity(0.5), // Warna shadow mengikuti itemColor dengan opacity 50%
+            blurRadius: 8, // Anda bisa menyesuaikan blurRadius sesuai keinginan
+            offset: const Offset(2, -2), // Offset shadow (x=2, y=-2)
           ),
-          child: Column(
-            children: [
-              // title dan score
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // kotak title
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.all(context.scaleWidth(12)),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        itemCategory,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 15,
-                          color: AppColor.navyText,
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                        ),
-                        textAlign: TextAlign.left,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(width: context.scaleWidth(12)),
-                  
-                  // kotak score
-                  Container(
-                    width: context.scaleWidth(50),
-                    height: context.scaleHeight(50),
+        ],
+      ),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // title dan score - selalu tampil
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // kotak title
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: itemColor,
-                        width: 2,
-                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: itemColor.withOpacity(0.2),
-                          blurRadius: 8,
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Text(
-                        itemScore.round().toString(),
-                        style: GoogleFonts.roboto(
-                          color: itemColor,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    child: Text(
+                      itemCategory,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 15,
+                        color: AppColor.navyText,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.left,
+                      maxLines: isExpanded ? null : 3,
+                      overflow:
+                          isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 12),
+
+                // kotak score
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: itemColor, // Background solid sesuai warna indikator
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: itemColor.withOpacity(0.4), // Shadow lebih menonjol
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      itemScore.round().toString(),
+                      style: GoogleFonts.roboto(
+                        color: Colors.white, // Angka berwarna putih
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                ],
-              ),
-              
-              SizedBox(height: context.scaleHeight(12)),
-              
-              // kotak detail deskripsi
-              Container(
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // Detail container dengan AnimatedCrossFade
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 400),
+              crossFadeState:
+                  isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              firstChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(context.scaleWidth(12)),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -311,12 +339,37 @@ class HistoryCardItem extends StatelessWidget {
                     height: 1.4,
                   ),
                   textAlign: TextAlign.left,
-                  maxLines: 3,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
-          ),
+              secondChild: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  itemReflection,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 13,
+                    color: AppColor.navyText.withOpacity(0.8),
+                    fontWeight: FontWeight.w400,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

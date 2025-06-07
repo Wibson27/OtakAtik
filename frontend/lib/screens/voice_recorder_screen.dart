@@ -20,7 +20,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   final AudioRecorder _audioRecorder = AudioRecorder();
 
   bool _isRecording = false;
-  bool _hasRecording = false; 
+  bool _hasRecording = false;
   String? _audioPath;
 
   // Timer durasi recording
@@ -32,14 +32,14 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   late Animation<double> _pulseAnimation;
 
   // Simulasi garis untuk visualisasi audio
-  List<double> _audioLevels = List.generate(50, (index) => 0.0); 
+  List<double> _audioLevels = List.generate(50, (index) => 0.0);
   Timer? _audioLevelTimer;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _initializeAudioLevels(); 
+    _initializeAudioLevels();
   }
 
   void _initializeAnimations() {
@@ -60,7 +60,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
     setState(() {
       _audioLevels = List.generate(
         _audioLevels.length,
-        (index) => 0.1, 
+        (index) => 0.1,
       );
     });
   }
@@ -81,12 +81,12 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
 
   void _startAudioLevelSimulation() {
     _audioLevelTimer = Timer.periodic(
-      const Duration(milliseconds: 60), 
+      const Duration(milliseconds: 60),
       (timer) {
         if (_isRecording) {
           setState(() {
-            _audioLevels.removeAt(0); 
-            _audioLevels.add(Random().nextDouble() * 0.7 + 0.3); 
+            _audioLevels.removeAt(0);
+            _audioLevels.add(Random().nextDouble() * 0.7 + 0.3);
           });
         }
       },
@@ -96,7 +96,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   void _stopAudioLevelSimulation() {
     _audioLevelTimer?.cancel();
     setState(() {
-      _audioLevels = List.generate(_audioLevels.length, (index) => 0.2); 
+      _audioLevels = List.generate(_audioLevels.length, (index) => 0.2);
     });
   }
 
@@ -125,13 +125,13 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
       setState(() {
         _isRecording = true;
         _recordingDuration = 0;
-        _hasRecording = false; 
-        _audioLevels = List.generate(_audioLevels.length, (index) => 0.1); 
+        _hasRecording = false;
+        _audioLevels = List.generate(_audioLevels.length, (index) => 0.1);
       });
 
       _pulseController.repeat(reverse: true);
       _startAudioLevelSimulation();
-      _startRecordingTimer(); 
+      _startRecordingTimer();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal memulai recording: $e')),
@@ -161,7 +161,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
 
       _pulseController.stop();
       _pulseController.reset();
-      _stopAudioLevelSimulation(); 
+      _stopAudioLevelSimulation();
       _recordingTimer?.cancel();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,7 +182,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
       _hasRecording = false;
       _audioPath = null;
       _recordingDuration = 0;
-      _initializeAudioLevels(); 
+      _initializeAudioLevels();
     });
   }
 
@@ -204,9 +204,9 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   // toggle recording
   void _toggleRecording() {
     if (_isRecording) {
-      _stopRecording(); 
+      _stopRecording();
     } else {
-      _startRecording(); 
+      _startRecording();
     }
   }
 
@@ -232,7 +232,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
             ),
           ),
 
-          
+
           Column(
             children: [
               Padding(
@@ -254,7 +254,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) =>  HistoryScreen()),
+                          MaterialPageRoute(builder: (context) => HistoryScreen()),
                         );
                       },
                       child: Image.asset(
@@ -269,13 +269,13 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
 
               const SizedBox(height: 21),
 
-              // Recording area
+              // Recording area (card warna solid teal)
               Center(
                 child: Container(
                   width: 348,
                   height: 164,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6EBAB3),
+                    color: const Color(0xFF6EBAB3), // Warna solid teal
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
@@ -300,7 +300,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                               height: (level * 80).clamp(5, 80),
                               margin: const EdgeInsets.symmetric(horizontal: 1),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withOpacity(0.8), // Warna visualisasi tetap putih/transparan
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             );
@@ -327,7 +327,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                               Text(
                                 _formatDuration(_recordingDuration),
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.white, // Teks timer putih agar kontras
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -340,17 +340,17 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                 ),
               ),
 
-              const Spacer(), 
+              const Spacer(),
 
-              // Recording 
+              // Tampilan durasi dan tombol aksi
               Column(
                 children: [
-                  if (_isRecording) 
+                  if (_isRecording)
                     Text(
                       _formatDuration(_recordingDuration),
                       style: const TextStyle(
                         fontSize: 30,
-                        color: Color(0xFF001F3F),
+                        color: Color(0xFF001F3F), // Warna teks biru gelap
                         fontFamily: 'FredokaOne',
                         fontWeight: FontWeight.w400,
                       ),
@@ -360,17 +360,17 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                       _formatDuration(_recordingDuration),
                       style: const TextStyle(
                         fontSize: 30,
-                        color: Color(0xFF001F3F),
+                        color: Color(0xFF001F3F), // Warna teks biru gelap
                         fontFamily: 'FredokaOne',
                         fontWeight: FontWeight.w400,
                       ),
                     )
-                  else 
+                  else
                     const Text(
-                      'Tap to record', 
+                      'Tap to record',
                       style: TextStyle(
                         fontSize: 30,
-                        color: Color(0xFF001F3F),
+                        color: Color(0xFF001F3F), // Warna teks biru gelap
                         fontFamily: 'FredokaOne',
                         fontWeight: FontWeight.w400,
                       ),
@@ -396,7 +396,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 50), 
+                  const SizedBox(height: 50),
 
                   // discard and analyze buttons
                   if (_hasRecording)
@@ -412,7 +412,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                                 width: 108,
                                 height: 52,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withOpacity(0.2), // Warna abu-abu transparan
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -420,7 +420,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                                     'Discard',
                                     style: TextStyle(
                                       fontSize: 24,
-                                      color: Color(0xFF001F3F),
+                                      color: Color(0xFF001F3F), // Warna teks biru gelap
                                       fontFamily: 'FredokaOne',
                                       fontWeight: FontWeight.w400,
                                     ),
@@ -436,7 +436,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                                 width: 108,
                                 height: 52,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6EBAB3),
+                                  color: const Color(0xFF6EBAB3), // Warna solid teal
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -444,7 +444,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                                     'Analyze',
                                     style: TextStyle(
                                       fontSize: 24,
-                                      color: Colors.white,
+                                      color: Colors.white, // Teks putih agar kontras
                                       fontFamily: 'FredokaOne',
                                       fontWeight: FontWeight.w400,
                                     ),
@@ -454,11 +454,11 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20), 
+                        const SizedBox(height: 20),
                       ],
                     )
                   else
-                    const SizedBox(height: 122), 
+                    const SizedBox(height: 122),
                 ],
               ),
             ],
