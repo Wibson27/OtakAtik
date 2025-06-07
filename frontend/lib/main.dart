@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/screens/history_screen.dart';
 import 'package:frontend/screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,6 +12,7 @@ import 'package:frontend/screens/sign_up_screen.dart';
 import 'package:frontend/screens/sign_in_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/forum_discussion_screen.dart';
+import 'package:frontend/screens/voice_recorder_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +56,7 @@ class MyApp extends StatelessWidget {
               color: AppColor.whiteText,
             ),
           ),
-          popupMenuTheme: const PopupMenuThemeData( 
+          popupMenuTheme: const PopupMenuThemeData(
             color: AppColor.putihNormal,
             surfaceTintColor: AppColor.putihNormal,
           ),
@@ -65,11 +67,13 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: AppRoute.splash,
         routes: {
-          AppRoute.splash: (context) => const SplashScreen(), 
+          AppRoute.splash: (context) => const SplashScreen(),
           AppRoute.signUp: (context) => const SignUpScreen(),
           AppRoute.signIn: (context) => const SignInScreen(),
           AppRoute.dashboard: (context) => const DashboardScreen(),
           AppRoute.forumDiscussList: (context) => const ForumDiscussionScreen(),
+          AppRoute.voiceSentiment: (context) => const VoiceRecorderScreen(),
+          AppRoute.voiceSentimentHistory: (context) => HistoryScreen(), 
         },
       ),
     );
