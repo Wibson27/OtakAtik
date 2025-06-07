@@ -8,5 +8,6 @@ class AppRoute {
   static const String forumDiscussList = '/forum-discuss';
   static const String forumDiscussDetail = '/forum-discuss-detail'; 
   static const String voiceSentiment = '/voice-sentiment';
+  static const String voiceSentimentHistory = '/voice-sentiment/history';
   static const String chatbot = '/chatbot';
 }
