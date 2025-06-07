@@ -5,8 +5,16 @@ import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  // Track expanded card index
+  int? expandedIndex;
 
   //function warna skor
   Color _getScoreColor(double score) {
@@ -26,7 +34,7 @@ class HistoryScreen extends StatelessWidget {
       vocalEntryId: 'entry_001',
       overallWellbeingScore: 5.5,
       wellbeingCategory: 'Menghadapi beberapa tantangan yang sangat panjang dan mungkin memerlukan dukungan',
-      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan.',
+      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan. Kami menemukan beberapa tema yang berulang dalam nada suara Anda dan kepuasan dalam percakapan Anda. Ini adalah indikasi yang baik dari well-being Anda.',
       createdAt: DateTime.parse('2025-06-06T10:00:00Z'),
       emotionalValence: 0.1,
       emotionalArousal: 0.2,
@@ -165,11 +173,21 @@ class HistoryScreen extends StatelessWidget {
             itemCount: historyData.length,
             itemBuilder: (context, index) {
               final item = historyData[index];
+              final isExpanded = expandedIndex == index;
+              
               return Padding(
                 padding: EdgeInsets.only(bottom: 16),
-                child: HistoryCardItem(
-                  item: item,
-                  getScoreColor: _getScoreColor,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      expandedIndex = isExpanded ? null : index;
+                    });
+                  },
+                  child: HistoryCardItem(
+                    item: item,
+                    getScoreColor: _getScoreColor,
+                    isExpanded: isExpanded,
+                  ),
                 ),
               );
             },
@@ -180,15 +198,17 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-// --- widget card
+// --- widget card dengan animasi expand
 class HistoryCardItem extends StatelessWidget {
   final VocalSentimentAnalysis item;
   final Function(double) getScoreColor;
+  final bool isExpanded;
 
   const HistoryCardItem({
     Key? key,
     required this.item,
     required this.getScoreColor,
+    required this.isExpanded,
   }) : super(key: key);
 
   @override
@@ -200,97 +220,101 @@ class HistoryCardItem extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: context.scaleHeight(140),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: itemColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: itemColor,
+          width: 2,
+        ),
       ),
-      child: IntrinsicHeight(
-        child: Container(
-          padding: EdgeInsets.all(context.scaleWidth(16)),
-          decoration: BoxDecoration(
-            color: itemColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: itemColor,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              // title dan score
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // kotak title
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.all(context.scaleWidth(12)),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        itemCategory,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 15,
-                          color: AppColor.navyText,
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                        ),
-                        textAlign: TextAlign.left,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(width: context.scaleWidth(12)),
-                  
-                  // kotak score
-                  Container(
-                    width: context.scaleWidth(50),
-                    height: context.scaleHeight(50),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // title dan score - selalu tampil
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // kotak title
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: itemColor,
-                        width: 2,
-                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: itemColor.withOpacity(0.2),
-                          blurRadius: 8,
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Text(
-                        itemScore.round().toString(),
-                        style: GoogleFonts.roboto(
-                          color: itemColor,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    child: Text(
+                      itemCategory,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 15,
+                        color: AppColor.navyText,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.left,
+                      maxLines: isExpanded ? null : 3,
+                      overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                
+                SizedBox(width: 12),
+                
+                // kotak score
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: itemColor,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: itemColor.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      itemScore.round().toString(),
+                      style: GoogleFonts.roboto(
+                        color: itemColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                ],
-              ),
-              
-              SizedBox(height: context.scaleHeight(12)),
-              
-              // kotak detail deskripsi
-              Container(
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 12),
+            
+            // Detail container dengan AnimatedCrossFade
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 400),
+              crossFadeState: isExpanded 
+                  ? CrossFadeState.showSecond 
+                  : CrossFadeState.showFirst,
+              firstChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(context.scaleWidth(12)),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -311,12 +335,37 @@ class HistoryCardItem extends StatelessWidget {
                     height: 1.4,
                   ),
                   textAlign: TextAlign.left,
-                  maxLines: 3,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
-          ),
+              secondChild: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  itemReflection,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 13,
+                    color: AppColor.navyText.withOpacity(0.8),
+                    fontWeight: FontWeight.w400,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
