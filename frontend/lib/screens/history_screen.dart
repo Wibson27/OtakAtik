@@ -19,22 +19,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
   //function warna skor
   Color _getScoreColor(double score) {
     if (score >= 7.0) {
-      return AppColor.hijauSuccess; 
+      return AppColor.hijauSuccess;
     } else if (score >= 4.0) {
-      return AppColor.kuning; 
+      return AppColor.kuning;
     } else {
-      return AppColor.merahError; 
+      return AppColor.merahError;
     }
   }
 
-  // sample data 
+  // sample data
   final List<VocalSentimentAnalysis> historyData = [
     VocalSentimentAnalysis(
       id: 'history_001',
       vocalEntryId: 'entry_001',
       overallWellbeingScore: 5.5,
-      wellbeingCategory: 'Menghadapi beberapa tantangan yang sangat panjang dan mungkin memerlukan dukungan',
-      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan. Kami menemukan beberapa tema yang berulang dalam nada suara Anda dan kepuasan dalam percakapan Anda. Ini adalah indikasi yang baik dari well-being Anda.',
+      wellbeingCategory:
+          'Menghadapi beberapa tantangan yang sangat panjang dan mungkin memerlukan dukungan',
+      reflectionPrompt:
+          'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa tantangan yang mungkin sedang Anda hadapi. Penting untuk memproses emosi ini dan mencari dukungan dari orang-orang terdekat atau profesional jika diperlukan. Kami menemukan beberapa tema yang berulang dalam nada suara Anda dan kepuasan dalam percakapan Anda. Ini adalah indikasi yang baik dari well-being Anda.',
       createdAt: DateTime.parse('2025-06-06T10:00:00Z'),
       emotionalValence: 0.1,
       emotionalArousal: 0.2,
@@ -47,7 +49,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       vocalEntryId: 'entry_002',
       overallWellbeingScore: 8.2,
       wellbeingCategory: 'Sangat Positif dan Penuh Semangat',
-      reflectionPrompt: 'Rekaman suara Anda memancarkan energi positif dan antusiasme yang tinggi. Terus pertahankan energi positif ini dengan melakukan aktivitas yang Anda sukai, seperti hobi atau olahraga rutin. Selamat!',
+      reflectionPrompt:
+          'Rekaman suara Anda memancarkan energi positif dan antusiasme yang tinggi. Terus pertahankan energi positif ini dengan melakukan aktivitas yang Anda sukai, seperti hobi atau olahraga rutin. Selamat!',
       createdAt: DateTime.parse('2025-06-05T14:30:00Z'),
       emotionalValence: 0.8,
       emotionalArousal: 0.7,
@@ -60,7 +63,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       vocalEntryId: 'entry_003',
       overallWellbeingScore: 3.1,
       wellbeingCategory: 'Mengalami Beberapa Kesulitan Emosional Cukup Serius',
-      reflectionPrompt: 'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa kesulitan emosional. Kami sarankan untuk mencari dukungan atau melakukan aktivitas relaksasi seperti meditasi atau yoga. Penting untuk istirahat cukup dan menjaga diri.',
+      reflectionPrompt:
+          'Berdasarkan rekaman suara Anda, kami mendeteksi adanya beberapa kesulitan emosional. Kami sarankan untuk mencari dukungan atau melakukan aktivitas relaksasi seperti meditasi atau yoga. Penting untuk istirahat cukup dan menjaga diri.',
       createdAt: DateTime.parse('2025-06-04T09:15:00Z'),
       emotionalValence: -0.5,
       emotionalArousal: -0.3,
@@ -73,7 +77,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       vocalEntryId: 'entry_004',
       overallWellbeingScore: 6.8,
       wellbeingCategory: 'Kesejahteraan Cukup Baik',
-      reflectionPrompt: 'Analisis suara Anda menunjukkan kesejahteraan yang cukup baik, namun ada ruang untuk peningkatan. Coba eksplorasi aktivitas baru yang menstimulasi pikiran Anda dan tetap jaga komunikasi dengan orang sekitar.',
+      reflectionPrompt:
+          'Analisis suara Anda menunjukkan kesejahteraan yang cukup baik, namun ada ruang untuk peningkatan. Coba eksplorasi aktivitas baru yang menstimulasi pikiran Anda dan tetap jaga komunikasi dengan orang sekitar.',
       createdAt: DateTime.parse('2025-06-03T11:00:00Z'),
       emotionalValence: 0.3,
       emotionalArousal: 0.4,
@@ -86,7 +91,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       vocalEntryId: 'entry_005',
       overallWellbeingScore: 2.1,
       wellbeingCategory: 'Memerlukan Perhatian & Dukungan Mendesak',
-      reflectionPrompt: 'Kami mendeteksi adanya beban emosional yang signifikan dari rekaman suara Anda. Kami sangat menyarankan untuk segera mencari bantuan profesional atau berbicara dengan orang yang Anda percayai. Jangan hadapi ini sendirian, ada banyak dukungan yang tersedia.',
+      reflectionPrompt:
+          'Kami mendeteksi adanya beban emosional yang signifikan dari rekaman suara Anda. Kami sangat menyarankan untuk segera mencari bantuan profesional atau berbicara dengan orang yang Anda percayai. Jangan hadapi ini sendirian, ada banyak dukungan yang tersedia.',
       createdAt: DateTime.parse('2025-06-02T16:45:00Z'),
       emotionalValence: -0.8,
       emotionalArousal: -0.7,
@@ -114,7 +120,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
+  Widget _buildMainContent(
+      BuildContext context, double screenWidth, double screenHeight) {
     return Stack(
       children: [
         Positioned(
@@ -127,7 +134,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             fit: BoxFit.cover,
           ),
         ),
-
         Positioned(
           top: 0,
           left: 0,
@@ -139,13 +145,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             fit: BoxFit.cover,
           ),
         ),
-
         Positioned(
           top: 16,
           left: 8,
           child: GestureDetector(
             onTap: () {
-              Navigator.pop(context); 
+              Navigator.pop(context);
             },
             child: SizedBox(
               width: 66,
@@ -157,7 +162,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
         ),
-
         Positioned(
           top: 94,
           left: 16,
@@ -168,13 +172,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
               0,
               8,
               0,
-              24, 
+              24,
             ),
             itemCount: historyData.length,
             itemBuilder: (context, index) {
               final item = historyData[index];
               final isExpanded = expandedIndex == index;
-              
+
               return Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: GestureDetector(
@@ -222,12 +226,16 @@ class HistoryCardItem extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: itemColor.withOpacity(0.1),
+        color: Color(0xFF80C2BC), // Warna hijau Tosca dengan hex code 80C2BC
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: itemColor,
-          width: 2,
-        ),
+        // Menghapus border dan menggantinya dengan boxShadow
+        boxShadow: [
+          BoxShadow(
+            color: itemColor.withOpacity(0.5), // Warna shadow mengikuti itemColor dengan opacity 50%
+            blurRadius: 8, // Anda bisa menyesuaikan blurRadius sesuai keinginan
+            offset: const Offset(2, -2), // Offset shadow (x=2, y=-2)
+          ),
+        ],
       ),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 400),
@@ -264,27 +272,24 @@ class HistoryCardItem extends StatelessWidget {
                       ),
                       textAlign: TextAlign.left,
                       maxLines: isExpanded ? null : 3,
-                      overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                      overflow:
+                          isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-                
+
                 SizedBox(width: 12),
-                
+
                 // kotak score
                 Container(
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: itemColor, // Background solid sesuai warna indikator
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: itemColor,
-                      width: 2,
-                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: itemColor.withOpacity(0.2),
+                        color: itemColor.withOpacity(0.4), // Shadow lebih menonjol
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -294,7 +299,7 @@ class HistoryCardItem extends StatelessWidget {
                     child: Text(
                       itemScore.round().toString(),
                       style: GoogleFonts.roboto(
-                        color: itemColor,
+                        color: Colors.white, // Angka berwarna putih
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -303,15 +308,14 @@ class HistoryCardItem extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 12),
-            
+
             // Detail container dengan AnimatedCrossFade
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 400),
-              crossFadeState: isExpanded 
-                  ? CrossFadeState.showSecond 
-                  : CrossFadeState.showFirst,
+              crossFadeState:
+                  isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               firstChild: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12),
