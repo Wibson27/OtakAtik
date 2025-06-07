@@ -1,0 +1,116 @@
+# =============================================================================
+# TENANG.IN BACKEND - GIT IGNORE RULES
+# =============================================================================
+
+# Environment variables (CRITICAL - NEVER COMMIT)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+tenang-backend
+main
+backend
+
+# Go test artifacts
+*.test
+*.out
+coverage.out
+
+# Go module cache
+go.sum
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+app.log
+error.log
+access.log
+
+# Upload directories
+uploads/
+uploads/audio/
+uploads/images/
+uploads/documents/
+temp/
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+*.pfx
+*.p12
+
+# Backup files
+*.bak
+*.backup
+*.sql.backup
+*.dump
+
+# Configuration files with secrets
+config.json
+config.yaml
+config.yml
+secrets.json
+credentials.json
+
+# Azure CLI files
+.azure/
+
+# Docker files (if needed to be excluded)
+docker-compose.override.yml
+.docker/
+
+# Development tools
+.air.toml
+tmp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Coverage reports
+coverage.html
+coverage.xml
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Database files (if using SQLite for testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation build artifacts
+docs/_build/
+site/
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
