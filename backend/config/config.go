@@ -29,6 +29,9 @@ type Config struct {
 	// Social Media OAuth
 	OAuth OAuthConfig
 
+	// Google OAuth Configuration
+	Google GoogleOAuthConfig
+
 	// Email Configuration
 	Email EmailConfig
 
@@ -70,6 +73,12 @@ type HuggingFaceConfig struct {
 	APIKey     string
 	ModelName  string // e.g., "facebook/wav2vec2-base-960h"
 	Endpoint   string
+}
+
+type GoogleOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
 }
 
 type OAuthConfig struct {
@@ -173,6 +182,12 @@ func LoadConfig() *Config {
 			APIKey:    getEnvRequired("HUGGINGFACE_API_KEY"),
 			ModelName: getEnv("HUGGINGFACE_MODEL", "facebook/wav2vec2-base-960h"),
 			Endpoint:  getEnv("HUGGINGFACE_ENDPOINT", "https://api-inference.huggingface.co"),
+		},
+
+		Google: GoogleOAuthConfig{
+			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+			RedirectURI:  getEnv("GOOGLE_REDIRECT_URI", ""),
 		},
 
 		OAuth: OAuthConfig{
