@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:frontend/screens/history_screen.dart';
-import 'package:frontend/screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/presentation/bloc/user/user_cubit.dart';
+import 'package:frontend/screens/splash_screen.dart';
 import 'package:frontend/screens/sign_up_screen.dart';
 import 'package:frontend/screens/sign_in_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/forum_discussion_screen.dart';
 import 'package:frontend/screens/voice_recorder_screen.dart';
 import 'package:frontend/screens/chatbot_screen.dart';
+import 'package:frontend/screens/history_screen.dart'; // Import history_screen
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<UserCubit>(
           create: (context) => UserCubit(),
         ),
+        // Tambahkan BlocProvider untuk fitur lain di sini jika diperlukan
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -46,7 +47,7 @@ class MyApp extends StatelessWidget {
             secondary: AppColor.kuning,
           ),
           scaffoldBackgroundColor: AppColor.putihNormal,
-          textTheme: GoogleFonts.poppinsTextTheme(),
+          textTheme: GoogleFonts.poppinsTextTheme(), // Default text theme
           appBarTheme: AppBarTheme(
             surfaceTintColor: AppColor.hijauTosca,
             backgroundColor: AppColor.hijauTosca,
@@ -61,10 +62,18 @@ class MyApp extends StatelessWidget {
             color: AppColor.putihNormal,
             surfaceTintColor: AppColor.putihNormal,
           ),
-          dialogTheme: const DialogThemeData( 
+          dialogTheme: const DialogThemeData(
             surfaceTintColor: AppColor.putihNormal,
             backgroundColor: AppColor.putihNormal,
           ),
+          // Atur TextTheme untuk font "FredokaOne" jika diperlukan secara global
+          // Jika ingin menggunakan Fredoka untuk semua heading, bisa tambahkan di sini
+          // Misalnya:
+          // textTheme: GoogleFonts.poppinsTextTheme().copyWith(
+          //   headlineLarge: GoogleFonts.fredoka(fontWeight: FontWeight.bold),
+          //   headlineMedium: GoogleFonts.fredoka(fontWeight: FontWeight.bold),
+          //   // ... dan seterusnya
+          // ),
         ),
         initialRoute: AppRoute.splash,
         routes: {
@@ -74,56 +83,10 @@ class MyApp extends StatelessWidget {
           AppRoute.dashboard: (context) => const DashboardScreen(),
           AppRoute.forumDiscussList: (context) => const ForumDiscussionScreen(),
           AppRoute.voiceSentiment: (context) => const VoiceRecorderScreen(),
-          AppRoute.voiceSentimentHistory: (context) => HistoryScreen(), 
-          AppRoute.chatbot: (context) => const ChatbotScreen(), 
-          //AppRoute.chatbotHistory: (context) => ChatbotHistoryScreen(),
+          AppRoute.voiceSentimentHistory: (context) => HistoryScreen(),
+          AppRoute.chatbot: (context) => const ChatbotScreen(),
+          // AppRoute.chatbotHistory: (context) => ChatbotHistoryScreen(), // Uncomment jika sudah ada screennya
         },
-      ),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

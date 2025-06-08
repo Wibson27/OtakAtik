@@ -2,11 +2,15 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import GoogleFonts
 import 'package:frontend/screens/history_screen.dart';
 import 'package:frontend/screens/sentiment_analysis_screen.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'package:frontend/common/app_color.dart'; // Import AppColor
+import 'package:frontend/common/screen_utils.dart'; // Import ScreenUtils
 
 class VoiceRecorderScreen extends StatefulWidget {
   const VoiceRecorderScreen({super.key});
@@ -23,15 +27,12 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   bool _hasRecording = false;
   String? _audioPath;
 
-  // Timer durasi recording
   Timer? _recordingTimer;
   int _recordingDuration = 0;
 
-  // Animation controllers
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Simulasi garis untuk visualisasi audio
   List<double> _audioLevels = List.generate(50, (index) => 0.0);
   Timer? _audioLevelTimer;
 
@@ -188,6 +189,17 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
 
   void _analyzeRecording() {
     if (_audioPath != null) {
+      // TODO: Logic untuk upload audio ke backend dan panggil API analisis
+      // Misalnya:
+      // final analysisResult = await AudioAnalysisService.uploadAndAnalyze(_audioPath!);
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => SentimentAnalysisScreen(analysisResult: analysisResult),
+      //   ),
+      // );
+
+      // Untuk saat ini, langsung navigasi dengan audioPath
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -201,7 +213,6 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
     }
   }
 
-  // toggle recording
   void _toggleRecording() {
     if (_isRecording) {
       _stopRecording();
@@ -219,37 +230,47 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.putihNormal, // Use AppColor
       body: Stack(
         children: [
+          // Background wave
           Positioned(
             right: 0,
-            top: 460,
+            top: context.scaleHeight(460), // Use scaled height
             bottom: 0,
             child: Image.asset(
               'assets/images/wave_tosca.png',
               fit: BoxFit.cover,
+              width: context.screenWidth, // Ensure it covers full width
             ),
           ),
-
-
+          // Blur top
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/blur_top_history.png',
+              width: context.screenWidth,
+              height: context.scaleHeight(88),
+              fit: BoxFit.fill,
+            ),
+          ),
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 50, left: 8, right: 37),
+                padding: EdgeInsets.only(top: context.scaleHeight(50), left: context.scaleWidth(8), right: context.scaleWidth(37)),
                 child: Row(
                   children: [
-                    // arrow button
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Image.asset(
                         'assets/images/arrow.png',
-                        width: 66,
-                        height: 66,
+                        width: context.scaleWidth(66),
+                        height: context.scaleHeight(66),
                       ),
                     ),
                     const Spacer(),
-                    // history button
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -259,76 +280,70 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                       },
                       child: Image.asset(
                         'assets/images/history_button.png',
-                        width: 34,
-                        height: 34,
+                        width: context.scaleWidth(34),
+                        height: context.scaleHeight(34),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 21),
-
-              // Recording area (card warna solid teal)
+              SizedBox(height: context.scaleHeight(21)),
               Center(
                 child: Container(
-                  width: 348,
-                  height: 164,
+                  width: context.scaleWidth(348),
+                  height: context.scaleHeight(164),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6EBAB3), // Warna solid teal
-                    borderRadius: BorderRadius.circular(18),
+                    color: const Color(0xFF6EBAB3), // Use AppColor.hijauTosca
+                    borderRadius: BorderRadius.circular(context.scaleWidth(18)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        blurRadius: context.scaleWidth(10),
+                        offset: Offset(0, context.scaleHeight(4)),
                       ),
                     ],
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // ini untuk visualisasi audio
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: EdgeInsets.symmetric(horizontal: context.scaleWidth(20.0)),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: _audioLevels.map((level) {
                             return Container(
-                              width: 4,
-                              height: (level * 80).clamp(5, 80),
-                              margin: const EdgeInsets.symmetric(horizontal: 1),
+                              width: context.scaleWidth(4),
+                              height: (level * context.scaleHeight(80)).clamp(context.scaleHeight(5), context.scaleHeight(80)),
+                              margin: EdgeInsets.symmetric(horizontal: context.scaleWidth(1)),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.8), // Warna visualisasi tetap putih/transparan
-                                borderRadius: BorderRadius.circular(2),
+                                color: AppColor.putihNormal.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(context.scaleWidth(2)),
                               ),
                             );
                           }).toList(),
                         ),
                       ),
-
-                      // timer ketika recording
                       if (_isRecording)
                         Positioned(
-                          top: 16,
-                          left: 16,
+                          top: context.scaleHeight(16),
+                          left: context.scaleWidth(16),
                           child: Row(
                             children: [
                               Container(
-                                width: 12,
-                                height: 12,
+                                width: context.scaleWidth(12),
+                                height: context.scaleHeight(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColor.merahError, // Use AppColor
+                                  borderRadius: BorderRadius.circular(context.scaleWidth(6)),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: context.scaleWidth(8)),
                               Text(
                                 _formatDuration(_recordingDuration),
-                                style: const TextStyle(
-                                  color: Colors.white, // Teks timer putih agar kontras
-                                  fontSize: 16,
+                                style: GoogleFonts.fredoka( // Use GoogleFonts
+                                  color: AppColor.putihNormal,
+                                  fontSize: context.scaleWidth(16),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -339,46 +354,37 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                   ),
                 ),
               ),
-
               const Spacer(),
-
-              // Tampilan durasi dan tombol aksi
               Column(
                 children: [
                   if (_isRecording)
                     Text(
                       _formatDuration(_recordingDuration),
-                      style: const TextStyle(
-                        fontSize: 30,
-                        color: Color(0xFF001F3F), // Warna teks biru gelap
-                        fontFamily: 'FredokaOne',
+                      style: GoogleFonts.fredoka(
+                        fontSize: context.scaleWidth(30),
+                        color: AppColor.navyText,
                         fontWeight: FontWeight.w400,
                       ),
                     )
                   else if (_hasRecording)
                     Text(
                       _formatDuration(_recordingDuration),
-                      style: const TextStyle(
-                        fontSize: 30,
-                        color: Color(0xFF001F3F), // Warna teks biru gelap
-                        fontFamily: 'FredokaOne',
+                      style: GoogleFonts.fredoka(
+                        fontSize: context.scaleWidth(30),
+                        color: AppColor.navyText,
                         fontWeight: FontWeight.w400,
                       ),
                     )
                   else
-                    const Text(
+                    Text(
                       'Tap to record',
-                      style: TextStyle(
-                        fontSize: 30,
-                        color: Color(0xFF001F3F), // Warna teks biru gelap
-                        fontFamily: 'FredokaOne',
+                      style: GoogleFonts.fredoka(
+                        fontSize: context.scaleWidth(30),
+                        color: AppColor.navyText,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-
-                  const SizedBox(height: 14),
-
-                  // Voice record button
+                  SizedBox(height: context.scaleHeight(14)),
                   GestureDetector(
                     onTap: _toggleRecording,
                     child: AnimatedBuilder(
@@ -388,64 +394,56 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                           scale: _isRecording ? _pulseAnimation.value : 1.0,
                           child: Image.asset(
                             'assets/images/voice_record_button.png',
-                            width: 68.44,
-                            height: 64,
+                            width: context.scaleWidth(68.44),
+                            height: context.scaleHeight(64),
                           ),
                         );
                       },
                     ),
                   ),
-
-                  const SizedBox(height: 50),
-
-                  // discard and analyze buttons
+                  SizedBox(height: context.scaleHeight(50)),
                   if (_hasRecording)
                     Column(
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // Discard button
                             GestureDetector(
                               onTap: _discardRecording,
                               child: Container(
-                                width: 108,
-                                height: 52,
+                                width: context.scaleWidth(108),
+                                height: context.scaleHeight(52),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.2), // Warna abu-abu transparan
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.grey.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'Discard',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      color: Color(0xFF001F3F), // Warna teks biru gelap
-                                      fontFamily: 'FredokaOne',
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: context.scaleWidth(24),
+                                      color: AppColor.navyText,
                                       fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-
-                            // Analyze button
                             GestureDetector(
                               onTap: _analyzeRecording,
                               child: Container(
-                                width: 108,
-                                height: 52,
+                                width: context.scaleWidth(108),
+                                height: context.scaleHeight(52),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6EBAB3), // Warna solid teal
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFF6EBAB3), // Use AppColor.hijauTosca
+                                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'Analyze',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      color: Colors.white, // Teks putih agar kontras
-                                      fontFamily: 'FredokaOne',
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: context.scaleWidth(24),
+                                      color: AppColor.putihNormal,
                                       fontWeight: FontWeight.w400,
                                     ),
                                   ),
@@ -454,11 +452,11 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: context.scaleHeight(20)),
                       ],
                     )
                   else
-                    const SizedBox(height: 122),
+                    SizedBox(height: context.scaleHeight(122)),
                 ],
               ),
             ],

@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:frontend/common/app_color.dart'; 
-import 'package:frontend/common/app_route.dart'; 
+import 'package:frontend/common/app_color.dart';
+import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
 class ForumDiscussionScreen extends StatelessWidget {
   const ForumDiscussionScreen({super.key});
 
-  // Sample data 
+  // Sample data (akan diganti dengan data dari backend)
   final List<Map<String, String>> discussionTopics = const [
     {
+      'id': 'disc_001', // Tambahkan ID untuk navigasi
       'title': 'Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?',
       'description': 'Akhir-akhir ini sering banget ngalamin lesu',
     },
     {
+      'id': 'disc_002',
       'title': 'Cara Mengatasi Kecemasan Saat Berinteraksi Sosial?',
       'description': 'Setiap kali harus ketemu orang banyak atau presentasi',
     },
     {
+      'id': 'disc_003',
       'title': 'Merasa Kesepian Meskipun Dikelilingi Banyak Orang',
       'description': 'Akhir-akhir ini sering banget ngalamin lesu',
     },
     {
+      'id': 'disc_004',
       'title': 'Mencari Jalur Karir Baru Setelah Resign, Butuh Masukan!',
       'description': 'Baru saja resign dari pekerjaan sebelumnya dan',
     },
     {
+      'id': 'disc_005',
       'title': 'Tips Meningkatkan Produktivitas Saat WFH?',
       'description': 'Sejak WFH kadang suka hilang fokus dan',
     },
@@ -33,17 +38,16 @@ class ForumDiscussionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final screenWidth = screenSize.width;
-    final screenHeight = screenSize.height;
+    final screenWidth = context.screenWidth;
+    final screenHeight = context.screenHeight;
 
     return Scaffold(
-      backgroundColor: AppColor.putihNormal, 
+      backgroundColor: AppColor.putihNormal,
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
-          child: _buildMainContent(context, screenWidth, screenHeight), 
+          child: _buildMainContent(context, screenWidth, screenHeight),
         ),
       ),
     );
@@ -59,8 +63,8 @@ class ForumDiscussionScreen extends StatelessWidget {
           bottom: 0,
           child: Image.asset(
             'assets/images/yellow_background.png',
-            width: 931,
-            height: 471,
+            width: screenWidth, // Gunakan screenWidth
+            height: screenHeight, // Gunakan screenHeight
             fit: BoxFit.cover,
           ),
         ),
@@ -70,21 +74,21 @@ class ForumDiscussionScreen extends StatelessWidget {
           right: 0,
           child: Image.asset(
             'assets/images/blur_top.png',
-            width: 429,
-            height: 88,
-            fit: BoxFit.cover,
+            width: screenWidth, // Gunakan screenWidth
+            height: context.scaleHeight(88),
+            fit: BoxFit.fill,
           ),
         ),
         Positioned(
-          top: 16,
-          left: 8,
+          top: context.scaleHeight(16),
+          left: context.scaleWidth(8),
           child: GestureDetector(
             onTap: () {
-              Navigator.pop(context); 
+              Navigator.pop(context);
             },
             child: SizedBox(
-              width: 66,
-              height: 66,
+              width: context.scaleWidth(66),
+              height: context.scaleHeight(66),
               child: Image.asset(
                 'assets/images/arrow.png',
                 fit: BoxFit.contain,
@@ -93,24 +97,24 @@ class ForumDiscussionScreen extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: 16,
+          top: context.scaleHeight(16),
           left: 0,
           right: 0,
           child: Center(
             child: Text(
               'Forum Discuss',
               style: GoogleFonts.fredoka(
-                color: AppColor.navyText, 
-                fontSize: 24,
+                color: AppColor.navyText,
+                fontSize: context.scaleWidth(24),
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ),
         Positioned(
-          top: 94,
-          left: 40,
-          right: 41,
+          top: context.scaleHeight(94),
+          left: context.scaleWidth(40),
+          right: context.scaleWidth(41),
           bottom: 0,
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
@@ -121,16 +125,21 @@ class ForumDiscussionScreen extends StatelessWidget {
                   final topic = entry.value;
                   return Container(
                     margin: EdgeInsets.only(
-                      bottom: index == discussionTopics.length - 1 ? 20 : 12,
+                      bottom: index == discussionTopics.length - 1 ? context.scaleHeight(20) : context.scaleHeight(12),
                     ),
-                    child: GestureDetector( 
+                    child: GestureDetector(
                       onTap: () {
-                        // navigasi ke detail post (dengan id)
-                        Navigator.pushNamed(context, AppRoute.forumDiscussDetail);
+                        // Teruskan ID diskusi ke halaman detail
+                        Navigator.pushNamed(
+                          context,
+                          AppRoute.forumDiscussDetail,
+                          arguments: {'discussionId': topic['id']}, // Meneruskan ID diskusi
+                        );
                       },
                       child: _buildDiscussionCard(
                         topic['title']!,
                         topic['description']!,
+                        context, // Meneruskan context
                       ),
                     ),
                   );
@@ -143,71 +152,71 @@ class ForumDiscussionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDiscussionCard(String title, String description) {
+  Widget _buildDiscussionCard(String title, String description, BuildContext context) {
     return Container(
-      width: 348,
+      width: context.scaleWidth(348), // Gunakan scaled width
       decoration: BoxDecoration(
-        color: AppColor.hijauTosca.withOpacity(0.8), 
-        borderRadius: BorderRadius.circular(18),
+        color: AppColor.hijauTosca.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(context.scaleWidth(18)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: context.scaleWidth(8),
+            offset: Offset(0, context.scaleHeight(4)),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(15.0),
+        padding: EdgeInsets.all(context.scaleWidth(15.0)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(6),
+              padding: EdgeInsets.all(context.scaleWidth(6)),
               decoration: BoxDecoration(
                 color: AppColor.putihNormal,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(context.scaleWidth(3)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    blurRadius: context.scaleWidth(4),
+                    offset: Offset(0, context.scaleHeight(2)),
                   ),
                 ],
               ),
               child: Text(
                 title,
                 style: GoogleFonts.fredoka(
-                  color: AppColor.navyText, 
-                  fontSize: 20,
+                  color: AppColor.navyText,
+                  fontSize: context.scaleWidth(20),
                   fontWeight: FontWeight.w400,
                   height: 1.2,
                 ),
                 textAlign: TextAlign.left,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.scaleHeight(12)),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(6),
-              margin: const EdgeInsets.only(left: 17),
+              padding: EdgeInsets.all(context.scaleWidth(6)),
+              margin: EdgeInsets.only(left: context.scaleWidth(17)),
               decoration: BoxDecoration(
                 color: AppColor.putihNormal,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(context.scaleWidth(3)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    blurRadius: context.scaleWidth(4),
+                    offset: Offset(0, context.scaleHeight(2)),
                   ),
                 ],
               ),
               child: Text(
                 description,
                 style: GoogleFonts.fredoka(
-                  color: AppColor.navyText, 
-                  fontSize: 12,
+                  color: AppColor.navyText,
+                  fontSize: context.scaleWidth(12),
                   fontWeight: FontWeight.w400,
                   height: 1.2,
                 ),

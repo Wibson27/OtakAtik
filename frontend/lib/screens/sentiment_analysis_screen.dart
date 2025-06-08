@@ -4,72 +4,61 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:frontend/common/color_utils.dart'; // Import ColorUtils
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
 class SentimentAnalysisScreen extends StatelessWidget {
   final String audioPath;
 
+  // Data dummy analysis result (akan diganti dengan data dari backend)
   final VocalSentimentAnalysis dummyAnalysisResult = VocalSentimentAnalysis(
     id: 'analysis_result_001',
     vocalEntryId: 'entry_dummy',
-    overallWellbeingScore: 7.5, 
+    overallWellbeingScore: 7.5,
     wellbeingCategory: 'Kesejahteraan Positif dan Stabil',
-    reflectionPrompt: 'Berdasarkan rekaman suara Anda, sistem kami mendeteksi bahwa kondisi emosional Anda saat ini cenderung positif dan stabil. Angka 5 ini merefleksikan suasana hati yang baik dan adanya keseimbangan. Kami menemukan beberapa tema yang menunjukkan adanya rasa tenang dan kepuasan dalam narasi Anda. Ini adalah indikasi yang baik dari well-being Anda.',
+    reflectionPrompt: 'Berdasarkan rekaman suara Anda, sistem kami mendeteksi bahwa kondisi emosional Anda saat ini cenderung positif dan stabil. Angka ini merefleksikan suasana hati yang baik dan adanya keseimbangan. Kami menemukan beberapa tema yang menunjukkan adanya rasa tenang dan kepuasan dalam narasi Anda. Ini adalah indikasi yang baik dari well-being Anda.',
     createdAt: DateTime.now(),
-    emotionalValence: 0.6, emotionalArousal: 0.3, emotionalDominance: 0.4,
-    processingDurationMs: 2500, analysisModelVersion: 'v1.1',
+    emotionalValence: 0.6,
+    emotionalArousal: 0.3,
+    emotionalDominance: 0.4,
+    // processingDurationMs: 2500, // Dihapus dari model VocalSentimentAnalysis
+    analysisModelVersion: 'v1.1',
   );
 
   SentimentAnalysisScreen({Key? key, required this.audioPath}) : super(key: key);
-
-  Color _getScoreColor(double score) {
-    if (score >= 7.0) {
-      return AppColor.hijauSuccess; 
-    } else if (score >= 4.0) {
-      return AppColor.kuning; 
-    } else {
-      return AppColor.merahError; 
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = context.screenWidth;
     final screenHeight = context.screenHeight;
 
-    // ini data dari dummyAnalysisResult
     final itemScore = dummyAnalysisResult.overallWellbeingScore ?? 0.0;
     final itemCategory = dummyAnalysisResult.wellbeingCategory ?? 'Analisis Tidak Tersedia';
     final itemReflection = dummyAnalysisResult.reflectionPrompt ?? 'Tidak ada penjelasan.';
-    final Color scoreColor = _getScoreColor(itemScore);
+    final Color scoreColor = ColorUtils.getScoreColor(itemScore); // Menggunakan ColorUtils
 
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
-      body: SafeArea( 
+      body: SafeArea(
         child: Stack(
           children: [
-            // Background wave
             Positioned.fill(
               child: Image.asset(
                 'assets/images/wave_history_voice.png',
                 fit: BoxFit.cover,
               ),
             ),
-
-            // Header Blur Top
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: Image.asset(
                 'assets/images/blur_top_history.png',
-                width: context.scaleWidth(429),
+                width: screenWidth, // Gunakan screenWidth
                 height: context.scaleHeight(88),
                 fit: BoxFit.fill,
               ),
             ),
-
-            // Header: Back Button
             Positioned(
               top: context.scaleHeight(16),
               left: context.scaleWidth(8),
@@ -82,9 +71,8 @@ class SentimentAnalysisScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             Positioned.fill(
-              top: context.scaleHeight(88), 
+              top: context.scaleHeight(88),
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: context.scaleWidth(20), vertical: context.scaleHeight(15)),
                 child: Column(
@@ -99,8 +87,8 @@ class SentimentAnalysisScreen extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            blurRadius: context.scaleWidth(10),
+                            offset: Offset(0, context.scaleHeight(4)),
                           ),
                         ],
                       ),
@@ -112,14 +100,10 @@ class SentimentAnalysisScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     SizedBox(height: context.scaleHeight(25)),
-
-                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Box Score
                         Container(
                           width: context.scaleWidth(100),
                           height: context.scaleHeight(50),
@@ -129,8 +113,8 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
+                                blurRadius: context.scaleWidth(5),
+                                offset: Offset(0, context.scaleHeight(2)),
                               ),
                             ],
                           ),
@@ -138,17 +122,14 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             child: Text(
                               itemScore.round().toString(),
                               style: GoogleFonts.roboto(
-                                fontSize: 28,
                                 color: AppColor.putihNormal,
+                                fontSize: context.scaleWidth(28),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ),
-
                         SizedBox(width: context.scaleWidth(15)),
-
-                        
                         Container(
                           width: context.scaleWidth(100),
                           height: context.scaleHeight(50),
@@ -159,8 +140,8 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
-                                blurRadius: 3,
-                                offset: const Offset(0, 2),
+                                blurRadius: context.scaleWidth(3),
+                                offset: Offset(0, context.scaleHeight(2)),
                               ),
                             ],
                           ),
@@ -175,23 +156,19 @@ class SentimentAnalysisScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     SizedBox(height: context.scaleHeight(25)),
-
                     Text(
                       itemCategory,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.fredoka(
-                        fontSize: 22,
+                        fontSize: context.scaleWidth(22),
                         color: AppColor.navyText,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     SizedBox(height: context.scaleHeight(25)),
-
                     Container(
                       width: screenWidth - context.scaleWidth(40),
                       decoration: BoxDecoration(
@@ -205,8 +182,8 @@ class SentimentAnalysisScreen extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            blurRadius: context.scaleWidth(10),
+                            offset: Offset(0, context.scaleHeight(4)),
                           ),
                         ],
                       ),
@@ -228,21 +205,20 @@ class SentimentAnalysisScreen extends StatelessWidget {
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 2),
+                                  blurRadius: context.scaleWidth(2),
+                                  offset: Offset(0, context.scaleHeight(2)),
                                 ),
                               ],
                             ),
                             child: Text(
                               'Penjelasan',
                               style: GoogleFonts.fredoka(
-                                fontSize: 24,
+                                fontSize: context.scaleWidth(24),
                                 color: AppColor.putihNormal,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                          
                           Divider(
                             height: 1,
                             thickness: 1,
@@ -250,13 +226,12 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             indent: context.scaleWidth(20),
                             endIndent: context.scaleWidth(20),
                           ),
-                          
                           Padding(
                             padding: EdgeInsets.all(context.scaleWidth(20)),
                             child: Text(
                               itemReflection,
                               style: GoogleFonts.roboto(
-                                fontSize: 16,
+                                fontSize: context.scaleWidth(16),
                                 color: AppColor.putihNormal,
                                 height: 1.5,
                               ),
@@ -266,7 +241,6 @@ class SentimentAnalysisScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     SizedBox(height: context.scaleHeight(40)),
                   ],
                 ),
