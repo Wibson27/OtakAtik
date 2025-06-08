@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-import 'package:frontend/common/color_utils.dart'; // Import ColorUtils
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -14,9 +13,21 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  // Track expanded card index
   int? expandedIndex;
 
-  // sample data (akan diganti dengan data dari backend)
+  //function warna skor
+  Color _getScoreColor(double score) {
+    if (score >= 7.0) {
+      return AppColor.hijauSuccess;
+    } else if (score >= 4.0) {
+      return AppColor.kuning;
+    } else {
+      return AppColor.merahError;
+    }
+  }
+
+  // sample data
   final List<VocalSentimentAnalysis> historyData = [
     VocalSentimentAnalysis(
       id: 'history_001',
@@ -30,6 +41,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       emotionalValence: 0.1,
       emotionalArousal: 0.2,
       emotionalDominance: 0.0,
+      processingDurationMs: 1000,
       analysisModelVersion: 'v1.0',
     ),
     VocalSentimentAnalysis(
@@ -43,6 +55,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       emotionalValence: 0.8,
       emotionalArousal: 0.7,
       emotionalDominance: 0.5,
+      processingDurationMs: 1200,
       analysisModelVersion: 'v1.0',
     ),
     VocalSentimentAnalysis(
@@ -56,6 +69,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       emotionalValence: -0.5,
       emotionalArousal: -0.3,
       emotionalDominance: -0.1,
+      processingDurationMs: 900,
       analysisModelVersion: 'v1.0',
     ),
     VocalSentimentAnalysis(
@@ -69,6 +83,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       emotionalValence: 0.3,
       emotionalArousal: 0.4,
       emotionalDominance: 0.2,
+      processingDurationMs: 1100,
       analysisModelVersion: 'v1.0',
     ),
     VocalSentimentAnalysis(
@@ -82,14 +97,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
       emotionalValence: -0.8,
       emotionalArousal: -0.7,
       emotionalDominance: -0.6,
+      processingDurationMs: 1500,
       analysisModelVersion: 'v1.0',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = context.screenWidth;
-    final screenHeight = context.screenHeight;
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
 
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
@@ -123,21 +140,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
           right: 0,
           child: Image.asset(
             'assets/images/blur_top_history.png',
-            width: screenWidth, // Use scaled width
-            height: context.scaleHeight(88),
-            fit: BoxFit.fill,
+            width: 429,
+            height: 88,
+            fit: BoxFit.cover,
           ),
         ),
         Positioned(
-          top: context.scaleHeight(16),
-          left: context.scaleWidth(8),
+          top: 16,
+          left: 8,
           child: GestureDetector(
             onTap: () {
               Navigator.pop(context);
             },
             child: SizedBox(
-              width: context.scaleWidth(66),
-              height: context.scaleHeight(66),
+              width: 66,
+              height: 66,
               child: Image.asset(
                 'assets/images/arrow.png',
                 fit: BoxFit.contain,
@@ -146,16 +163,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         Positioned(
-          top: context.scaleHeight(94),
-          left: context.scaleWidth(16),
-          right: context.scaleWidth(16),
+          top: 94,
+          left: 16,
+          right: 16,
           bottom: 0,
           child: ListView.builder(
             padding: EdgeInsets.fromLTRB(
               0,
-              context.scaleHeight(8),
+              8,
               0,
-              context.scaleHeight(24),
+              24,
             ),
             itemCount: historyData.length,
             itemBuilder: (context, index) {
@@ -163,7 +180,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               final isExpanded = expandedIndex == index;
 
               return Padding(
-                padding: EdgeInsets.only(bottom: context.scaleHeight(16)),
+                padding: EdgeInsets.only(bottom: 16),
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
@@ -172,6 +189,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   },
                   child: HistoryCardItem(
                     item: item,
+                    getScoreColor: _getScoreColor,
                     isExpanded: isExpanded,
                   ),
                 ),
@@ -184,13 +202,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
+// --- widget card dengan animasi expand
 class HistoryCardItem extends StatelessWidget {
   final VocalSentimentAnalysis item;
+  final Function(double) getScoreColor;
   final bool isExpanded;
 
   const HistoryCardItem({
     Key? key,
     required this.item,
+    required this.getScoreColor,
     required this.isExpanded,
   }) : super(key: key);
 
@@ -199,19 +220,20 @@ class HistoryCardItem extends StatelessWidget {
     final itemScore = item.overallWellbeingScore ?? 0.0;
     final itemCategory = item.wellbeingCategory ?? 'Analisis Tidak Tersedia';
     final itemReflection = item.reflectionPrompt ?? 'Tidak ada deskripsi.';
-    final Color itemColor = ColorUtils.getScoreColor(itemScore); // Menggunakan ColorUtils
+    final Color itemColor = getScoreColor(itemScore);
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(context.scaleWidth(16)),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF80C2BC), // Warna hijau Tosca dengan hex code 80C2BC (bisa diganti AppColor.hijauTosca)
-        borderRadius: BorderRadius.circular(context.scaleWidth(16)),
+        color: Color(0xFF80C2BC), // Warna hijau Tosca dengan hex code 80C2BC
+        borderRadius: BorderRadius.circular(16),
+        // Menghapus border dan menggantinya dengan boxShadow
         boxShadow: [
           BoxShadow(
-            color: itemColor.withOpacity(0.5),
-            blurRadius: context.scaleWidth(8),
-            offset: Offset(context.scaleWidth(2), context.scaleHeight(-2)),
+            color: itemColor.withOpacity(0.5), // Warna shadow mengikuti itemColor dengan opacity 50%
+            blurRadius: 8, // Anda bisa menyesuaikan blurRadius sesuai keinginan
+            offset: const Offset(2, -2), // Offset shadow (x=2, y=-2)
           ),
         ],
       ),
@@ -221,49 +243,55 @@ class HistoryCardItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // title dan score - selalu tampil
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // kotak title
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.all(context.scaleWidth(12)),
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColor.putihNormal, // Use AppColor
-                      borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
-                          blurRadius: context.scaleWidth(4),
-                          offset: Offset(0, context.scaleHeight(2)),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     child: Text(
                       itemCategory,
                       style: GoogleFonts.fredoka(
-                        fontSize: context.scaleWidth(15),
-                        color: AppColor.navyText, // Use AppColor
+                        fontSize: 15,
+                        color: AppColor.navyText,
                         fontWeight: FontWeight.w500,
                         height: 1.3,
                       ),
                       textAlign: TextAlign.left,
                       maxLines: isExpanded ? null : 3,
-                      overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                      overflow:
+                          isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-                SizedBox(width: context.scaleWidth(12)),
+
+                SizedBox(width: 12),
+
+                // kotak score
                 Container(
-                  width: context.scaleWidth(50),
-                  height: context.scaleHeight(50),
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
-                    color: itemColor,
-                    borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+                    color: itemColor, // Background solid sesuai warna indikator
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: itemColor.withOpacity(0.4),
-                        blurRadius: context.scaleWidth(8),
-                        offset: Offset(0, context.scaleHeight(2)),
+                        color: itemColor.withOpacity(0.4), // Shadow lebih menonjol
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -271,8 +299,8 @@ class HistoryCardItem extends StatelessWidget {
                     child: Text(
                       itemScore.round().toString(),
                       style: GoogleFonts.roboto(
-                        color: AppColor.putihNormal, // Use AppColor
-                        fontSize: context.scaleWidth(22),
+                        color: Colors.white, // Angka berwarna putih
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -280,30 +308,33 @@ class HistoryCardItem extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: context.scaleHeight(12)),
+
+            SizedBox(height: 12),
+
+            // Detail container dengan AnimatedCrossFade
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 400),
               crossFadeState:
                   isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               firstChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(context.scaleWidth(12)),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColor.putihNormal, // Use AppColor
-                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: context.scaleWidth(4),
-                      offset: Offset(0, context.scaleHeight(2)),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Text(
                   itemReflection,
                   style: GoogleFonts.fredoka(
-                    fontSize: context.scaleWidth(13),
-                    color: AppColor.navyText.withOpacity(0.8), // Use AppColor
+                    fontSize: 13,
+                    color: AppColor.navyText.withOpacity(0.8),
                     fontWeight: FontWeight.w400,
                     height: 1.4,
                   ),
@@ -314,23 +345,23 @@ class HistoryCardItem extends StatelessWidget {
               ),
               secondChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(context.scaleWidth(12)),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColor.putihNormal, // Use AppColor
-                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: context.scaleWidth(4),
-                      offset: Offset(0, context.scaleHeight(2)),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Text(
                   itemReflection,
                   style: GoogleFonts.fredoka(
-                    fontSize: context.scaleWidth(13),
-                    color: AppColor.navyText.withOpacity(0.8), // Use AppColor
+                    fontSize: 13,
+                    color: AppColor.navyText.withOpacity(0.8),
                     fontWeight: FontWeight.w400,
                     height: 1.4,
                   ),

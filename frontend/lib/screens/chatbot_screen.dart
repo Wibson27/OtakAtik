@@ -6,29 +6,116 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Import dari common
+// Pastikan path ini sesuai dengan struktur proyek Anda
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-import 'package:frontend/common/enums.dart';
-import 'package:frontend/common/time_formatter.dart'; // Import TimeFormatter
-
-// Import dari models
 import 'package:frontend/data/models/chat_message.dart';
 import 'package:frontend/data/models/attachment_file.dart';
-import 'package:frontend/data/models/discussion.dart'; // Import Discussion dari models
+import 'package:frontend/data/models/discussion.dart';
+import 'package:frontend/common/enums.dart';
 
-// Data Service yang akan direfactor ke Cubit/Bloc di masa depan
+// Time formatter
+class TimeFormatter {
+  static String formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 30) {
+      return 'baru saja';
+    } else if (difference.inMinutes < 1) {
+      return '${difference.inSeconds} detik lalu';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} menit lalu';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} jam lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      final weeksDiff = (difference.inDays / 7).floor();
+      return '$weeksDiff minggu lalu';
+    }
+  }
+
+  static String formatTimeDetailed(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+}
+
+// Discussion Model with copyWith method
+class Discussion {
+  final String id;
+  final String title;
+  final String content;
+  final String authorName;
+  final DateTime createdAt;
+
+  const Discussion({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.authorName,
+    required this.createdAt,
+  });
+
+  // Method copyWith untuk membuat copy dengan perubahan tertentu
+  Discussion copyWith({
+    String? id,
+    String? title,
+    String? content,
+    String? authorName,
+    DateTime? createdAt,
+  }) {
+    return Discussion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      authorName: authorName ?? this.authorName,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  // Helper methods
+  @override
+  String toString() {
+    return 'Discussion(id: $id, title: $title, content: $content, authorName: $authorName, createdAt: $createdAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Discussion &&
+        other.id == id &&
+        other.title == title &&
+        other.content == content &&
+        other.authorName == authorName &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        title.hashCode ^
+        content.hashCode ^
+        authorName.hashCode ^
+        createdAt.hashCode;
+  }
+}
+
 class ChatDataService {
   static final ChatDataService _instance = ChatDataService._internal();
   factory ChatDataService() => _instance;
   ChatDataService._internal();
 
+  // Map untuk menyimpan pesan berdasarkan chatSessionId
   final Map<String, List<ChatMessage>> _allMessages = {};
+  // List untuk menyimpan semua diskusi/history chat
   final List<Discussion> _allDiscussions = [];
 
-  String _currentChatSessionId = "";
-  Discussion? _currentChatDiscussion;
+  String _currentChatSessionId = ""; // Session ID aktif
+  Discussion? _currentChatDiscussion; // Diskusi aktif
 
   List<Discussion> get allDiscussions => List.unmodifiable(_allDiscussions);
   List<ChatMessage> get currentMessages {
@@ -39,9 +126,12 @@ class ChatDataService {
   }
   Discussion? get currentDiscussion => _currentChatDiscussion;
 
+  // Initialize with dummy data or load from storage
   void initialize() {
+    // Inisialisasi jika belum ada sesi
     if (_allMessages.isEmpty) {
-      _startNewChatSession();
+      _startNewChatSession(); // Start a default session
+      // Add initial bot message to the first session
       addMessage(
         ChatMessage(
           id: "bot_msg_001",
@@ -66,7 +156,7 @@ class ChatDataService {
           isOwner: true,
         ),
       );
-      addMessage(
+       addMessage(
         ChatMessage(
           id: "bot_msg_002",
           chatSessionId: _currentChatSessionId,
@@ -79,6 +169,7 @@ class ChatDataService {
         ),
       );
 
+      // Add dummy discussions
       _allDiscussions.add(Discussion(
         id: "chatbot_session_001",
         title: "Overthinking Session",
@@ -109,11 +200,13 @@ class ChatDataService {
     }
     _allMessages[message.chatSessionId]!.add(message);
     
+    // Update discussion content/last message
     final discussionIndex = _allDiscussions.indexWhere(
       (disc) => disc.id == message.chatSessionId,
     );
 
     if (discussionIndex != -1) {
+      // Discussion found, update it
       if (message.messageContent.isNotEmpty) {
         _allDiscussions[discussionIndex] = _allDiscussions[discussionIndex].copyWith(
           content: message.messageContent,
@@ -121,6 +214,7 @@ class ChatDataService {
         _currentChatDiscussion = _allDiscussions[discussionIndex];
       }
     } else {
+      // Discussion not found, create a new one
       final newDisc = Discussion(
         id: message.chatSessionId,
         title: message.messageContent.isNotEmpty ? message.messageContent : "New Chat Session",
@@ -140,10 +234,10 @@ class ChatDataService {
       id: _currentChatSessionId,
       title: "New Chat Session",
       content: "Mulai percakapan baru.",
-      authorName: "User",
+      authorName: "User", // Assuming new chat is initiated by user
       createdAt: DateTime.now(),
     );
-    _allDiscussions.insert(0, _currentChatDiscussion!);
+    _allDiscussions.insert(0, _currentChatDiscussion!); // Add to the top of the list
   }
 
   void loadChatSession(String sessionId) {
@@ -151,12 +245,14 @@ class ChatDataService {
       _currentChatSessionId = sessionId;
       _currentChatDiscussion = _allDiscussions.firstWhere((disc) => disc.id == sessionId);
     } else {
+      // Handle case where session ID is not found, maybe create a new empty one
       _startNewChatSession();
     }
   }
 
   void startNewChat() {
     _startNewChatSession();
+    // Add initial bot message for the new chat
     addMessage(
       ChatMessage(
         id: "bot_msg_${DateTime.now().millisecondsSinceEpoch}",
@@ -175,10 +271,12 @@ class ChatDataService {
     return "msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}";
   }
 
+  // Method to update discussion title based on first user message
   void updateDiscussionTitle(String sessionId, String newTitle) {
     final index = _allDiscussions.indexWhere((disc) => disc.id == sessionId);
     if (index != -1) {
       _allDiscussions[index] = _allDiscussions[index].copyWith(title: newTitle);
+      // Update current discussion if it's the active one
       if (_currentChatDiscussion?.id == sessionId) {
         _currentChatDiscussion = _allDiscussions[index];
       }
@@ -194,22 +292,28 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
+  // GlobalKey untuk ScaffoldState, diperlukan untuk membuka Drawer
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Controllers
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
+  // Data service
   final ChatDataService _dataService = ChatDataService();
 
+  // State variables
   bool _isTyping = false;
   bool _showEmojiPicker = false;
   String _currentMessage = '';
   List<ChatMessage> _messages = [];
   final List<AttachmentFile> _pendingAttachments = [];
 
+  // File picker
   final ImagePicker _imagePicker = ImagePicker();
 
+  // Emoji
   final List<String> _emojiList = [
     '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
     '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
@@ -226,7 +330,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
-    _dataService.initialize();
+    _dataService.initialize(); // Initialize data service with dummy data or load existing
     _initializeData();
     _messageController.addListener(() {
       setState(() {
@@ -234,8 +338,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _isTyping = _currentMessage.isNotEmpty || _pendingAttachments.isNotEmpty;
       });
     });
+    // Menambahkan listener untuk FocusNode untuk rebuild UI saat fokus berubah
     _messageFocusNode.addListener(() {
-      setState(() {});
+      setState(() {
+        // Hanya perlu setState untuk me-rebuild _buildBottomMessageArea
+        // Agar dekorasi Container berubah saat fokus TextField berubah
+      });
     });
   }
 
@@ -251,7 +359,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void dispose() {
     _messageController.dispose();
-    _messageFocusNode.removeListener(() {});
+    _messageFocusNode.removeListener(() {}); // Hapus listener
     _messageFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -263,10 +371,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final screenHeight = context.screenHeight;
 
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey, // Tetapkan GlobalKey ke Scaffold
       backgroundColor: AppColor.putihNormal,
       resizeToAvoidBottomInset: true,
-      endDrawer: _buildHistoryDrawer(context),
+      endDrawer: _buildHistoryDrawer(context), // Implementasi drawer di sini
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
@@ -278,7 +386,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               _buildChatMessagesArea(context),
               _buildBottomSection(context),
               if (_showEmojiPicker) _buildSimpleEmojiPicker(context),
-              if (_pendingAttachments.isNotEmpty && !_showEmojiPicker) _buildUploadingIndicator(context),
+              if (_pendingAttachments.isNotEmpty && !_showEmojiPicker) _buildUploadingIndicator(), // Hanya tampilkan jika tidak ada emoji picker
             ],
           ),
         ),
@@ -286,6 +394,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // Background
   Widget _buildBackground() {
     return Positioned.fill(
       child: Image.asset(
@@ -295,6 +404,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _buildHeader
   Widget _buildHeader(BuildContext context) {
     return Positioned(
       top: 0,
@@ -302,18 +412,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       right: 0,
       child: Stack(
         children: [
+          // blur_top_history.png
           Image.asset(
             'assets/images/blur_top_history.png',
             width: context.screenWidth,
             height: context.scaleHeight(88),
             fit: BoxFit.fill,
           ),
+
           Positioned(
             top: context.scaleHeight(16),
             left: context.scaleWidth(8),
             right: context.scaleWidth(8),
             child: Row(
               children: [
+                // arrow.png
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Image.asset(
@@ -323,9 +436,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
                 SizedBox(width: context.scaleWidth(10)),
+                // Title "chatbot"
                 Expanded(
                   child: Text(
-                    _dataService.currentDiscussion?.title ?? 'Chatbot',
+                    _dataService.currentDiscussion?.title ?? 'Chatbot', // Display current discussion title
                     style: GoogleFonts.fredoka(
                       fontSize: 24,
                       color: AppColor.navyText,
@@ -336,9 +450,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
                 SizedBox(width: context.scaleWidth(10)),
+                // history_button.png (diganti untuk membuka drawer)
                 GestureDetector(
                   onTap: () {
-                    _scaffoldKey.currentState?.openEndDrawer();
+                    _scaffoldKey.currentState?.openEndDrawer(); // Buka drawer dari kanan
                   },
                   child: Image.asset(
                     'assets/images/history_button.png',
@@ -355,6 +470,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _buildChatMessagesArea
   Widget _buildChatMessagesArea(BuildContext context) {
     return Positioned(
       top: context.scaleHeight(88),
@@ -367,7 +483,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         itemCount: _messages.length,
         itemBuilder: (context, index) {
           final message = _messages[index];
-          return _buildChatMessageBubbleItem(message, context); // Pass context
+          return _buildChatMessageBubbleItem(message);
         },
       ),
     );
@@ -375,20 +491,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildBottomSection(BuildContext currentContext) {
     return Positioned(
-      bottom: currentContext.scaleHeight(25), // Mengatur bottom agar tepat di atas keyboard
+      bottom: 25, // Mengatur bottom ke 0 agar tepat di atas keyboard
       left: 0,
       right: 0,
       child: Column(
         children: [
           _buildBottomMessageArea(currentContext),
-          // Emoji picker dan indicator upload sekarang di handle di root Stack
-          // if (_showEmojiPicker) _buildSimpleEmojiPicker(currentContext),
+          if (_showEmojiPicker) _buildSimpleEmojiPicker(currentContext),
         ],
       ),
     );
   }
 
-  Widget _buildUploadingIndicator(BuildContext context) {
+  // Upload indicator
+  Widget _buildUploadingIndicator() {
     return Positioned.fill(
       child: Container(
         color: Colors.black.withOpacity(0.3),
@@ -409,7 +525,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Text(
                   'Mengunggah file...',
                   style: GoogleFonts.fredoka(
-                    fontSize: context.scaleWidth(14),
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: AppColor.navyText,
                   ),
@@ -422,6 +538,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _buildBottomMessageArea
   Widget _buildBottomMessageArea(BuildContext areaContext) {
     double dynamicHeight = _calculateMessageBoxHeight(areaContext);
 
@@ -439,20 +556,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               fit: BoxFit.fill,
             ),
           ),
+
+          // Pending attachments preview
           if (_pendingAttachments.isNotEmpty)
             Positioned(
-              left: areaContext.scaleWidth(60),
-              right: areaContext.scaleWidth(60),
-              bottom: dynamicHeight - areaContext.scaleHeight(40),
+              left: areaContext.scaleWidth(60), // Adjusted to give space for emoji button
+              right: areaContext.scaleWidth(60), // Adjusted
+              bottom: dynamicHeight - areaContext.scaleHeight(40), // Position above the text input
               child: _buildPendingAttachmentsPreview(areaContext),
             ),
+
+          // Text inputan
           Positioned(
-            left: areaContext.scaleWidth(100),
-            right: areaContext.scaleWidth(60),
+            left: areaContext.scaleWidth(100), // Adjusted
+            right: areaContext.scaleWidth(60), // Adjusted
             bottom: areaContext.scaleHeight(10),
             top: _pendingAttachments.isNotEmpty
-                ? areaContext.scaleHeight(20)
-                : areaContext.scaleHeight(10),
+                ? areaContext.scaleHeight(20) // Move down if attachments are present
+                : areaContext.scaleHeight(10), // Original top position
             child: Container(
               decoration: BoxDecoration(
                 color: AppColor.putihNormal,
@@ -470,7 +591,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 style: GoogleFonts.fredoka(
-                  fontSize: areaContext.scaleWidth(12),
+                  fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: AppColor.navyText,
                 ),
@@ -479,7 +600,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   border: InputBorder.none,
                   hintText: 'Ketik pesan...',
                   hintStyle: GoogleFonts.fredoka(
-                    fontSize: areaContext.scaleWidth(12),
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppColor.navyText.withOpacity(0.6),
                   ),
@@ -493,6 +614,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           ),
+
+          // happy_emoji.png (Tombol Emoji)
           Positioned(
             left: areaContext.scaleWidth(14),
             bottom: areaContext.scaleHeight(8),
@@ -505,6 +628,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           ),
+
+          // paper_clip.png (Tombol Attachment)
           Positioned(
             left: areaContext.scaleWidth(60),
             bottom: areaContext.scaleHeight(9),
@@ -517,6 +642,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           ),
+
+          // polygon_button.png
           Positioned(
             right: areaContext.scaleWidth(24),
             bottom: areaContext.scaleHeight(8),
@@ -534,6 +661,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _buildPendingAttachmentsPreview
   Widget _buildPendingAttachmentsPreview(BuildContext previewContext) {
     return SizedBox(
       height: previewContext.scaleHeight(30),
@@ -565,7 +693,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Text(
                   attachment.name.length > 10 ? '${attachment.name.substring(0, 10)}...' : attachment.name,
                   style: GoogleFonts.fredoka(
-                    fontSize: previewContext.scaleWidth(9),
+                    fontSize: 9,
                     fontWeight: FontWeight.w400,
                     color: AppColor.navyText,
                   ),
@@ -588,14 +716,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _calculateMessageBoxHeight
   double _calculateMessageBoxHeight(BuildContext calcContext) {
-    double baseImageHeight = calcContext.scaleHeight(50);
+    double baseImageHeight = calcContext.scaleHeight(50); // Tinggi default message_box.png
 
+    // Calculate text content height
     final textPainter = TextPainter(
       text: TextSpan(
         text: _currentMessage.isEmpty ? 'Ketik pesan...' : _currentMessage,
         style: GoogleFonts.fredoka(
-          fontSize: calcContext.scaleWidth(12), // Use scaled font size
+          fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
       ),
@@ -603,28 +733,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       textDirection: TextDirection.ltr,
     );
 
-    double availableWidthForText = calcContext.scaleWidth(417 - 100 - 60 - 20); // (full image width - left offset - right offset - internal padding)
+    // This width should match the actual TextField's width
+    // left: areaContext.scaleWidth(60), right: areaContext.scaleWidth(60),
+    // So, total width of the image asset is 417, so 417 - 60 - 60 = 297
+    double availableWidthForText = calcContext.scaleWidth(297 - 20); // 20 for internal horizontal padding of TextField
     if (availableWidthForText <= 0) availableWidthForText = calcContext.scaleWidth(100);
 
     textPainter.layout(maxWidth: availableWidthForText);
 
     double textContentHeight = textPainter.height;
 
-    final double minTextHeight = calcContext.scaleHeight(16);
+    // Minimum height for an empty text field (approx. one line height)
+    final double minTextHeight = calcContext.scaleHeight(16); // Approximated height of one line of text
     textContentHeight = max(minTextHeight, textContentHeight);
 
+
+    // Adjust vertical padding based on attachment presence
     double textFieldPaddingTop = _pendingAttachments.isNotEmpty ? calcContext.scaleHeight(35) : calcContext.scaleHeight(10);
     double textFieldPaddingBottom = calcContext.scaleHeight(10);
     double requiredContentHeight = textContentHeight + textFieldPaddingTop + textFieldPaddingBottom;
 
+    // Maximum height for the message box
     double maxMessageBoxHeight = calcContext.scaleHeight(200);
 
+    // The final height will be the max of base image height and content height, clamped by max height
     return max(baseImageHeight, requiredContentHeight).clamp(baseImageHeight, maxMessageBoxHeight);
   }
 
+
+  // _buildSimpleEmojiPicker
   Widget _buildSimpleEmojiPicker(BuildContext emojiContext) {
     return Positioned(
-      bottom: 0,
+      bottom: 0, // At the very bottom
       left: 0,
       right: 0,
       child: Container(
@@ -639,14 +779,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Text(
                   'Pilih Emoji',
                   style: GoogleFonts.fredoka(
-                    fontSize: emojiContext.scaleWidth(16),
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColor.navyText,
                   ),
                 ),
                 GestureDetector(
                   onTap: () => setState(() => _showEmojiPicker = false),
-                  child: Icon(Icons.close, size: emojiContext.scaleWidth(24)),
+                  child: const Icon(Icons.close),
                 ),
               ],
             ),
@@ -665,7 +805,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     onTap: () {
                       _messageController.text += _emojiList[index];
                       setState(() => _showEmojiPicker = false);
-                      _messageFocusNode.requestFocus();
+                      _messageFocusNode.requestFocus(); // Kembalikan fokus ke TextField setelah memilih emoji
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -689,6 +829,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // _toggleEmojiPicker
   void _toggleEmojiPicker(BuildContext toggleContext) {
     setState(() {
       _showEmojiPicker = !_showEmojiPicker;
@@ -700,6 +841,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
   }
 
+  // _showAttachmentDialog
   void _showAttachmentDialog(BuildContext dialogContext) {
     _messageFocusNode.unfocus();
 
@@ -713,7 +855,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           title: Text(
             'Pilih Attachment',
             style: GoogleFonts.fredoka(
-              fontSize: dialogContext.scaleWidth(18),
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColor.navyText,
             ),
@@ -731,13 +873,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   child: Icon(
                     Icons.camera_alt,
                     color: AppColor.hijauTosca,
-                    size: dialogContext.scaleWidth(24),
                   ),
                 ),
                 title: Text(
                   'Kamera',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(16),
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColor.navyText,
                   ),
@@ -745,7 +886,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 subtitle: Text(
                   'Ambil foto langsung',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(12),
+                    fontSize: 12,
                     fontWeight: FontWeight.w300,
                     color: AppColor.navyText.withOpacity(0.7),
                   ),
@@ -765,13 +906,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   child: Icon(
                     Icons.photo_library,
                     color: AppColor.biruNormal,
-                    size: dialogContext.scaleWidth(24),
                   ),
                 ),
                 title: Text(
                   'Galeri',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(16),
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColor.navyText,
                   ),
@@ -779,7 +919,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 subtitle: Text(
                   'Pilih dari galeri',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(12),
+                    fontSize: 12,
                     fontWeight: FontWeight.w300,
                     color: AppColor.navyText.withOpacity(0.7),
                   ),
@@ -799,13 +939,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   child: Icon(
                     Icons.attach_file,
                     color: AppColor.kuning,
-                    size: dialogContext.scaleWidth(24),
                   ),
                 ),
                 title: Text(
                   'File',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(16),
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColor.navyText,
                   ),
@@ -813,7 +952,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 subtitle: Text(
                   'Dokumen dan file lainnya',
                   style: GoogleFonts.fredoka(
-                    fontSize: dialogContext.scaleWidth(12),
+                    fontSize: 12,
                     fontWeight: FontWeight.w300,
                     color: AppColor.navyText.withOpacity(0.7),
                   ),
@@ -829,12 +968,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _messageFocusNode.requestFocus();
+                _messageFocusNode.requestFocus(); // Kembalikan fokus ke TextField setelah menutup dialog
               },
               child: Text(
                 'Batal',
                 style: GoogleFonts.fredoka(
-                  fontSize: dialogContext.scaleWidth(14),
+                  fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColor.navyText.withOpacity(0.7),
                 ),
@@ -921,7 +1060,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final fileName = file.path.split('/').last;
     final size = fileSize ?? await file.length();
 
-    if (size > 10 * 1024 * 1024) {
+    if (size > 10 * 1024 * 1024) { // Max 10MB
       _showErrorSnackbar('File terlalu besar. Maksimal 10MB.');
       return;
     }
@@ -942,7 +1081,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       SnackBar(
         content: Text(
           'File berhasil ditambahkan: $fileName',
-          style: GoogleFonts.roboto(color: AppColor.putihNormal, fontSize: context.scaleWidth(12)),
+          style: GoogleFonts.roboto(color: AppColor.putihNormal, fontSize: 12),
         ),
         backgroundColor: AppColor.hijauTosca,
         duration: const Duration(seconds: 2),
@@ -966,7 +1105,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.roboto(color: AppColor.putihNormal, fontSize: context.scaleWidth(12)),
+          style: GoogleFonts.roboto(color: AppColor.putihNormal, fontSize: 12),
         ),
         backgroundColor: AppColor.merahError,
         duration: const Duration(seconds: 3),
@@ -999,6 +1138,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final messageText = _currentMessage.trim();
     final currentSessionId = _dataService._currentChatSessionId;
 
+    // Update discussion title if it's the first user message in a new session
     final firstBotMsg = _dataService.currentMessages.isNotEmpty
         ? _dataService.currentMessages.firstWhere(
             (msg) => msg.senderType == 'ai_bot',
@@ -1021,6 +1161,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _dataService.updateDiscussionTitle(currentSessionId, messageText);
       }
     }
+
 
     final newMessage = ChatMessage(
       id: _dataService.generateMessageId(),
@@ -1047,6 +1188,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _messageFocusNode.unfocus();
     _scrollToBottom();
 
+    // Simulate bot reply
     Future.delayed(const Duration(seconds: 1), () {
       final botReplyMessage = ChatMessage(
         id: _dataService.generateMessageId(),
@@ -1066,8 +1208,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
   }
 
-  Widget _buildChatMessageBubbleItem(ChatMessage message, BuildContext itemContext) {
-    final double messageMaxWidth = itemContext.screenWidth * 0.7;
+  // _buildChatMessageBubbleItem
+  Widget _buildChatMessageBubbleItem(ChatMessage message) {
+    final double messageMaxWidth = context.screenWidth * 0.7;
 
     String bubbleImage;
     if (message.isOwner) {
@@ -1080,18 +1223,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       alignment: message.isOwner ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(
-          top: itemContext.scaleHeight(8),
-          bottom: itemContext.scaleHeight(8),
-          left: message.isOwner ? itemContext.screenWidth * 0.15 : 0,
-          right: message.isOwner ? 0 : itemContext.screenWidth * 0.15,
+          top: context.scaleHeight(8),
+          bottom: context.scaleHeight(8),
+          left: message.isOwner ? context.screenWidth * 0.15 : 0,
+          right: message.isOwner ? 0 : context.screenWidth * 0.15,
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: itemContext.scaleWidth(25),
-          vertical: itemContext.scaleHeight(25),
+          horizontal: context.scaleWidth(25),
+          vertical: context.scaleHeight(25),
         ),
         constraints: BoxConstraints(
           maxWidth: messageMaxWidth,
-          minWidth: itemContext.scaleWidth(100),
+          minWidth: context.scaleWidth(100),
         ),
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -1105,7 +1248,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             Text(
               message.messageContent,
               style: GoogleFonts.fredoka(
-                fontSize: itemContext.scaleWidth(12),
+                fontSize: 12,
                 color: AppColor.navyText,
                 fontWeight: FontWeight.w400,
               ),
@@ -1113,26 +1256,26 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
             if (message.attachments.isNotEmpty)
               Padding(
-                padding: EdgeInsets.only(top: itemContext.scaleHeight(5)),
+                padding: EdgeInsets.only(top: context.scaleHeight(5)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: message.attachments.map((attachment) {
                     return Container(
-                      margin: EdgeInsets.only(right: itemContext.scaleWidth(5)),
+                      margin: EdgeInsets.only(right: context.scaleWidth(5)),
                       child: Icon(
                         attachment.type == AttachmentType.image ? Icons.image : Icons.attach_file,
                         color: AppColor.navyText,
-                        size: itemContext.scaleWidth(16),
+                        size: context.scaleWidth(16),
                       ),
                     );
                   }).toList(),
                 ),
               ),
-            SizedBox(height: itemContext.scaleHeight(4)),
+            SizedBox(height: context.scaleHeight(4)),
             Text(
               '${message.senderName} - ${TimeFormatter.formatTimeDetailed(message.timestamp)}',
               style: GoogleFonts.fredoka(
-                fontSize: itemContext.scaleWidth(9),
+                fontSize: 9,
                 color: AppColor.navyText.withOpacity(0.5),
               ),
             ),
@@ -1142,25 +1285,28 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  // --- Start of new Drawer (History) implementation ---
+
   Widget _buildHistoryDrawer(BuildContext drawerContext) {
     return Drawer(
-      width: drawerContext.screenWidth * 0.75,
+      width: drawerContext.screenWidth * 0.75, // Lebar drawer 75% dari lebar layar
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(0),
-          bottomLeft: Radius.circular(0),
+          topLeft: Radius.circular(0), // Tidak ada radius di kiri atas
+          bottomLeft: Radius.circular(0), // Tidak ada radius di kiri bawah
         ),
       ),
       child: Container(
-        color: AppColor.putihNormal,
+        color: AppColor.putihNormal, // Background Drawer putih
         child: Column(
           children: [
+            // Header Drawer (History & Close button)
             Container(
               width: double.infinity,
-              height: drawerContext.scaleHeight(88),
+              height: drawerContext.scaleHeight(88), // Tinggi header sama dengan main header
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/blur_top_history.png'),
+                  image: AssetImage('assets/images/blur_top_history.png'), // Gambar background header
                   fit: BoxFit.fill,
                 ),
               ),
@@ -1175,7 +1321,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   Row(
                     children: [
                       Image.asset(
-                        'assets/images/history_button.png',
+                        'assets/images/history_button.png', // Icon jam
                         width: drawerContext.scaleWidth(34),
                         height: drawerContext.scaleHeight(34),
                         fit: BoxFit.contain,
@@ -1184,7 +1330,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       Text(
                         'History',
                         style: GoogleFonts.fredoka(
-                          fontSize: drawerContext.scaleWidth(24),
+                          fontSize: 24,
                           color: AppColor.navyText,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1192,7 +1338,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.of(drawerContext).pop(),
+                    onTap: () => Navigator.of(drawerContext).pop(), // Tutup drawer
                     child: Icon(
                       Icons.close,
                       color: AppColor.navyText,
@@ -1202,23 +1348,26 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ],
               ),
             ),
-            SizedBox(height: drawerContext.scaleHeight(20)),
+            SizedBox(height: drawerContext.scaleHeight(20)), // Jarak antara header dan list chips
+            // List History Chips
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: drawerContext.scaleWidth(16)),
-                itemCount: _dataService.allDiscussions.length + 1,
+                itemCount: _dataService.allDiscussions.length + 1, // +1 for "New Chat" button
                 itemBuilder: (context, index) {
                   if (index < _dataService.allDiscussions.length) {
+                    // Item history
                     final discussion = _dataService.allDiscussions[index];
                     return Padding(
                       padding: EdgeInsets.only(bottom: drawerContext.scaleHeight(12)),
                       child: _buildHistoryChipItem(drawerContext, discussion),
                     );
                   } else {
+                    // Tombol New Chat (plus icon)
                     return Padding(
                       padding: EdgeInsets.only(
                         top: drawerContext.scaleHeight(10),
-                        bottom: drawerContext.scaleHeight(20),
+                        bottom: drawerContext.scaleHeight(20), // Padding bawah agar tidak mepet
                       ),
                       child: _buildNewChatButton(drawerContext),
                     );
@@ -1235,8 +1384,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildHistoryChipItem(BuildContext context, Discussion discussion) {
     return GestureDetector(
       onTap: () {
+        // Logika saat history chip diklik
         print('History chip tapped: ${discussion.title} (ID: ${discussion.id})');
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); // Tutup drawer setelah memilih
         setState(() {
           _dataService.loadChatSession(discussion.id);
           _messages = _dataService.currentMessages;
@@ -1254,14 +1404,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           vertical: context.scaleHeight(15),
         ),
         decoration: BoxDecoration(
-          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauTosca.withOpacity(0.3) : AppColor.hijauTosca,
+          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauTosca.withOpacity(0.3) : AppColor.hijauTosca, // Highlight active discussion
           borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-          border: Border.all(color: AppColor.navyElement, width: 1),
+          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
         ),
         child: Text(
           discussion.title,
           style: GoogleFonts.fredoka(
-            fontSize: context.scaleWidth(16),
+            fontSize: 16,
             color: AppColor.navyText,
             fontWeight: FontWeight.w500,
           ),
@@ -1275,11 +1425,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildNewChatButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        // Logika saat tombol new chat diklik
         print('New chat button tapped');
-        Navigator.of(context).pop();
-        _dataService.startNewChat();
+        Navigator.of(context).pop(); // Tutup drawer
+        _dataService.startNewChat(); // Start a new chat session
         setState(() {
-          _messages = _dataService.currentMessages;
+          _messages = _dataService.currentMessages; // Update messages to the new empty session
           _messageController.clear();
           _pendingAttachments.clear();
           _isTyping = false;
@@ -1289,11 +1440,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       },
       child: Container(
         width: double.infinity,
-        height: context.scaleHeight(50),
+        height: context.scaleHeight(50), // Tinggi tombol
         decoration: BoxDecoration(
-          color: AppColor.putihNormal,
+          color: AppColor.putihNormal, // Background putih
           borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-          border: Border.all(color: AppColor.navyElement, width: 1),
+          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
         ),
         child: Center(
           child: Icon(
@@ -1305,4 +1456,5 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
     );
   }
+  // --- End of new Drawer (History) implementation ---
 }
