@@ -12,6 +12,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _formKey = GlobalKey<FormState>(); // GlobalKey for Form
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -46,6 +47,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  void _handleSignUp() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // Logic for registration (e.g., API call)
+      print('Username: ${_usernameController.text}');
+      print('Password: ${_passwordController.text}');
+      print('Confirm Password: ${_confirmPasswordController.text}');
+      // Simulating successful registration
+      Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = context.screenWidth;
@@ -74,7 +86,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
       child: Stack(
         children: [
-          // Wave atas
           Positioned(
             top: 0,
             left: 0,
@@ -86,30 +97,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          // Wave bawah + shark
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Image.asset(
-              'assets/images/wave_shark_signup.png', 
+              'assets/images/wave_shark_signup.png',
               width: screenWidth,
               height: context.scaleHeight(165),
               fit: BoxFit.cover,
             ),
           ),
-          // Form sign up group
           Positioned(
             top: context.scaleHeight(134),
             left: (screenWidth - context.scaleWidth(360)) / 2,
-            child: _buildSignUpForm(context, screenWidth),
+            child: _buildSignUpForm(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSignUpForm(BuildContext context, double screenWidth) {
+  Widget _buildSignUpForm(BuildContext context) {
     final double formAreaWidth = context.scaleWidth(360);
     final double formAreaHeight = context.scaleHeight(665);
 
@@ -127,7 +136,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 'SIGN UP',
                 style: GoogleFonts.fredoka(
                   color: AppColor.hijauTosca,
-                  fontSize: 64,
+                  fontSize: context.scaleWidth(64),
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2,
                 ),
@@ -139,79 +148,103 @@ class _SignUpScreenState extends State<SignUpScreen> {
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: context.scaleWidth(265 * 1.30), 
-                height: context.scaleHeight(215 * 1.30), 
+                width: context.scaleWidth(265 * 1.30),
+                height: context.scaleHeight(215 * 1.30),
                 child: Image.asset(
                   'assets/images/blue_background.png',
                   fit: BoxFit.cover,
                 ),
               ),
               Positioned(
-                child: Column(
-                  children: [
-                    // Username 
-                    _buildInputField(
-                      context: context,
-                      controller: _usernameController,
-                      focusNode: _usernameFocusNode,
-                      hintText: 'username',
-                      width: context.scaleWidth(230 * 1.30), 
-                      height: context.scaleHeight(33 * 1.30), 
-                      obscureText: false,
-                    ),
-                    SizedBox(height: context.scaleHeight(15)),
-                    // Password 
-                    _buildInputField(
-                      context: context,
-                      controller: _passwordController,
-                      focusNode: _passwordFocusNode,
-                      hintText: 'password',
-                      width: context.scaleWidth(230 * 1.30), 
-                      height: context.scaleHeight(33 * 1.30), 
-                      obscureText: true,
-                    ),
-                    SizedBox(height: context.scaleHeight(15)),
-                    // Password correct 
-                    _buildInputField(
-                      context: context,
-                      controller: _confirmPasswordController,
-                      focusNode: _confirmPasswordFocusNode,
-                      hintText: 'password correct',
-                      width: context.scaleWidth(230 * 1.30), 
-                      height: context.scaleHeight(33 * 1.30), 
-                      obscureText: true,
-                    ),
-                    SizedBox(height: context.scaleHeight(18)),
-                    SizedBox(
-                      width: context.scaleWidth(230 * 1.30), 
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          // Google icon (dengan animasi tekan)
-                          GestureDetector(
-                            onTapDown: (_) => setState(() => _isGoogleButtonActive = true),
-                            onTapUp: (_) => setState(() => _isGoogleButtonActive = false),
-                            onTapCancel: () => setState(() => _isGoogleButtonActive = false),
-                            onTap: () {
-                              Navigator.pushNamed(context, AppRoute.signIn);
-                            },
-                            child: AnimatedScale(
-                              scale: _isGoogleButtonActive ? 0.95 : 1.0,
-                              duration: const Duration(milliseconds: 100),
-                              child: SizedBox(
-                                width: context.scaleWidth(100 * 1.30), 
-                                height: context.scaleHeight(33 * 1.30),
-                                child: Image.asset(
-                                  'assets/images/google_icon.png',
-                                  fit: BoxFit.contain,
+                child: Form(
+                  key: _formKey, // Attach GlobalKey to Form
+                  child: Column(
+                    children: [
+                      _buildInputField(
+                        context: context,
+                        controller: _usernameController,
+                        focusNode: _usernameFocusNode,
+                        hintText: 'username',
+                        width: context.scaleWidth(230 * 1.30),
+                        height: context.scaleHeight(33 * 1.30),
+                        obscureText: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Username tidak boleh kosong';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: context.scaleHeight(15)),
+                      _buildInputField(
+                        context: context,
+                        controller: _passwordController,
+                        focusNode: _passwordFocusNode,
+                        hintText: 'password',
+                        width: context.scaleWidth(230 * 1.30),
+                        height: context.scaleHeight(33 * 1.30),
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password tidak boleh kosong';
+                          }
+                          if (value.length < 6) {
+                            return 'Password minimal 6 karakter';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: context.scaleHeight(15)),
+                      _buildInputField(
+                        context: context,
+                        controller: _confirmPasswordController,
+                        focusNode: _confirmPasswordFocusNode,
+                        hintText: 'password correct',
+                        width: context.scaleWidth(230 * 1.30),
+                        height: context.scaleHeight(33 * 1.30),
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Konfirmasi password tidak boleh kosong';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Password tidak cocok';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: context.scaleHeight(18)),
+                      SizedBox(
+                        width: context.scaleWidth(230 * 1.30),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTapDown: (_) => setState(() => _isGoogleButtonActive = true),
+                              onTapUp: (_) => setState(() => _isGoogleButtonActive = false),
+                              onTapCancel: () => setState(() => _isGoogleButtonActive = false),
+                              onTap: () {
+                                // Logic for Google Sign Up/Sign In
+                                Navigator.pushNamed(context, AppRoute.signIn);
+                              },
+                              child: AnimatedScale(
+                                scale: _isGoogleButtonActive ? 0.95 : 1.0,
+                                duration: const Duration(milliseconds: 100),
+                                child: SizedBox(
+                                  width: context.scaleWidth(100 * 1.30),
+                                  height: context.scaleHeight(33 * 1.30),
+                                  child: Image.asset(
+                                    'assets/images/google_icon.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Positioned(
@@ -221,16 +254,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onTapDown: (_) => setState(() => _isLoginButtonActive = true),
                   onTapUp: (_) => setState(() => _isLoginButtonActive = false),
                   onTapCancel: () => setState(() => _isLoginButtonActive = false),
-                  onTap: () {
-                    // Logika validasi sign-up dan navigasi
-                    Navigator.pushReplacementNamed(context, AppRoute.dashboard);
-                  },
+                  onTap: _handleSignUp, // Call the validation method
                   child: AnimatedScale(
                     scale: _isLoginButtonActive ? 0.95 : 1.0,
                     duration: const Duration(milliseconds: 100),
                     child: SizedBox(
-                      width: context.scaleWidth(126 * 1.30), 
-                      height: context.scaleHeight(46 * 1.30), 
+                      width: context.scaleWidth(126 * 1.30),
+                      height: context.scaleHeight(46 * 1.30),
                       child: Image.asset(
                         'assets/images/login_button.png',
                         fit: BoxFit.contain,
@@ -248,22 +278,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'you have account? ',
-                  style: TextStyle(
+                  style: GoogleFonts.roboto( // Use GoogleFonts consistently
                     color: Colors.black,
-                    fontSize: 20,
+                    fontSize: context.scaleWidth(20),
                   ),
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.signIn);
+                    Navigator.pushNamed(context, AppRoute.signIn); // Push to SignInScreen
                   },
                   child: Text(
                     'Sign in',
-                    style: TextStyle(
+                    style: GoogleFonts.roboto( // Use GoogleFonts consistently
                       color: AppColor.biruNormal,
-                      fontSize: 20,
+                      fontSize: context.scaleWidth(20),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -276,7 +306,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Widget _buildInputField
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -285,6 +314,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required double width,
     required double height,
     bool obscureText = false,
+    String? Function(String?)? validator, // Add validator
   }) {
     Color boxColor = AppColor.hijauTosca;
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
@@ -300,7 +330,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       height: height,
       decoration: BoxDecoration(
         color: boxColor,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(context.scaleWidth(25)),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
           BoxShadow(
@@ -321,7 +351,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           child: TextSelectionTheme(
             data: const TextSelectionThemeData(
-              cursorColor: Colors.black, // Kursor hitam
+              cursorColor: Colors.black,
             ),
             child: TextFormField(
               controller: controller,
@@ -331,20 +361,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
               textAlignVertical: TextAlignVertical.center,
               style: GoogleFonts.roboto(
                 color: AppColor.whiteText,
-                fontSize: 16,
+                fontSize: context.scaleWidth(16),
                 fontWeight: FontWeight.normal,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: GoogleFonts.roboto(
                   color: AppColor.whiteText,
-                  fontSize: 16,
+                  fontSize: context.scaleWidth(16),
                   fontWeight: FontWeight.bold,
                 ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
                 isDense: true,
               ),
+              validator: validator, // Assign the validator
             ),
           ),
         ),
