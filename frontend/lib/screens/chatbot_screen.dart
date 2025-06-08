@@ -151,7 +151,7 @@ class ChatDataService {
           senderType: "user",
           messageContent: "Lagi kerasa agak overthinking nih... 🤔",
           senderId: "user_main",
-          senderName: "Hai OtakAtik",
+          senderName: "Saya",
           timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
           isOwner: true,
         ),
@@ -491,7 +491,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildBottomSection(BuildContext currentContext) {
     return Positioned(
-      bottom: 0, // Mengatur bottom ke 0 agar tepat di atas keyboard
+      bottom: 25, // Mengatur bottom ke 0 agar tepat di atas keyboard
       left: 0,
       right: 0,
       child: Column(
@@ -519,7 +519,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.hijauSuccess),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.hijauTosca),
                 ),
                 SizedBox(height: context.scaleHeight(12)),
                 Text(
@@ -544,7 +544,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     return Container(
       height: dynamicHeight,
-      margin: EdgeInsets.symmetric(horizontal: areaContext.scaleWidth(10)),
+      margin: EdgeInsets.symmetric(horizontal: areaContext.scaleWidth(15)),
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -568,11 +568,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
           // Text inputan
           Positioned(
-            left: areaContext.scaleWidth(60), // Adjusted
+            left: areaContext.scaleWidth(100), // Adjusted
             right: areaContext.scaleWidth(60), // Adjusted
             bottom: areaContext.scaleHeight(10),
             top: _pendingAttachments.isNotEmpty
-                ? areaContext.scaleHeight(35) // Move down if attachments are present
+                ? areaContext.scaleHeight(20) // Move down if attachments are present
                 : areaContext.scaleHeight(10), // Original top position
             child: Container(
               decoration: BoxDecoration(
@@ -605,7 +605,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     color: AppColor.navyText.withOpacity(0.6),
                   ),
                   contentPadding: EdgeInsets.symmetric(
-                    vertical: areaContext.scaleHeight(8),
+                    vertical: areaContext.scaleHeight(5),
                     horizontal: areaContext.scaleWidth(10),
                   ),
                   isDense: true,
@@ -631,7 +631,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
           // paper_clip.png (Tombol Attachment)
           Positioned(
-            left: areaContext.scaleWidth(87),
+            left: areaContext.scaleWidth(60),
             bottom: areaContext.scaleHeight(9),
             child: GestureDetector(
               onTap: () => _showAttachmentDialog(areaContext),
@@ -674,10 +674,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             margin: EdgeInsets.only(right: previewContext.scaleWidth(8)),
             padding: EdgeInsets.symmetric(horizontal: previewContext.scaleWidth(8), vertical: previewContext.scaleHeight(4)),
             decoration: BoxDecoration(
-              color: AppColor.hijauSuccess.withOpacity(0.1),
+              color: AppColor.hijauTosca.withOpacity(0.1),
               borderRadius: BorderRadius.circular(previewContext.scaleWidth(15)),
               border: Border.all(
-                color: AppColor.hijauSuccess.withOpacity(0.3),
+                color: AppColor.hijauTosca.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -687,7 +687,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Icon(
                   attachment.type == AttachmentType.image ? Icons.image : Icons.attach_file,
                   size: previewContext.scaleWidth(12),
-                  color: AppColor.hijauSuccess,
+                  color: AppColor.hijauTosca,
                 ),
                 SizedBox(width: previewContext.scaleWidth(4)),
                 Text(
@@ -867,12 +867,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 leading: Container(
                   padding: EdgeInsets.all(dialogContext.scaleWidth(8)),
                   decoration: BoxDecoration(
-                    color: AppColor.hijauSuccess.withOpacity(0.1),
+                    color: AppColor.hijauTosca.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(dialogContext.scaleWidth(8)),
                   ),
                   child: Icon(
                     Icons.camera_alt,
-                    color: AppColor.hijauSuccess,
+                    color: AppColor.hijauTosca,
                   ),
                 ),
                 title: Text(
@@ -1083,7 +1083,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           'File berhasil ditambahkan: $fileName',
           style: GoogleFonts.roboto(color: AppColor.putihNormal, fontSize: 12),
         ),
-        backgroundColor: AppColor.hijauSuccess,
+        backgroundColor: AppColor.hijauTosca,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -1169,7 +1169,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       senderType: "user",
       messageContent: messageText,
       senderId: "user_main",
-      senderName: "Hai OtakAtik",
+      senderName: "Saya",
       timestamp: DateTime.now(),
       isOwner: true,
       attachments: List.from(_pendingAttachments),
@@ -1326,7 +1326,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                         height: drawerContext.scaleHeight(34),
                         fit: BoxFit.contain,
                       ),
-                      SizedBox(width: drawerContext.scaleWidth(8)),
+                      SizedBox(width: drawerContext.scaleWidth(80)),
                       Text(
                         'History',
                         style: GoogleFonts.fredoka(
@@ -1404,7 +1404,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           vertical: context.scaleHeight(15),
         ),
         decoration: BoxDecoration(
-          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauSuccess.withOpacity(0.3) : AppColor.hijauSuccess, // Highlight active discussion
+          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauTosca.withOpacity(0.3) : AppColor.hijauTosca, // Highlight active discussion
           borderRadius: BorderRadius.circular(context.scaleWidth(12)),
           border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
         ),
