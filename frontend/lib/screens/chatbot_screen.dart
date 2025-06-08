@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
+// Pastikan path ini sesuai dengan struktur proyek Anda
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
@@ -14,7 +15,7 @@ import 'package:frontend/data/models/attachment_file.dart';
 import 'package:frontend/data/models/discussion.dart';
 import 'package:frontend/common/enums.dart';
 
-// Time formatter 
+// Time formatter
 class TimeFormatter {
   static String formatTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -43,65 +44,243 @@ class TimeFormatter {
   }
 }
 
+// Discussion Model with copyWith method
+class Discussion {
+  final String id;
+  final String title;
+  final String content;
+  final String authorName;
+  final DateTime createdAt;
+
+  const Discussion({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.authorName,
+    required this.createdAt,
+  });
+
+  // Method copyWith untuk membuat copy dengan perubahan tertentu
+  Discussion copyWith({
+    String? id,
+    String? title,
+    String? content,
+    String? authorName,
+    DateTime? createdAt,
+  }) {
+    return Discussion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      authorName: authorName ?? this.authorName,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  // Helper methods
+  @override
+  String toString() {
+    return 'Discussion(id: $id, title: $title, content: $content, authorName: $authorName, createdAt: $createdAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Discussion &&
+        other.id == id &&
+        other.title == title &&
+        other.content == content &&
+        other.authorName == authorName &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        title.hashCode ^
+        content.hashCode ^
+        authorName.hashCode ^
+        createdAt.hashCode;
+  }
+}
+
 class ChatDataService {
   static final ChatDataService _instance = ChatDataService._internal();
   factory ChatDataService() => _instance;
   ChatDataService._internal();
 
-  String _currentChatSessionId = "chatbot_session_001";
+  // Map untuk menyimpan pesan berdasarkan chatSessionId
+  final Map<String, List<ChatMessage>> _allMessages = {};
+  // List untuk menyimpan semua diskusi/history chat
+  final List<Discussion> _allDiscussions = [];
 
-  String get currentChatSessionId => _currentChatSessionId; 
+  String _currentChatSessionId = ""; // Session ID aktif
+  Discussion? _currentChatDiscussion; // Diskusi aktif
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: "bot_msg_001",
-      chatSessionId: "chatbot_session_001",
-      senderType: "ai_bot",
-      messageContent: "Hai! 👋 Ada yang bisa saya bantu hari ini?",
-      senderId: "ai_bot_001",
-      senderName: "Tenang.in Bot",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      isOwner: false,
-    ),
-    ChatMessage(
-      id: "user_msg_001",
-      chatSessionId: "chatbot_session_001",
-      senderType: "user",
-      messageContent: "Lagi kerasa agak overthinking nih... 🤔",
-      senderId: "user_main",
-      senderName: "Hai OtakAtik",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
-      isOwner: true,
-    ),
-    ChatMessage(
-      id: "bot_msg_002",
-      chatSessionId: "chatbot_session_001",
-      senderType: "ai_bot",
-      messageContent: "Hmm, wajar kok kalau merasa terbebani dan punya pekerjaan. Tapi coba kita lihat dari sisi lain yuk! 😊 Bayangkan perasaan lega ketika semua tugas itu selesai. ✨ Kita bisa coba pecah jadi bagian-bagian kecil. Kekuatan apa yang kamu cari? 💪 Atau mungkin ada hal lain yang bisa bantu kamu merasa lebih tenang? Misalnya, mendengarkan musik yang rileks? 🎶",
-      senderId: "ai_bot_001",
-      senderName: "Tenang.in Bot",
-      timestamp: DateTime.parse('2025-06-06T10:06:00Z'),
-      isOwner: false,
-    ),
-  ];
+  List<Discussion> get allDiscussions => List.unmodifiable(_allDiscussions);
+  List<ChatMessage> get currentMessages {
+    if (_currentChatSessionId.isEmpty || !_allMessages.containsKey(_currentChatSessionId)) {
+      return [];
+    }
+    return List.unmodifiable(_allMessages[_currentChatSessionId]!);
+  }
+  Discussion? get currentDiscussion => _currentChatDiscussion;
 
-  final Discussion _currentChatDiscussion = Discussion(
-    id: "chat_001",
-    title: "Chatbot Session",
-    content: "Sesi obrolan dengan chatbot.",
-    authorName: "Chatbot",
-    createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
-  );
+  // Initialize with dummy data or load from storage
+  void initialize() {
+    // Inisialisasi jika belum ada sesi
+    if (_allMessages.isEmpty) {
+      _startNewChatSession(); // Start a default session
+      // Add initial bot message to the first session
+      addMessage(
+        ChatMessage(
+          id: "bot_msg_001",
+          chatSessionId: _currentChatSessionId,
+          senderType: "ai_bot",
+          messageContent: "Hai! 👋 Ada yang bisa saya bantu hari ini?",
+          senderId: "ai_bot_001",
+          senderName: "Tenang.in Bot",
+          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+          isOwner: false,
+        ),
+      );
+      addMessage(
+        ChatMessage(
+          id: "user_msg_001",
+          chatSessionId: _currentChatSessionId,
+          senderType: "user",
+          messageContent: "Lagi kerasa agak overthinking nih... 🤔",
+          senderId: "user_main",
+          senderName: "Hai OtakAtik",
+          timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
+          isOwner: true,
+        ),
+      );
+       addMessage(
+        ChatMessage(
+          id: "bot_msg_002",
+          chatSessionId: _currentChatSessionId,
+          senderType: "ai_bot",
+          messageContent: "Hmm, wajar kok kalau merasa terbebani dan punya pekerjaan. Tapi coba kita lihat dari sisi lain yuk! 😊 Bayangkan perasaan lega ketika semua tugas itu selesai. ✨ Kita bisa coba pecah jadi bagian-bagian kecil. Kekuatan apa yang kamu cari? 💪 Atau mungkin ada hal lain yang bisa bantu kamu merasa lebih tenang? Misalnya, mendengarkan musik yang rileks? 🎶",
+          senderId: "ai_bot_001",
+          senderName: "Tenang.in Bot",
+          timestamp: DateTime.parse('2025-06-06T10:06:00Z'),
+          isOwner: false,
+        ),
+      );
 
-  Discussion get currentDiscussion => _currentChatDiscussion;
-  List<ChatMessage> get messages => List.unmodifiable(_messages);
+      // Add dummy discussions
+      _allDiscussions.add(Discussion(
+        id: "chatbot_session_001",
+        title: "Overthinking Session",
+        content: "Diskusi tentang overthinking.",
+        authorName: "User",
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ));
+      _allDiscussions.add(Discussion(
+        id: "chatbot_session_002",
+        title: "Wound Healing",
+        content: "Diskusi tentang penyembuhan luka batin.",
+        authorName: "User",
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ));
+      _allDiscussions.add(Discussion(
+        id: "chatbot_session_003",
+        title: "Feeling Lonely",
+        content: "Diskusi tentang rasa kesepian.",
+        authorName: "User",
+        createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      ));
+    }
+  }
 
   void addMessage(ChatMessage message) {
-    _messages.add(message);
+    if (!_allMessages.containsKey(message.chatSessionId)) {
+      _allMessages[message.chatSessionId] = [];
+    }
+    _allMessages[message.chatSessionId]!.add(message);
+    
+    // Update discussion content/last message
+    final discussionIndex = _allDiscussions.indexWhere(
+      (disc) => disc.id == message.chatSessionId,
+    );
+
+    if (discussionIndex != -1) {
+      // Discussion found, update it
+      if (message.messageContent.isNotEmpty) {
+        _allDiscussions[discussionIndex] = _allDiscussions[discussionIndex].copyWith(
+          content: message.messageContent,
+        );
+        _currentChatDiscussion = _allDiscussions[discussionIndex];
+      }
+    } else {
+      // Discussion not found, create a new one
+      final newDisc = Discussion(
+        id: message.chatSessionId,
+        title: message.messageContent.isNotEmpty ? message.messageContent : "New Chat Session",
+        content: message.messageContent,
+        authorName: message.senderName,
+        createdAt: message.timestamp,
+      );
+      _allDiscussions.add(newDisc);
+      _currentChatDiscussion = newDisc;
+    }
+  }
+
+  void _startNewChatSession() {
+    _currentChatSessionId = "chatbot_session_${DateTime.now().millisecondsSinceEpoch}";
+    _allMessages[_currentChatSessionId] = [];
+    _currentChatDiscussion = Discussion(
+      id: _currentChatSessionId,
+      title: "New Chat Session",
+      content: "Mulai percakapan baru.",
+      authorName: "User", // Assuming new chat is initiated by user
+      createdAt: DateTime.now(),
+    );
+    _allDiscussions.insert(0, _currentChatDiscussion!); // Add to the top of the list
+  }
+
+  void loadChatSession(String sessionId) {
+    if (_allMessages.containsKey(sessionId)) {
+      _currentChatSessionId = sessionId;
+      _currentChatDiscussion = _allDiscussions.firstWhere((disc) => disc.id == sessionId);
+    } else {
+      // Handle case where session ID is not found, maybe create a new empty one
+      _startNewChatSession();
+    }
+  }
+
+  void startNewChat() {
+    _startNewChatSession();
+    // Add initial bot message for the new chat
+    addMessage(
+      ChatMessage(
+        id: "bot_msg_${DateTime.now().millisecondsSinceEpoch}",
+        chatSessionId: _currentChatSessionId,
+        senderType: "ai_bot",
+        messageContent: "Halo! 👋 Ada yang bisa saya bantu untuk memulai percakapan baru?",
+        senderId: "ai_bot_001",
+        senderName: "Tenang.in Bot",
+        timestamp: DateTime.now(),
+        isOwner: false,
+      ),
+    );
   }
 
   String generateMessageId() {
     return "msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}";
+  }
+
+  // Method to update discussion title based on first user message
+  void updateDiscussionTitle(String sessionId, String newTitle) {
+    final index = _allDiscussions.indexWhere((disc) => disc.id == sessionId);
+    if (index != -1) {
+      _allDiscussions[index] = _allDiscussions[index].copyWith(title: newTitle);
+      // Update current discussion if it's the active one
+      if (_currentChatDiscussion?.id == sessionId) {
+        _currentChatDiscussion = _allDiscussions[index];
+      }
+    }
   }
 }
 
@@ -113,6 +292,9 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
+  // GlobalKey untuk ScaffoldState, diperlukan untuk membuka Drawer
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // Controllers
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
@@ -128,10 +310,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   List<ChatMessage> _messages = [];
   final List<AttachmentFile> _pendingAttachments = [];
 
-  // File picker 
+  // File picker
   final ImagePicker _imagePicker = ImagePicker();
 
-  // Emoji 
+  // Emoji
   final List<String> _emojiList = [
     '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
     '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
@@ -148,6 +330,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
+    _dataService.initialize(); // Initialize data service with dummy data or load existing
     _initializeData();
     _messageController.addListener(() {
       setState(() {
@@ -155,11 +338,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _isTyping = _currentMessage.isNotEmpty || _pendingAttachments.isNotEmpty;
       });
     });
+    // Menambahkan listener untuk FocusNode untuk rebuild UI saat fokus berubah
+    _messageFocusNode.addListener(() {
+      setState(() {
+        // Hanya perlu setState untuk me-rebuild _buildBottomMessageArea
+        // Agar dekorasi Container berubah saat fokus TextField berubah
+      });
+    });
   }
 
   void _initializeData() {
     setState(() {
-      _messages = _dataService.messages;
+      _messages = _dataService.currentMessages;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
@@ -169,6 +359,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void dispose() {
     _messageController.dispose();
+    _messageFocusNode.removeListener(() {}); // Hapus listener
     _messageFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -180,8 +371,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final screenHeight = context.screenHeight;
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 244, 240, 240), 
-      resizeToAvoidBottomInset: true, 
+      key: _scaffoldKey, // Tetapkan GlobalKey ke Scaffold
+      backgroundColor: AppColor.putihNormal,
+      resizeToAvoidBottomInset: true,
+      endDrawer: _buildHistoryDrawer(context), // Implementasi drawer di sini
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
@@ -193,7 +386,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               _buildChatMessagesArea(context),
               _buildBottomSection(context),
               if (_showEmojiPicker) _buildSimpleEmojiPicker(context),
-              if (_pendingAttachments.isNotEmpty) _buildUploadingIndicator(),
+              if (_pendingAttachments.isNotEmpty && !_showEmojiPicker) _buildUploadingIndicator(), // Hanya tampilkan jika tidak ada emoji picker
             ],
           ),
         ),
@@ -205,7 +398,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildBackground() {
     return Positioned.fill(
       child: Image.asset(
-        'assets/images/wave_history_voice.png', 
+        'assets/images/wave_history_voice.png',
         fit: BoxFit.cover,
       ),
     );
@@ -217,18 +410,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       top: 0,
       left: 0,
       right: 0,
-      child: Stack( 
+      child: Stack(
         children: [
           // blur_top_history.png
           Image.asset(
             'assets/images/blur_top_history.png',
-            width: context.screenWidth, 
-            height: context.scaleHeight(88), 
-            fit: BoxFit.fill, 
+            width: context.screenWidth,
+            height: context.scaleHeight(88),
+            fit: BoxFit.fill,
           ),
-          
+
           Positioned(
-            top: context.scaleHeight(16), 
+            top: context.scaleHeight(16),
             left: context.scaleWidth(8),
             right: context.scaleWidth(8),
             child: Row(
@@ -242,11 +435,25 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     height: context.scaleHeight(66),
                   ),
                 ),
-                SizedBox(width: context.scaleWidth(300)),
-               
+                SizedBox(width: context.scaleWidth(10)),
+                // Title "chatbot"
+                Expanded(
+                  child: Text(
+                    _dataService.currentDiscussion?.title ?? 'Chatbot', // Display current discussion title
+                    style: GoogleFonts.fredoka(
+                      fontSize: 24,
+                      color: AppColor.navyText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: context.scaleWidth(10)),
+                // history_button.png (diganti untuk membuka drawer)
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.chatbotHistory);
+                    _scaffoldKey.currentState?.openEndDrawer(); // Buka drawer dari kanan
                   },
                   child: Image.asset(
                     'assets/images/history_button.png',
@@ -263,13 +470,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  //  _buildChatMessagesArea
+  // _buildChatMessagesArea
   Widget _buildChatMessagesArea(BuildContext context) {
     return Positioned(
-      top: context.scaleHeight(88), 
+      top: context.scaleHeight(88),
       left: 0,
       right: 0,
-      bottom: context.scaleHeight(80), 
+      bottom: context.scaleHeight(80),
       child: ListView.builder(
         controller: _scrollController,
         padding: EdgeInsets.symmetric(horizontal: context.scaleWidth(15), vertical: context.scaleHeight(10)),
@@ -284,7 +491,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildBottomSection(BuildContext currentContext) {
     return Positioned(
-      bottom: currentContext.scaleHeight(10), 
+      bottom: 0, // Mengatur bottom ke 0 agar tepat di atas keyboard
       left: 0,
       right: 0,
       child: Column(
@@ -342,59 +549,73 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         alignment: Alignment.bottomCenter,
         children: [
           SizedBox(
-            width: areaContext.scaleWidth(417), 
+            width: areaContext.scaleWidth(417),
             height: dynamicHeight,
             child: Image.asset(
               'assets/images/message_box.png',
-              fit: BoxFit.fill, 
+              fit: BoxFit.fill,
             ),
           ),
 
+          // Pending attachments preview
           if (_pendingAttachments.isNotEmpty)
             Positioned(
-              left: areaContext.scaleWidth(140),
-              right: areaContext.scaleWidth(70),
-              bottom: dynamicHeight - areaContext.scaleHeight(25), 
+              left: areaContext.scaleWidth(60), // Adjusted to give space for emoji button
+              right: areaContext.scaleWidth(60), // Adjusted
+              bottom: dynamicHeight - areaContext.scaleHeight(40), // Position above the text input
               child: _buildPendingAttachmentsPreview(areaContext),
             ),
 
-          // Text inputan 
+          // Text inputan
           Positioned(
-            left: areaContext.scaleWidth(140),
-            right: areaContext.scaleWidth(70),
-            bottom: areaContext.scaleHeight(10), 
+            left: areaContext.scaleWidth(60), // Adjusted
+            right: areaContext.scaleWidth(60), // Adjusted
+            bottom: areaContext.scaleHeight(10),
             top: _pendingAttachments.isNotEmpty
-                ? areaContext.scaleHeight(35) 
-                : areaContext.scaleHeight(10), 
-            child: TextField(
-              controller: _messageController,
-              focusNode: _messageFocusNode,
-              maxLines: null, 
-              style: GoogleFonts.fredoka(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: AppColor.navyText,
+                ? areaContext.scaleHeight(35) // Move down if attachments are present
+                : areaContext.scaleHeight(10), // Original top position
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColor.putihNormal,
+                borderRadius: BorderRadius.circular(areaContext.scaleWidth(20)),
+                border: Border.all(
+                  color: _messageFocusNode.hasFocus
+                      ? Colors.grey.withOpacity(0.4)
+                      : Colors.transparent,
+                  width: _messageFocusNode.hasFocus ? 1.5 : 0,
+                ),
               ),
-              textAlign: TextAlign.left, 
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Ketik pesan...',
-                hintStyle: GoogleFonts.fredoka(
+              child: TextField(
+                controller: _messageController,
+                focusNode: _messageFocusNode,
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                style: GoogleFonts.fredoka(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: AppColor.navyText.withOpacity(0.6),
+                  color: AppColor.navyText,
                 ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: areaContext.scaleHeight(0), 
-                  horizontal: areaContext.scaleWidth(0),
+                textAlign: TextAlign.left,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Ketik pesan...',
+                  hintStyle: GoogleFonts.fredoka(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColor.navyText.withOpacity(0.6),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: areaContext.scaleHeight(8),
+                    horizontal: areaContext.scaleWidth(10),
+                  ),
+                  isDense: true,
                 ),
-                isDense: true,
+                cursorColor: AppColor.navyText,
               ),
-              cursorColor: AppColor.navyText,
             ),
           ),
 
-          // happy_emoji.png
+          // happy_emoji.png (Tombol Emoji)
           Positioned(
             left: areaContext.scaleWidth(14),
             bottom: areaContext.scaleHeight(8),
@@ -408,7 +629,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // paper_clip.png 
+          // paper_clip.png (Tombol Attachment)
           Positioned(
             left: areaContext.scaleWidth(87),
             bottom: areaContext.scaleHeight(9),
@@ -422,7 +643,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // polygon_button.png 
+          // polygon_button.png
           Positioned(
             right: areaContext.scaleWidth(24),
             bottom: areaContext.scaleHeight(8),
@@ -497,9 +718,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   // _calculateMessageBoxHeight
   double _calculateMessageBoxHeight(BuildContext calcContext) {
-    double baseImageHeight = calcContext.scaleHeight(50);
-    double attachmentAreaHeight = _pendingAttachments.isNotEmpty ? calcContext.scaleHeight(35) : 0;
+    double baseImageHeight = calcContext.scaleHeight(50); // Tinggi default message_box.png
 
+    // Calculate text content height
     final textPainter = TextPainter(
       text: TextSpan(
         text: _currentMessage.isEmpty ? 'Ketik pesan...' : _currentMessage,
@@ -512,33 +733,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       textDirection: TextDirection.ltr,
     );
 
-    double availableWidthForText = calcContext.scaleWidth(417 - 140 - 70);
+    // This width should match the actual TextField's width
+    // left: areaContext.scaleWidth(60), right: areaContext.scaleWidth(60),
+    // So, total width of the image asset is 417, so 417 - 60 - 60 = 297
+    double availableWidthForText = calcContext.scaleWidth(297 - 20); // 20 for internal horizontal padding of TextField
     if (availableWidthForText <= 0) availableWidthForText = calcContext.scaleWidth(100);
 
     textPainter.layout(maxWidth: availableWidthForText);
 
     double textContentHeight = textPainter.height;
-    double textFieldVerticalPadding = calcContext.scaleHeight(10) + calcContext.scaleHeight(10); 
-    if (_pendingAttachments.isNotEmpty) {
-      textFieldVerticalPadding = calcContext.scaleHeight(35) + calcContext.scaleHeight(10); 
-    }
 
-    double requiredContentHeight = textContentHeight;
-    if (_currentMessage.isEmpty) {
-        requiredContentHeight = max(requiredContentHeight, calcContext.scaleHeight(16)); 
-    }
+    // Minimum height for an empty text field (approx. one line height)
+    final double minTextHeight = calcContext.scaleHeight(16); // Approximated height of one line of text
+    textContentHeight = max(minTextHeight, textContentHeight);
 
 
-    double totalContentHeight = requiredContentHeight + textFieldVerticalPadding;
-    double calculatedTotalHeight = max(baseImageHeight, totalContentHeight);
-    return calculatedTotalHeight.clamp(baseImageHeight, calcContext.scaleHeight(200));
+    // Adjust vertical padding based on attachment presence
+    double textFieldPaddingTop = _pendingAttachments.isNotEmpty ? calcContext.scaleHeight(35) : calcContext.scaleHeight(10);
+    double textFieldPaddingBottom = calcContext.scaleHeight(10);
+    double requiredContentHeight = textContentHeight + textFieldPaddingTop + textFieldPaddingBottom;
+
+    // Maximum height for the message box
+    double maxMessageBoxHeight = calcContext.scaleHeight(200);
+
+    // The final height will be the max of base image height and content height, clamped by max height
+    return max(baseImageHeight, requiredContentHeight).clamp(baseImageHeight, maxMessageBoxHeight);
   }
 
 
-  //  _buildSimpleEmojiPicker
+  // _buildSimpleEmojiPicker
   Widget _buildSimpleEmojiPicker(BuildContext emojiContext) {
     return Positioned(
-      bottom: emojiContext.scaleHeight(10) + _calculateMessageBoxHeight(emojiContext),
+      bottom: 0, // At the very bottom
       left: 0,
       right: 0,
       child: Container(
@@ -603,14 +829,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  //  _toggleEmojiPicker
+  // _toggleEmojiPicker
   void _toggleEmojiPicker(BuildContext toggleContext) {
     setState(() {
       _showEmojiPicker = !_showEmojiPicker;
       if (_showEmojiPicker) {
-        _messageFocusNode.unfocus(); 
+        _messageFocusNode.unfocus();
       } else {
-        _messageFocusNode.requestFocus(); 
+        _messageFocusNode.requestFocus();
       }
     });
   }
@@ -910,10 +1136,36 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
 
     final messageText = _currentMessage.trim();
+    final currentSessionId = _dataService._currentChatSessionId;
+
+    // Update discussion title if it's the first user message in a new session
+    final firstBotMsg = _dataService.currentMessages.isNotEmpty
+        ? _dataService.currentMessages.firstWhere(
+            (msg) => msg.senderType == 'ai_bot',
+            orElse: () => ChatMessage(
+              id: 'dummy',
+              chatSessionId: '',
+              senderType: 'user',
+              messageContent: '',
+              senderId: '',
+              senderName: '',
+              timestamp: DateTime.now(),
+              isOwner: true,
+            ),
+          )
+        : null;
+    if (_dataService.currentMessages.length == 1 &&
+        firstBotMsg != null &&
+        firstBotMsg.id == _dataService.currentMessages.first.id) {
+      if (messageText.isNotEmpty) {
+        _dataService.updateDiscussionTitle(currentSessionId, messageText);
+      }
+    }
+
 
     final newMessage = ChatMessage(
       id: _dataService.generateMessageId(),
-      chatSessionId: _dataService.currentChatSessionId,
+      chatSessionId: currentSessionId,
       senderType: "user",
       messageContent: messageText,
       senderId: "user_main",
@@ -925,7 +1177,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     setState(() {
       _dataService.addMessage(newMessage);
-      _messages = _dataService.messages;
+      _messages = _dataService.currentMessages;
       _messageController.clear();
       _currentMessage = '';
       _isTyping = false;
@@ -936,10 +1188,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _messageFocusNode.unfocus();
     _scrollToBottom();
 
+    // Simulate bot reply
     Future.delayed(const Duration(seconds: 1), () {
       final botReplyMessage = ChatMessage(
         id: _dataService.generateMessageId(),
-        chatSessionId: _dataService.currentChatSessionId,
+        chatSessionId: currentSessionId,
         senderType: "ai_bot",
         messageContent: "Terima kasih atas pesannya! Saya sedang memproses itu. Ada hal lain yang bisa saya bantu?",
         senderId: "ai_bot_001",
@@ -949,13 +1202,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       );
       setState(() {
         _dataService.addMessage(botReplyMessage);
-        _messages = _dataService.messages;
+        _messages = _dataService.currentMessages;
       });
       _scrollToBottom();
     });
   }
 
-  // _buildChatMessageBubbleItem 
+  // _buildChatMessageBubbleItem
   Widget _buildChatMessageBubbleItem(ChatMessage message) {
     final double messageMaxWidth = context.screenWidth * 0.7;
 
@@ -1031,4 +1284,177 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
     );
   }
+
+  // --- Start of new Drawer (History) implementation ---
+
+  Widget _buildHistoryDrawer(BuildContext drawerContext) {
+    return Drawer(
+      width: drawerContext.screenWidth * 0.75, // Lebar drawer 75% dari lebar layar
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(0), // Tidak ada radius di kiri atas
+          bottomLeft: Radius.circular(0), // Tidak ada radius di kiri bawah
+        ),
+      ),
+      child: Container(
+        color: AppColor.putihNormal, // Background Drawer putih
+        child: Column(
+          children: [
+            // Header Drawer (History & Close button)
+            Container(
+              width: double.infinity,
+              height: drawerContext.scaleHeight(88), // Tinggi header sama dengan main header
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/blur_top_history.png'), // Gambar background header
+                  fit: BoxFit.fill,
+                ),
+              ),
+              padding: EdgeInsets.only(
+                top: drawerContext.scaleHeight(16),
+                left: drawerContext.scaleWidth(8),
+                right: drawerContext.scaleWidth(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/history_button.png', // Icon jam
+                        width: drawerContext.scaleWidth(34),
+                        height: drawerContext.scaleHeight(34),
+                        fit: BoxFit.contain,
+                      ),
+                      SizedBox(width: drawerContext.scaleWidth(8)),
+                      Text(
+                        'History',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 24,
+                          color: AppColor.navyText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(drawerContext).pop(), // Tutup drawer
+                    child: Icon(
+                      Icons.close,
+                      color: AppColor.navyText,
+                      size: drawerContext.scaleWidth(24),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: drawerContext.scaleHeight(20)), // Jarak antara header dan list chips
+            // List History Chips
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: drawerContext.scaleWidth(16)),
+                itemCount: _dataService.allDiscussions.length + 1, // +1 for "New Chat" button
+                itemBuilder: (context, index) {
+                  if (index < _dataService.allDiscussions.length) {
+                    // Item history
+                    final discussion = _dataService.allDiscussions[index];
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: drawerContext.scaleHeight(12)),
+                      child: _buildHistoryChipItem(drawerContext, discussion),
+                    );
+                  } else {
+                    // Tombol New Chat (plus icon)
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        top: drawerContext.scaleHeight(10),
+                        bottom: drawerContext.scaleHeight(20), // Padding bawah agar tidak mepet
+                      ),
+                      child: _buildNewChatButton(drawerContext),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryChipItem(BuildContext context, Discussion discussion) {
+    return GestureDetector(
+      onTap: () {
+        // Logika saat history chip diklik
+        print('History chip tapped: ${discussion.title} (ID: ${discussion.id})');
+        Navigator.of(context).pop(); // Tutup drawer setelah memilih
+        setState(() {
+          _dataService.loadChatSession(discussion.id);
+          _messages = _dataService.currentMessages;
+          _messageController.clear();
+          _pendingAttachments.clear();
+          _isTyping = false;
+          _showEmojiPicker = false;
+        });
+        _scrollToBottom();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          horizontal: context.scaleWidth(20),
+          vertical: context.scaleHeight(15),
+        ),
+        decoration: BoxDecoration(
+          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauSuccess.withOpacity(0.3) : AppColor.hijauSuccess, // Highlight active discussion
+          borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
+        ),
+        child: Text(
+          discussion.title,
+          style: GoogleFonts.fredoka(
+            fontSize: 16,
+            color: AppColor.navyText,
+            fontWeight: FontWeight.w500,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNewChatButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Logika saat tombol new chat diklik
+        print('New chat button tapped');
+        Navigator.of(context).pop(); // Tutup drawer
+        _dataService.startNewChat(); // Start a new chat session
+        setState(() {
+          _messages = _dataService.currentMessages; // Update messages to the new empty session
+          _messageController.clear();
+          _pendingAttachments.clear();
+          _isTyping = false;
+          _showEmojiPicker = false;
+        });
+        _scrollToBottom();
+      },
+      child: Container(
+        width: double.infinity,
+        height: context.scaleHeight(50), // Tinggi tombol
+        decoration: BoxDecoration(
+          color: AppColor.putihNormal, // Background putih
+          borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
+        ),
+        child: Center(
+          child: Icon(
+            Icons.add,
+            color: AppColor.navyText,
+            size: context.scaleWidth(30),
+          ),
+        ),
+      ),
+    );
+  }
+  // --- End of new Drawer (History) implementation ---
 }
