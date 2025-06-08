@@ -13,6 +13,7 @@ import 'package:frontend/screens/sign_in_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/forum_discussion_screen.dart';
 import 'package:frontend/screens/voice_recorder_screen.dart';
+import 'package:frontend/screens/chatbot_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,8 @@ class MyApp extends StatelessWidget {
           AppRoute.forumDiscussList: (context) => const ForumDiscussionScreen(),
           AppRoute.voiceSentiment: (context) => const VoiceRecorderScreen(),
           AppRoute.voiceSentimentHistory: (context) => HistoryScreen(), 
+          AppRoute.chatbot: (context) => const ChatbotScreen(), 
+          //AppRoute.chatbotHistory: (context) => ChatbotHistoryScreen(),
         },
       ),
     );
