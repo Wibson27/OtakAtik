@@ -233,7 +233,7 @@ class ProfileScreen extends StatelessWidget {
               // 11. Text "Link to connect with Apps"
               Positioned(
                 top: context.scaleHeight(592), // Dari Figma
-                left: context.scaleWidth(42), // Dari Figma
+                left: context.scaleWidth(110), // Dari Figma
                 child: Text(
                   'Link to connect with Apps',
                   style: GoogleFonts.inter(
