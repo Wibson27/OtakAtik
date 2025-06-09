@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:frontend/common/color_utils.dart'; 
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
 class SentimentAnalysisScreen extends StatelessWidget {
@@ -12,26 +13,15 @@ class SentimentAnalysisScreen extends StatelessWidget {
   final VocalSentimentAnalysis dummyAnalysisResult = VocalSentimentAnalysis(
     id: 'analysis_result_001',
     vocalEntryId: 'entry_dummy',
-    overallWellbeingScore: 7.5, 
+    overallWellbeingScore: 7.5,
     wellbeingCategory: 'Kesejahteraan Positif dan Stabil',
-    reflectionPrompt: 'Berdasarkan rekaman suara Anda, sistem kami mendeteksi bahwa kondisi emosional Anda saat ini cenderung positif dan stabil. Angka 5 ini merefleksikan suasana hati yang baik dan adanya keseimbangan. Kami menemukan beberapa tema yang menunjukkan adanya rasa tenang dan kepuasan dalam narasi Anda. Ini adalah indikasi yang baik dari well-being Anda.',
+    reflectionPrompt: 'Berdasarkan rekaman suara Anda, sistem kami mendeteksi bahwa kondisi emosional Anda saat ini cenderung positif dan stabil. Angka ini merefleksikan suasana hati yang baik dan adanya keseimbangan. Kami menemukan beberapa tema yang menunjukkan adanya rasa tenang dan kepuasan dalam narasi Anda. Ini adalah indikasi yang baik dari well-being Anda.',
     createdAt: DateTime.now(),
     emotionalValence: 0.6, emotionalArousal: 0.3, emotionalDominance: 0.4,
     processingDurationMs: 2500, analysisModelVersion: 'v1.1',
   );
 
   SentimentAnalysisScreen({Key? key, required this.audioPath}) : super(key: key);
-
-  Color _getScoreColor(double score) {
-    if (score >= 7.0) {
-      return AppColor.hijauSuccess; 
-    } else if (score >= 4.0) {
-      return AppColor.kuning; 
-    } else {
-      return AppColor.merahError; 
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = context.screenWidth;
@@ -41,11 +31,11 @@ class SentimentAnalysisScreen extends StatelessWidget {
     final itemScore = dummyAnalysisResult.overallWellbeingScore ?? 0.0;
     final itemCategory = dummyAnalysisResult.wellbeingCategory ?? 'Analisis Tidak Tersedia';
     final itemReflection = dummyAnalysisResult.reflectionPrompt ?? 'Tidak ada penjelasan.';
-    final Color scoreColor = _getScoreColor(itemScore);
+    final Color scoreColor = ColorUtils.getScoreColor(itemScore);
 
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
-      body: SafeArea( 
+      body: SafeArea(
         child: Stack(
           children: [
             // Background wave
@@ -84,9 +74,10 @@ class SentimentAnalysisScreen extends StatelessWidget {
             ),
 
             Positioned.fill(
-              top: context.scaleHeight(88), 
+              top: context.scaleHeight(88),
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: context.scaleWidth(20), vertical: context.scaleHeight(15)),
+                padding: EdgeInsets.symmetric(
+                    horizontal: context.scaleWidth(20), vertical: context.scaleHeight(15)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -115,7 +106,7 @@ class SentimentAnalysisScreen extends StatelessWidget {
 
                     SizedBox(height: context.scaleHeight(25)),
 
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -148,7 +139,7 @@ class SentimentAnalysisScreen extends StatelessWidget {
 
                         SizedBox(width: context.scaleWidth(15)),
 
-                        
+
                         Container(
                           width: context.scaleWidth(100),
                           height: context.scaleHeight(50),
@@ -242,7 +233,7 @@ class SentimentAnalysisScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          
+
                           Divider(
                             height: 1,
                             thickness: 1,
@@ -250,7 +241,7 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             indent: context.scaleWidth(20),
                             endIndent: context.scaleWidth(20),
                           ),
-                          
+
                           Padding(
                             padding: EdgeInsets.all(context.scaleWidth(20)),
                             child: Text(
