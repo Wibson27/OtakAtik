@@ -3,10 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:frontend/common/color_utils.dart'; 
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
 class HistoryScreen extends StatefulWidget {
-  HistoryScreen({super.key});
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -15,18 +16,6 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   // Track expanded card index
   int? expandedIndex;
-
-  //function warna skor
-  Color _getScoreColor(double score) {
-    if (score >= 7.0) {
-      return AppColor.hijauSuccess;
-    } else if (score >= 4.0) {
-      return AppColor.kuning;
-    } else {
-      return AppColor.merahError;
-    }
-  }
-
   // sample data
   final List<VocalSentimentAnalysis> historyData = [
     VocalSentimentAnalysis(
@@ -104,9 +93,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final screenWidth = screenSize.width;
-    final screenHeight = screenSize.height;
+    final screenWidth = context.screenWidth;
+    final screenHeight = context.screenHeight;
 
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
@@ -140,21 +128,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
           right: 0,
           child: Image.asset(
             'assets/images/blur_top_history.png',
-            width: 429,
-            height: 88,
+            width: context.scaleWidth(429),
+            height: context.scaleHeight(88),
             fit: BoxFit.cover,
           ),
         ),
         Positioned(
-          top: 16,
-          left: 8,
+          top: context.scaleHeight(16),
+          left: context.scaleWidth(8),
           child: GestureDetector(
             onTap: () {
               Navigator.pop(context);
             },
             child: SizedBox(
-              width: 66,
-              height: 66,
+              width: context.scaleWidth(66),
+              height: context.scaleHeight(66),
               child: Image.asset(
                 'assets/images/arrow.png',
                 fit: BoxFit.contain,
@@ -163,16 +151,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         Positioned(
-          top: 94,
-          left: 16,
-          right: 16,
+          top: context.scaleHeight(94),
+          left: context.scaleWidth(16),
+          right: context.scaleWidth(16),
           bottom: 0,
           child: ListView.builder(
             padding: EdgeInsets.fromLTRB(
               0,
-              8,
+              context.scaleHeight(8),
               0,
-              24,
+              context.scaleHeight(24),
             ),
             itemCount: historyData.length,
             itemBuilder: (context, index) {
@@ -180,7 +168,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               final isExpanded = expandedIndex == index;
 
               return Padding(
-                padding: EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.only(bottom: context.scaleHeight(16)),
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
@@ -189,8 +177,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   },
                   child: HistoryCardItem(
                     item: item,
-                    getScoreColor: _getScoreColor,
+                    getScoreColor: ColorUtils.getScoreColor,
                     isExpanded: isExpanded,
+                    context: context,
                   ),
                 ),
               );
@@ -202,17 +191,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
-// --- widget card dengan animasi expand
+// widget card dengan animasi expand
 class HistoryCardItem extends StatelessWidget {
   final VocalSentimentAnalysis item;
   final Function(double) getScoreColor;
   final bool isExpanded;
+  final BuildContext context;
 
   const HistoryCardItem({
     Key? key,
     required this.item,
     required this.getScoreColor,
     required this.isExpanded,
+    required this.context,
   }) : super(key: key);
 
   @override
@@ -224,16 +215,15 @@ class HistoryCardItem extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(context.scaleWidth(16)),
       decoration: BoxDecoration(
-        color: Color(0xFF80C2BC), // Warna hijau Tosca dengan hex code 80C2BC
-        borderRadius: BorderRadius.circular(16),
-        // Menghapus border dan menggantinya dengan boxShadow
+        color: const Color(0xFF80C2BC), 
+        borderRadius: BorderRadius.circular(context.scaleWidth(16)),
         boxShadow: [
           BoxShadow(
-            color: itemColor.withOpacity(0.5), // Warna shadow mengikuti itemColor dengan opacity 50%
-            blurRadius: 8, // Anda bisa menyesuaikan blurRadius sesuai keinginan
-            offset: const Offset(2, -2), // Offset shadow (x=2, y=-2)
+            color: itemColor.withOpacity(0.5),
+            blurRadius: 8,
+            offset: const Offset(2, -2),
           ),
         ],
       ),
@@ -243,17 +233,15 @@ class HistoryCardItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // title dan score - selalu tampil
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // kotak title
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.all(12),
+                    padding: EdgeInsets.all(context.scaleWidth(12)),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColor.putihNormal,
+                      borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
@@ -278,18 +266,17 @@ class HistoryCardItem extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(width: 12),
+                SizedBox(width: context.scaleWidth(12)),
 
-                // kotak score
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: context.scaleWidth(50),
+                  height: context.scaleHeight(50),
                   decoration: BoxDecoration(
-                    color: itemColor, // Background solid sesuai warna indikator
-                    borderRadius: BorderRadius.circular(12),
+                    color: itemColor,
+                    borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                     boxShadow: [
                       BoxShadow(
-                        color: itemColor.withOpacity(0.4), // Shadow lebih menonjol
+                        color: itemColor.withOpacity(0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -299,7 +286,7 @@ class HistoryCardItem extends StatelessWidget {
                     child: Text(
                       itemScore.round().toString(),
                       style: GoogleFonts.roboto(
-                        color: Colors.white, // Angka berwarna putih
+                        color: AppColor.putihNormal,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -309,19 +296,18 @@ class HistoryCardItem extends StatelessWidget {
               ],
             ),
 
-            SizedBox(height: 12),
+            SizedBox(height: context.scaleHeight(12)),
 
-            // Detail container dengan AnimatedCrossFade
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 400),
               crossFadeState:
                   isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               firstChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
+                padding: EdgeInsets.all(context.scaleWidth(12)),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColor.putihNormal,
+                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
@@ -340,15 +326,16 @@ class HistoryCardItem extends StatelessWidget {
                   ),
                   textAlign: TextAlign.left,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow:
+                      TextOverflow.ellipsis,
                 ),
               ),
               secondChild: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
+                padding: EdgeInsets.all(context.scaleWidth(12)),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColor.putihNormal,
+                  borderRadius: BorderRadius.circular(context.scaleWidth(12)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),

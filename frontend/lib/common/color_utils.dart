@@ -1,27 +1,14 @@
-class TimeFormatter {
-  static String formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
+import 'package:flutter/material.dart';
+import 'package:frontend/common/app_color.dart';
 
-    if (difference.inSeconds < 30) {
-      return 'baru saja';
-    } else if (difference.inMinutes < 1) {
-      return '${difference.inSeconds} detik lalu';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} menit lalu';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours} jam lalu';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} hari lalu';
+class ColorUtils {
+  static Color getScoreColor(double score) {
+    if (score >= 7.0) {
+      return AppColor.hijauSuccess;
+    } else if (score >= 4.0) {
+      return AppColor.kuning;
     } else {
-      final weeksDiff = (difference.inDays / 7).floor();
-      return '$weeksDiff minggu lalu';
+      return AppColor.merahError;
     }
-  }
-
-  static String formatTimeDetailed(DateTime dateTime) {
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }
