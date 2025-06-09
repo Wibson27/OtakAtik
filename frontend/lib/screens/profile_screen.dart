@@ -4,6 +4,7 @@ import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 import 'package:frontend/data/models/user.dart'; 
+import 'package:frontend/screens/profile_update_password_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -89,7 +90,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Stack(
                     children: [
-                      // rectangle_photo_profile.png
+                      // profile_photo_pink.jpg
                       Positioned(
                         top: context.scaleHeight(31.5), 
                         left: context.scaleWidth(24.5), 
@@ -99,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(context.scaleWidth(52)), 
                             image: const DecorationImage(
-                              image: AssetImage('assets/images/rectangle_photo_profile.png'),
+                              image: AssetImage('assets/images/profile_photo_pink.jpg'),
                               fit: BoxFit.cover,
                             ),
                             border: Border.all(
@@ -214,7 +215,12 @@ class ProfileScreen extends StatelessWidget {
                 right: context.scaleWidth(25), 
                 child: GestureDetector(
                   onTap: () {
-                    print('Update Password menu tapped');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileUpdatePasswordScreen(),
+                      ),
+                    );
                   },
                   child: Image.asset(
                     'assets/images/menu_update_password.png',
