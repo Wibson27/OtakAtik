@@ -13,7 +13,8 @@ import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/forum_discussion_screen.dart';
 import 'package:frontend/screens/voice_recorder_screen.dart';
 import 'package:frontend/screens/chatbot_screen.dart';
-import 'package:frontend/screens/history_screen.dart'; // Import history_screen
+import 'package:frontend/screens/history_screen.dart';
+import 'package:frontend/screens/profile_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,6 @@ class MyApp extends StatelessWidget {
         BlocProvider<UserCubit>(
           create: (context) => UserCubit(),
         ),
-        // Tambahkan BlocProvider untuk fitur lain di sini jika diperlukan
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
             secondary: AppColor.kuning,
           ),
           scaffoldBackgroundColor: AppColor.putihNormal,
-          textTheme: GoogleFonts.poppinsTextTheme(), // Default text theme
+          textTheme: GoogleFonts.poppinsTextTheme(), 
           appBarTheme: AppBarTheme(
             surfaceTintColor: AppColor.hijauTosca,
             backgroundColor: AppColor.hijauTosca,
@@ -66,14 +66,6 @@ class MyApp extends StatelessWidget {
             surfaceTintColor: AppColor.putihNormal,
             backgroundColor: AppColor.putihNormal,
           ),
-          // Atur TextTheme untuk font "FredokaOne" jika diperlukan secara global
-          // Jika ingin menggunakan Fredoka untuk semua heading, bisa tambahkan di sini
-          // Misalnya:
-          // textTheme: GoogleFonts.poppinsTextTheme().copyWith(
-          //   headlineLarge: GoogleFonts.fredoka(fontWeight: FontWeight.bold),
-          //   headlineMedium: GoogleFonts.fredoka(fontWeight: FontWeight.bold),
-          //   // ... dan seterusnya
-          // ),
         ),
         initialRoute: AppRoute.splash,
         routes: {
@@ -85,7 +77,7 @@ class MyApp extends StatelessWidget {
           AppRoute.voiceSentiment: (context) => const VoiceRecorderScreen(),
           AppRoute.voiceSentimentHistory: (context) => HistoryScreen(),
           AppRoute.chatbot: (context) => const ChatbotScreen(),
-          // AppRoute.chatbotHistory: (context) => ChatbotHistoryScreen(), // Uncomment jika sudah ada screennya
+          AppRoute.profile: (context) => const ProfileScreen(),
         },
       ),
     );

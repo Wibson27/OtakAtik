@@ -10,4 +10,5 @@ class AppColor {
   static const Color navyText = Color(0xFF001F3F);
   static const Color hijauSuccess = Color(0xFF2E6F40); 
   static const Color merahError = Color(0xFFB00020);
+  static const Color hitamNormal = Color(0xFF000000);
 }

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-//import 'package:frontend/screens/profile_screen.dart'; // Import ProfileScreen jika sudah dibuat
+import 'package:frontend/screens/profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class DashboardScreen extends StatelessWidget {
                 right: 0,
                 child: Image.asset(
                   'assets/images/wave_dashboard_background.png',
-                  width: screenWidth, // Gunakan screenWidth
+                  width: screenWidth, 
                   height: context.scaleHeight(832.9),
                   fit: BoxFit.fill,
                 ),
@@ -78,7 +78,7 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Bottom Navigation Area
+              // Navigation bawah
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -101,7 +101,7 @@ class DashboardScreen extends StatelessWidget {
                 left: context.scaleWidth(107),
                 child: GestureDetector(
                   onTap: () {
-                    // Current screen is Dashboard, so no action needed or animate to self
+                    
                   },
                   child: Image.asset(
                     'assets/images/home_button.png',
@@ -115,7 +115,7 @@ class DashboardScreen extends StatelessWidget {
                 right: context.scaleWidth(76),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.profile);
+                    Navigator.pushNamed(context, AppRoute.profile); // 
                   },
                   child: Image.asset(
                     'assets/images/profile_button.png',
