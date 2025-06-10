@@ -2,13 +2,18 @@ package controllers
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"backend/models"
 	"time"
+
+	"backend/config"
+	"backend/middleware"
+	"backend/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -17,481 +22,332 @@ import (
 )
 
 type VocalController struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
-// CreateEntry uploads and creates a new vocal journal entry
+func NewVocalController(db *gorm.DB, cfg *config.Config) *VocalController {
+	return &VocalController{DB: db, Cfg: cfg}
+}
+
+// --- DTOs and Request Structs ---
+
+type VocalEntryResponse struct {
+	ID                 uuid.UUID      `json:"id"`
+	UserID             uuid.UUID      `json:"user_id"`
+	EntryTitle         *string        `json:"entry_title,omitempty"`
+	DurationSeconds    int            `json:"duration_seconds"`
+	AudioFormat        string         `json:"audio_format"`
+	UserTags           pq.StringArray `json:"user_tags,omitempty"`
+	AnalysisStatus     string         `json:"analysis_status"`
+	TranscriptionReady bool           `json:"transcription_ready"`
+	AnalysisReady      bool           `json:"analysis_ready"`
+	CreatedAt          time.Time      `json:"created_at"`
+}
+
+type VocalEntryDetailResponse struct {
+	ID            uuid.UUID                      `json:"id"`
+	EntryTitle    *string                        `json:"entry_title,omitempty"`
+	CreatedAt     time.Time                      `json:"created_at"`
+	AudioURL      string                         `json:"audio_url"`
+	Transcription *models.VocalTranscription     `json:"transcription,omitempty"`
+	Analysis      *models.VocalSentimentAnalysis `json:"analysis,omitempty"`
+}
+
+type UpdateVocalEntryRequest struct {
+	EntryTitle *string        `json:"entryTitle"`
+	UserTags   pq.StringArray `json:"userTags" gorm:"type:text[]"`
+}
+
+type WellbeingTrend struct {
+	Date                string  `json:"date"`
+	OverallWellbeingScore float64 `json:"overall_wellbeing_score"`
+}
+
+
+// --- Controller Handlers ---
+
+// CreateEntry handles the upload of a new vocal journal entry.
 func (v *VocalController) CreateEntry(c *gin.Context) {
-	userIDStr := c.Param("userId")
-	userID, err := uuid.Parse(userIDStr)
+	authedUser, _ := middleware.GetFullUserFromContext(c)
+
+	if err := c.Request.ParseMultipartForm(v.Cfg.Storage.MaxFileSize); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request size exceeds limit", "code": "size_limit_exceeded"})
+		return
+	}
+
+	file, header, err := c.Request.FormFile("audioFile")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Audio file is required in 'audioFile' field", "code": "file_required"})
+		return
+	}
+	defer file.Close()
+
+	fileExt := strings.ToLower(filepath.Ext(header.Filename))
+	if fileExt != ".wav" && fileExt != ".mp3" && fileExt != ".m4a" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type. Use .wav, .mp3, or .m4a", "code": "invalid_file_type"})
 		return
 	}
 
-	// Get form data
-	entryTitle := c.PostForm("entryTitle")
-	userTagsStr := c.PostForm("userTags") // Comma-separated tags
-	transcriptionEnabled := c.DefaultPostForm("transcriptionEnabled", "true")
-	privacyLevel := c.DefaultPostForm("privacyLevel", "private")
+	uploadPath := v.Cfg.Storage.AudioUploadPath
+	if err := os.MkdirAll(uploadPath, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not prepare storage", "code": "storage_error"})
+		return
+	}
 
-	// Handle file upload
-	file, err := c.FormFile("audioFile")
+	uniqueFilename := fmt.Sprintf("%s_%s%s", authedUser.ID.String(), uuid.New().String(), fileExt)
+	filePath := filepath.Join(uploadPath, uniqueFilename)
+
+	out, err := os.Create(filePath)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Audio file is required"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save file", "code": "file_save_error"})
+		return
+	}
+	defer out.Close()
+	_, err = io.Copy(out, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while saving file", "code": "file_copy_error"})
 		return
 	}
 
-	// Validate file type
-	allowedExtensions := []string{".wav", ".mp3", ".m4a"}
-	fileExtension := strings.ToLower(filepath.Ext(file.Filename))
-	isValidExtension := false
-	for _, ext := range allowedExtensions {
-		if ext == fileExtension {
-			isValidExtension = true
-			break
-		}
-	}
+	entryTitle := c.Request.FormValue("entryTitle")
+	userTagsStr := c.Request.FormValue("userTags")
+	transcriptionEnabled, _ := strconv.ParseBool(c.DefaultPostForm("transcriptionEnabled", "true"))
 
-	if !isValidExtension {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type. Only WAV, MP3, and M4A files are allowed"})
-		return
-	}
+	// TODO: Get audio duration from file metadata.
+	durationSeconds := 120 // Placeholder
 
-	// Validate file size (max 50MB)
-	if file.Size > 50*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File size exceeds 50MB limit"})
-		return
-	}
-
-	// Generate unique filename
-	fileUUID := uuid.New()
-	filename := fmt.Sprintf("%s_%s%s", userID.String(), fileUUID.String(), fileExtension)
-	audioFilePath := filepath.Join("audio", filename)
-
-	// Create audio directory if it doesn't exist
-	if err := os.MkdirAll("audio", 0755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create audio directory"})
-		return
-	}
-
-	// Save file
-	if err := c.SaveUploadedFile(file, audioFilePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save audio file"})
-		return
-	}
-
-	// TODO: Get audio duration from file metadata
-	// For now, we'll set a placeholder value
-	durationSeconds := 60 // This should be calculated from actual audio file
-
-	// Parse user tags
-	var userTags pq.StringArray
-	if userTagsStr != "" {
-		tags := strings.Split(userTagsStr, ",")
-		for i, tag := range tags {
-			tags[i] = strings.TrimSpace(tag)
-		}
-		userTags = tags
-	}
-
-	// Validate privacy level
-	if privacyLevel != "private" && privacyLevel != "anonymous_research" {
-		privacyLevel = "private"
-	}
-
-	// Parse transcription enabled
-	transcriptionEnabledBool, _ := strconv.ParseBool(transcriptionEnabled)
-
-	// Create vocal journal entry
 	entry := models.VocalJournalEntry{
-		UserID:               userID,
+		UserID:               authedUser.ID,
+		EntryTitle:           &entryTitle,
 		DurationSeconds:      durationSeconds,
-		FileSizeBytes:        &file.Size,
-		AudioFilePath:        audioFilePath,
-		AudioFormat:          strings.TrimPrefix(fileExtension, "."),
-		RecordingQuality:     "good", // TODO: Analyze audio quality
-		AmbientNoiseLevel:    "low",  // TODO: Analyze ambient noise
-		UserTags:             userTags,
-		TranscriptionEnabled: transcriptionEnabledBool,
+		FileSizeBytes:        &header.Size,
+		AudioFilePath:        filePath,
+		AudioFormat:          strings.TrimPrefix(fileExt, "."),
+		UserTags:             strings.Split(userTagsStr, ","),
+		TranscriptionEnabled: transcriptionEnabled,
 		AnalysisStatus:       "pending",
-		PrivacyLevel:         privacyLevel,
+		PrivacyLevel:         "private",
 	}
 
-	if entryTitle != "" {
-		entry.EntryTitle = &entryTitle
-	}
-
-	// Save to database
 	if err := v.DB.Create(&entry).Error; err != nil {
-		// Clean up uploaded file if database save fails
-		os.Remove(audioFilePath)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create vocal entry"})
+		os.Remove(filePath)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create vocal entry record", "code": "db_error"})
 		return
 	}
 
-	// Trigger async processing for transcription and analysis
-	if transcriptionEnabledBool {
+	if transcriptionEnabled {
 		go v.processVocalEntry(entry.ID)
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Vocal journal entry created successfully",
-		"entry":   entry,
-	})
+	c.JSON(http.StatusCreated, gin.H{"message": "Vocal entry uploaded successfully", "entry_id": entry.ID})
 }
 
-// processVocalEntry handles async transcription and sentiment analysis
-func (v *VocalController) processVocalEntry(entryID uuid.UUID) {
-	// Update status to processing
-	v.DB.Model(&models.VocalJournalEntry{}).Where("id = ?", entryID).Update("analysis_status", "processing")
-
-	// TODO: Implement actual speech-to-text service integration
-	// This is a placeholder for the actual implementation
-
-	// Simulate processing time
-	time.Sleep(10 * time.Second)
-
-	// Example transcription (in real implementation, this would come from speech service)
-	transcription := models.VocalTranscription{
-		VocalEntryID:         entryID,
-		TranscriptionText:    "This is a placeholder transcription. In the actual implementation, this would come from a speech-to-text service like Azure Speech, Google Speech-to-Text, or AWS Transcribe.",
-		ConfidenceScore:      func() *float64 { score := 0.85; return &score }(),
-		LanguageDetected:     func() *string { lang := "id"; return &lang }(),
-		WordCount:            func() *int { count := 25; return &count }(),
-		ProcessingService:    "azure_speech", // or "google_speech", "aws_transcribe"
-		ProcessingDurationMs: func() *int { duration := 8500; return &duration }(),
-		IsEncrypted:          true,
-	}
-
-	// Save transcription
-	if err := v.DB.Create(&transcription).Error; err != nil {
-		v.DB.Model(&models.VocalJournalEntry{}).Where("id = ?", entryID).Update("analysis_status", "failed")
-		return
-	}
-
-	// TODO: Implement sentiment analysis
-	// This would typically involve:
-	// 1. Analyzing the transcribed text for emotional content
-	// 2. Analyzing voice features (tone, pace, etc.) from the audio
-	// 3. Combining text and voice analysis for comprehensive sentiment
-
-	// Example sentiment analysis (placeholder)
-	sentimentAnalysis := models.VocalSentimentAnalysis{
-		VocalEntryID:            entryID,
-		OverallWellbeingScore:   func() *float64 { score := 6.5; return &score }(),
-		WellbeingCategory:       func() *string { category := "moderate"; return &category }(),
-		EmotionalValence:        func() *float64 { valence := 0.2; return &valence }(),
-		EmotionalArousal:        func() *float64 { arousal := -0.1; return &arousal }(),
-		EmotionalDominance:      func() *float64 { dominance := 0.3; return &dominance }(),
-		DetectedEmotions:        `{"calm": 0.6, "hopeful": 0.3, "worried": 0.1}`,
-		DetectedThemes:          pq.StringArray{"daily_routine", "work_stress", "self_care"},
-		StressIndicators:        `{"voice_tension": 0.2, "speech_rate": "normal", "pauses": "few"}`,
-		VoiceFeatures:           `{"pitch_mean": 180.5, "pitch_std": 25.3, "intensity_mean": 65.2}`,
-		AnalysisModelVersion:    func() *string { version := "tenang_ai_v1.0"; return &version }(),
-		ConfidenceScore:         func() *float64 { score := 0.78; return &score }(),
-		ProcessingDurationMs:    func() *int { duration := 5200; return &duration }(),
-		ReflectionPrompt:        func() *string { prompt := "It sounds like you're navigating some daily challenges while maintaining a generally positive outlook. What aspects of your self-care routine have been most helpful recently?"; return &prompt }(),
-	}
-
-	// Save sentiment analysis
-	if err := v.DB.Create(&sentimentAnalysis).Error; err != nil {
-		v.DB.Model(&models.VocalJournalEntry{}).Where("id = ?", entryID).Update("analysis_status", "failed")
-		return
-	}
-
-	// Update status to completed
-	v.DB.Model(&models.VocalJournalEntry{}).Where("id = ?", entryID).Update("analysis_status", "completed")
-}
-
-// GetEntries returns user's vocal journal entries
+// GetEntries retrieves a paginated list of vocal entries for the user.
 func (v *VocalController) GetEntries(c *gin.Context) {
-	userIDStr := c.Param("userId")
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	// Pagination parameters
+	authedUser, _ := middleware.GetFullUserFromContext(c)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "15"))
 	offset := (page - 1) * limit
 
-	// Status filter
-	status := c.Query("status") // pending, processing, completed, failed
-
-	query := v.DB.Where("user_id = ?", userID)
-	if status != "" {
-		query = query.Where("analysis_status = ?", status)
-	}
-
 	var entries []models.VocalJournalEntry
-	if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&entries).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch vocal entries"})
-		return
-	}
+	query := v.DB.Where("user_id = ?", authedUser.ID)
+	query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&entries)
 
-	// Get total count for pagination
-	var totalCount int64
-	countQuery := v.DB.Model(&models.VocalJournalEntry{}).Where("user_id = ?", userID)
-	if status != "" {
-		countQuery = countQuery.Where("analysis_status = ?", status)
-	}
-	countQuery.Count(&totalCount)
+	var response []VocalEntryResponse
+	for _, e := range entries {
+		var transcriptionCount, analysisCount int64
+		v.DB.Model(&models.VocalTranscription{}).Where("vocal_entry_id = ?", e.ID).Count(&transcriptionCount)
+		v.DB.Model(&models.VocalSentimentAnalysis{}).Where("vocal_entry_id = ?", e.ID).Count(&analysisCount)
 
-	c.JSON(http.StatusOK, gin.H{
-		"entries": entries,
-		"pagination": gin.H{
-			"page":       page,
-			"limit":      limit,
-			"totalCount": totalCount,
-			"totalPages": (totalCount + int64(limit) - 1) / int64(limit),
-		},
-	})
+		response = append(response, VocalEntryResponse{
+			ID: e.ID, UserID: e.UserID, EntryTitle: e.EntryTitle, DurationSeconds: e.DurationSeconds,
+			AudioFormat: e.AudioFormat, UserTags: e.UserTags, AnalysisStatus: e.AnalysisStatus,
+			TranscriptionReady: transcriptionCount > 0, AnalysisReady: analysisCount > 0, CreatedAt: e.CreatedAt,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// GetEntry returns a specific vocal journal entry with analysis
+// GetEntry retrieves a single detailed vocal entry with its analysis.
 func (v *VocalController) GetEntry(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
+	entryID, _ := uuid.Parse(c.Param("entryId"))
+	authedUser, _ := middleware.GetFullUserFromContext(c)
 
 	var entry models.VocalJournalEntry
-	if err := v.DB.Preload("Transcription").Preload("SentimentAnalysis").Where("id = ?", entryID).First(&entry).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found"})
+	if err := v.DB.Preload("Transcription").Preload("Analysis").Where("id = ? AND user_id = ?", entryID, authedUser.ID).First(&entry).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found or access denied", "code": "not_found_or_forbidden"})
 		return
 	}
 
-	c.JSON(http.StatusOK, entry)
-}
-
-// GetTranscription returns transcription for a vocal entry
-func (v *VocalController) GetTranscription(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
-
-	var transcription models.VocalTranscription
-	if err := v.DB.Where("vocal_entry_id = ?", entryID).First(&transcription).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Transcription not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, transcription)
-}
-
-// GetSentimentAnalysis returns sentiment analysis for a vocal entry
-func (v *VocalController) GetSentimentAnalysis(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
-
-	var analysis models.VocalSentimentAnalysis
-	if err := v.DB.Where("vocal_entry_id = ?", entryID).First(&analysis).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Sentiment analysis not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, analysis)
-}
-
-// UpdateEntry updates a vocal journal entry
-func (v *VocalController) UpdateEntry(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
-
-	type UpdateEntryRequest struct {
-		EntryTitle   *string           `json:"entryTitle"`
-		UserTags     *pq.StringArray   `json:"userTags"`
-		PrivacyLevel *string           `json:"privacyLevel"`
-	}
-
-	var req UpdateEntryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Find entry
-	var entry models.VocalJournalEntry
-	if err := v.DB.Where("id = ?", entryID).First(&entry).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found"})
-		return
-	}
-
-	// Update fields if provided
-	if req.EntryTitle != nil {
-		entry.EntryTitle = req.EntryTitle
-	}
-
-	if req.UserTags != nil {
-		entry.UserTags = *req.UserTags
-	}
-
-	if req.PrivacyLevel != nil {
-		if *req.PrivacyLevel == "private" || *req.PrivacyLevel == "anonymous_research" {
-			entry.PrivacyLevel = *req.PrivacyLevel
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid privacy level. Use 'private' or 'anonymous_research'"})
-			return
-		}
-	}
-
-	// Save updates
-	if err := v.DB.Save(&entry).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update vocal entry"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Vocal entry updated successfully",
-		"entry":   entry,
+	c.JSON(http.StatusOK, VocalEntryDetailResponse{
+		ID:            entry.ID,
+		EntryTitle:    entry.EntryTitle,
+		CreatedAt:     entry.CreatedAt,
+		AudioURL:      fmt.Sprintf("/api/v1/vocal/entries/%s/audio", entry.ID.String()),
+		Transcription: entry.Transcription,
+		Analysis:      entry.SentimentAnalysis,
 	})
 }
 
-// DeleteEntry deletes a vocal journal entry and its associated files
+// DeleteEntry deletes a vocal entry and its associated data and file.
 func (v *VocalController) DeleteEntry(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
+	entryID, _ := uuid.Parse(c.Param("entryId"))
+	authedUser, _ := middleware.GetFullUserFromContext(c)
 
-	// Find entry
 	var entry models.VocalJournalEntry
-	if err := v.DB.Where("id = ?", entryID).First(&entry).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found"})
+	if err := v.DB.Where("id = ? AND user_id = ?", entryID, authedUser.ID).First(&entry).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found", "code": "not_found"})
 		return
 	}
 
-	// Delete associated audio file
-	if entry.AudioFilePath != "" {
-		if err := os.Remove(entry.AudioFilePath); err != nil {
-			// Log error but don't fail the request
-			fmt.Printf("Warning: Failed to delete audio file %s: %v\n", entry.AudioFilePath, err)
-		}
+	// Hapus file dari disk
+	if err := os.Remove(entry.AudioFilePath); err != nil {
+		log.Printf("WARNING: Failed to delete audio file %s: %v", entry.AudioFilePath, err)
 	}
 
-	// Delete from database (this will cascade to transcription and sentiment analysis)
-	if err := v.DB.Delete(&entry).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete vocal entry"})
+	// Hapus record dari DB (akan ter-cascade ke transkripsi dan analisis)
+	if err := v.DB.Select("Transcription", "Analysis").Delete(&entry).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete vocal entry record", "code": "db_error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Vocal entry deleted successfully"})
+	c.Status(http.StatusNoContent)
 }
 
-// GetWellbeingTrends returns user's wellbeing trends from vocal analysis
+// GetAudioFile serves the requested audio file after ownership verification.
+func (v *VocalController) GetAudioFile(c *gin.Context) {
+    entryID, _ := uuid.Parse(c.Param("entryId"))
+    authedUser, _ := middleware.GetFullUserFromContext(c)
+
+    var entry models.VocalJournalEntry
+    if err := v.DB.Where("id = ? AND user_id = ?", entryID, authedUser.ID).First(&entry).Error; err != nil {
+        c.JSON(http.StatusForbidden, gin.H{"error": "Access to this audio file is denied", "code": "forbidden"})
+        return
+    }
+
+    c.File(entry.AudioFilePath)
+}
+
+// GetWellbeingTrends returns aggregated wellbeing data for visualizations.
 func (v *VocalController) GetWellbeingTrends(c *gin.Context) {
-	userIDStr := c.Param("userId")
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	// Get date range from query params (default to last 30 days)
-	daysStr := c.DefaultQuery("days", "30")
-	days, _ := strconv.Atoi(daysStr)
-	if days <= 0 {
-		days = 30
-	}
-
-	startDate := time.Now().AddDate(0, 0, -days)
-
-	// Get wellbeing scores over time
-	type WellbeingTrend struct {
-		Date                  time.Time `json:"date"`
-		OverallWellbeingScore float64   `json:"overallWellbeingScore"`
-		EmotionalValence      float64   `json:"emotionalValence"`
-		WellbeingCategory     string    `json:"wellbeingCategory"`
-	}
+	authedUser, _ := middleware.GetFullUserFromContext(c)
+	days, _ := strconv.Atoi(c.DefaultQuery("days", "30"))
 
 	var trends []WellbeingTrend
-	query := `
-		SELECT
-			DATE(vje.created_at) as date,
-			AVG(vsa.overall_wellbeing_score) as overall_wellbeing_score,
-			AVG(vsa.emotional_valence) as emotional_valence,
-			MODE() WITHIN GROUP (ORDER BY vsa.wellbeing_category) as wellbeing_category
-		FROM vocal_journal_entries vje
-		JOIN vocal_sentiment_analysis vsa ON vje.id = vsa.vocal_entry_id
-		WHERE vje.user_id = ? AND vje.created_at >= ? AND vsa.overall_wellbeing_score IS NOT NULL
-		GROUP BY DATE(vje.created_at)
-		ORDER BY date DESC
-	`
+	v.DB.Model(&models.VocalSentimentAnalysis{}).
+		Select("DATE(vocal_journal_entries.created_at) as date, AVG(overall_wellbeing_score) as overall_wellbeing_score").
+		Joins("JOIN vocal_journal_entries ON vocal_journal_entries.id = vocal_sentiment_analysis.vocal_entry_id").
+		Where("vocal_journal_entries.user_id = ? AND vocal_journal_entries.created_at >= ?", authedUser.ID, time.Now().AddDate(0, 0, -days)).
+		Group("DATE(vocal_journal_entries.created_at)").
+		Order("date ASC").
+		Scan(&trends)
 
-	if err := v.DB.Raw(query, userID, startDate).Scan(&trends).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch wellbeing trends"})
-		return
-	}
-
-	// Calculate overall statistics
-	var avgWellbeing, avgValence float64
-	if len(trends) > 0 {
-		totalWellbeing, totalValence := 0.0, 0.0
-		for _, trend := range trends {
-			totalWellbeing += trend.OverallWellbeingScore
-			totalValence += trend.EmotionalValence
-		}
-		avgWellbeing = totalWellbeing / float64(len(trends))
-		avgValence = totalValence / float64(len(trends))
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"trends": trends,
-		"summary": gin.H{
-			"averageWellbeing": avgWellbeing,
-			"averageValence":   avgValence,
-			"periodDays":       days,
-			"entryCount":       len(trends),
-		},
-		"dateRange": gin.H{
-			"startDate": startDate,
-			"endDate":   time.Now(),
-		},
-	})
+	c.JSON(http.StatusOK, gin.H{"trends": trends})
 }
 
-// GetAudioFile serves the audio file for playback
-func (v *VocalController) GetAudioFile(c *gin.Context) {
-	entryIDStr := c.Param("entryId")
-	entryID, err := uuid.Parse(entryIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entry ID"})
-		return
-	}
 
-	// Find entry
+// --- AI Processing Pipeline & Helpers ---
+
+func (v *VocalController) processVocalEntry(entryID uuid.UUID) {
+	log.Printf("Starting vocal analysis pipeline for entry: %s", entryID)
+	v.DB.Model(&models.VocalJournalEntry{}).Where("id = ?", entryID).Update("analysis_status", "processing")
+
 	var entry models.VocalJournalEntry
-	if err := v.DB.Where("id = ?", entryID).First(&entry).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vocal entry not found"})
+	if err := v.DB.First(&entry, entryID).Error; err != nil {
+		log.Printf("ERROR: Could not find entry %s to process: %v", entryID, err)
 		return
 	}
 
-	// TODO: Add authorization check to ensure user owns this entry
-
-	// Check if file exists
-	if _, err := os.Stat(entry.AudioFilePath); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Audio file not found"})
+	// ---- Tahap 1: Speech-to-Text (Azure Speech Services) ----
+	transcriptionText, err := v.transcribeAudioWithAzure(entry.AudioFilePath)
+	if err != nil {
+		log.Printf("ERROR: Azure transcription failed for entry %s: %v", entryID, err)
+		v.DB.Model(&entry).Update("analysis_status", "failed")
 		return
 	}
+	confidenceScore := 0.95
+	transcription := models.VocalTranscription{
+		VocalEntryID: entryID, TranscriptionText: transcriptionText, ConfidenceScore: &confidenceScore, // Placeholder score
+	}
+	v.DB.Create(&transcription)
 
-	// Serve the file
-	c.File(entry.AudioFilePath)
+
+	// ---- Tahap 2: Content Analysis (Azure Text Analytics) ----
+	themes, err := v.analyzeTextWithAzure(transcriptionText)
+	if err != nil { log.Printf("WARNING: Text analysis failed for entry %s: %v", entryID, err) }
+
+
+	// ---- Tahap 3: Vocal Sentiment Analysis (HuggingFace) ----
+	// valence, arousal, dominance, err := v.analyzeVocalTonesWithHuggingFace(entry.AudioFilePath)
+	// if err != nil { log.Printf("WARNING: Vocal analysis failed for entry %s: %v", entryID, err) }
+
+
+	// ---- Tahap 4: Gabungkan Hasil & Simpan ----
+	overallScore := 7.5
+	wellbeingCategory := "Menghadapi beberapa tantangan 💪"
+	analysis := models.VocalSentimentAnalysis{
+		VocalEntryID:         entryID,
+		OverallWellbeingScore: &overallScore, // Placeholder
+		WellbeingCategory:    &wellbeingCategory, // Placeholder
+		DetectedThemes:       themes,
+	}
+	v.DB.Create(&analysis)
+
+	v.DB.Model(&entry).Update("analysis_status", "completed")
+	log.Printf("Finished vocal analysis pipeline for entry: %s", entryID)
+}
+
+func (v *VocalController) transcribeAudioWithAzure(filePath string) (string, error) {
+	// apiKey := v.Cfg.Azure.SpeechApiKey
+	// region := v.Cfg.Azure.SpeechRegion
+	// if apiKey == "" || region == "" { return "", errors.New("Azure Speech config not set") }
+	//
+	// config, err := speech.NewSpeechConfigFromSubscription(apiKey, region)
+	// if err != nil { return "", err }
+	// defer config.Close()
+	//
+	// audioConfig, err := audio.NewAudioConfigFromWavFileInput(filePath)
+	// if err != nil { return "", err }
+	// defer audioConfig.Close()
+	//
+	// recognizer, err := speech.NewSpeechRecognizerFromConfig(config, audioConfig)
+	// if err != nil { return "", err }
+	// defer recognizer.Close()
+	//
+	// result := <-recognizer.RecognizeOnceAsync()
+	// if result.Error != nil { return "", result.Error }
+
+	// Placeholder untuk pengembangan
+	log.Printf("TRANSCRIBING (placeholder): %s", filePath)
+	time.Sleep(3 * time.Second)
+	return "Ini adalah hasil transkripsi dari file audio. Terdengar ada sedikit kekhawatiran mengenai pekerjaan, namun secara umum nada suara terdengar stabil dan tenang.", nil
+}
+
+func (v *VocalController) analyzeTextWithAzure(text string) (pq.StringArray, error) {
+	// endpoint := v.Cfg.Azure.TextAnalyticsEndpoint
+	// key := v.Cfg.Azure.TextAnalyticsKey
+	// ... (Setup Azure Text Analytics client) ...
+	//
+	// resp, err := client.ExtractKeyPhrases(context.Background(), []string{text}, nil)
+	// ... (proses response untuk mendapatkan tema/keyword)
+
+	// Placeholder untuk pengembangan
+	log.Printf("ANALYZING TEXT (placeholder): %s", text)
+	time.Sleep(1 * time.Second)
+	return pq.StringArray{"pekerjaan", "tantangan", "rutinitas"}, nil
+}
+
+func (v *VocalController) analyzeVocalTonesWithHuggingFace(filePath string) (float64, float64, float64, error) {
+	// endpoint := v.Cfg.HuggingFace.Endpoint
+	// apiKey := v.Cfg.HuggingFace.ApiKey
+	// ... (baca file audio, buat HTTP request ke HuggingFace Inference API) ...
+	//
+	// resp, err := http.DefaultClient.Do(req)
+	// ... (proses JSON response dari HuggingFace)
+
+	// Placeholder untuk pengembangan
+	log.Printf("ANALYZING VOCAL TONES (placeholder): %s", filePath)
+	time.Sleep(2 * time.Second)
+	return 0.6, 0.3, 0.5, nil // valence, arousal, dominance
 }
