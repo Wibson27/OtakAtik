@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"backend/models"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -8,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"backend/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,12 +23,12 @@ type SocialController struct {
 // ConnectAccount connects a social media account
 func (s *SocialController) ConnectAccount(c *gin.Context) {
 	type ConnectAccountRequest struct {
-		Platform         string `json:"platform" binding:"required"` // instagram, twitter, facebook, tiktok
-		PlatformUserID   string `json:"platformUserId" binding:"required"`
-		PlatformUsername string `json:"platformUsername"`
-		AccessToken      string `json:"accessToken" binding:"required"`
-		TokenExpiresAt   string `json:"tokenExpiresAt"` // ISO 8601 format
-		MonitoringEnabled bool  `json:"monitoringEnabled"`
+		Platform          string `json:"platform" binding:"required"` // instagram, twitter, facebook, tiktok
+		PlatformUserID    string `json:"platformUserId" binding:"required"`
+		PlatformUsername  string `json:"platformUsername"`
+		AccessToken       string `json:"accessToken" binding:"required"`
+		TokenExpiresAt    string `json:"tokenExpiresAt"` // ISO 8601 format
+		MonitoringEnabled bool   `json:"monitoringEnabled"`
 	}
 
 	var req ConnectAccountRequest
@@ -404,10 +404,10 @@ func (s *SocialController) GetSocialMediaInsights(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "No social media accounts with monitoring enabled",
 			"insights": gin.H{
-				"totalPosts":      0,
-				"platformCounts":  map[string]int{},
-				"timelineData":    []interface{}{},
-				"summary":         gin.H{},
+				"totalPosts":     0,
+				"platformCounts": map[string]int{},
+				"timelineData":   []interface{}{},
+				"summary":        gin.H{},
 			},
 		})
 		return
