@@ -1,11 +1,8 @@
-// lib/screens/profile_edit_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-// Import model User jika nanti akan menampilkan data user dari model
-// import 'package:frontend/data/models/user.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -15,18 +12,14 @@ class ProfileEditScreen extends StatefulWidget {
 }
 
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
-  // Controllers input
+  // Controller input
   final TextEditingController _displayNameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
-
-  // FocusNodes
   final FocusNode _displayNameFocusNode = FocusNode();
   final FocusNode _usernameFocusNode = FocusNode();
-
-  // GlobalKey for Form
   final _formKey = GlobalKey<FormState>();
 
-  // Error texts
+  // Error  text
   String? _displayNameErrorText;
   String? _usernameErrorText;
 
@@ -42,17 +35,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _displayNameController.addListener(_clearDisplayNameError);
     _usernameController.addListener(_clearUsernameError);
 
-    // TODO: Load existing user data into controllers from actual user model
-    _displayNameController.text = 'El fonso mantey'; // Dummy data dari Figma
-    _usernameController.text = '@Elcuphacabra'; // Dummy data dari Figma
+    _displayNameController.text = 'El fonso mantey';
+    _usernameController.text = '@Elcuphacabra';
   }
 
   void _onFocusChange() {
-    setState(() {}); // Untuk me-rebuild UI saat fokus berubah
+    setState(() {});
   }
 
   void _clearDisplayNameError() {
-    if (_displayNameErrorText != null && _displayNameController.text.isNotEmpty) {
+    if (_displayNameErrorText != null &&
+        _displayNameController.text.isNotEmpty) {
       setState(() {
         _displayNameErrorText = null;
       });
@@ -108,18 +101,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       isValid = false;
     }
 
-
     if (isValid) {
-      // Jika form valid, lakukan proses update profil
       print('Display Name: ${_displayNameController.text}');
       print('Username: ${_usernameController.text}');
-      // TODO: Panggil API backend untuk update profil
-      // Misalnya: context.read<UserCubit>().updateProfile(_displayNameController.text, _usernameController.text);
-      Navigator.pop(context); // Kembali ke ProfileScreen setelah berhasil update
-      // Tampilkan SnackBar sukses
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Profil berhasil diupdate!', style: GoogleFonts.roboto(color: AppColor.putihNormal)),
+          content: Text('Profil berhasil diupdate!',
+              style: GoogleFonts.roboto(color: AppColor.putihNormal)),
           backgroundColor: AppColor.hijauSuccess,
           duration: const Duration(seconds: 2),
         ),
@@ -129,8 +118,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   void _handleReset() {
     setState(() {
-      _displayNameController.text = 'El fonso mantey'; // Reset ke dummy awal
-      _usernameController.text = '@Elcuphacabra'; // Reset ke dummy awal
+      _displayNameController.text = 'El fonso mantey';
+      _usernameController.text = '@Elcuphacabra';
       _displayNameFocusNode.unfocus();
       _usernameFocusNode.unfocus();
       _displayNameErrorText = null;
@@ -152,7 +141,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png (background atas)
+              // wave_top.png
               Positioned(
                 top: 0,
                 left: 0,
@@ -165,7 +154,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ),
               ),
 
-              // arrow.png (tombol kembali)
+              // arrow.png
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -182,7 +171,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ),
               ),
 
-              // Text 'Edit Profile' - posisinya di wave_top
+              // Text 'Edit Profile'
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -190,24 +179,22 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 child: Center(
                   child: Text(
                     'Edit Profile',
-                    style: GoogleFonts.roboto( // Menggunakan Roboto untuk teks judul
+                    style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: AppColor.putihNormal, // Warna putihNormal agar sesuai
+                      color: AppColor.putihNormal,
                     ),
                   ),
                 ),
               ),
 
-              // Konten Utama Edit Profile (Rectangle 31)
               Positioned(
-                top: context.scaleHeight(200), // Posisi container putih disesuaikan
+                top: context.scaleHeight(94),
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Container(
                   width: context.scaleWidth(380),
-                  // Tinggi container bisa disesuaikan atau dihilangkan jika pakai SingleChildScrollView
-                  // height: context.scaleHeight(373),
+                  height: context.scaleHeight(167),
                   decoration: BoxDecoration(
                     color: AppColor.putihNormal,
                     borderRadius: BorderRadius.circular(context.scaleWidth(18)),
@@ -219,57 +206,131 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       ),
                     ],
                   ),
-                  child: SingleChildScrollView( // Tambahkan SingleChildScrollView
+                  child: Stack(
+                    children: [
+                      // profile_photo_pink.png
+                      Positioned(
+                        top: context.scaleHeight(31.5),
+                        left: context.scaleWidth(24.5),
+                        child: Container(
+                          width: context.scaleWidth(104),
+                          height: context.scaleHeight(104),
+                          decoration: BoxDecoration(
+                            borderRadius:
+                                BorderRadius.circular(context.scaleWidth(52)),
+                            border: Border.all(
+                              color: AppColor.putihNormal.withOpacity(0.5),
+                              width: context.scaleWidth(2),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 4,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(context.scaleWidth(52)),
+                            child: Image.asset(
+                              'assets/images/profile_photo_pink.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Icon(Icons.person,
+                                      size: context.scaleWidth(60),
+                                      color: Colors.grey),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Display Name
+                      Positioned(
+                        top: context.scaleHeight(53),
+                        left: context.scaleWidth(149),
+                        child: Text(
+                          _displayNameController.text.isNotEmpty
+                              ? _displayNameController.text
+                              : 'Nama Anda',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      // Username
+                      Positioned(
+                        top: context.scaleHeight(75),
+                        left: context.scaleWidth(149),
+                        child: Text(
+                          _usernameController.text.isNotEmpty
+                              ? _usernameController.text
+                              : '@usernameAnda',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      // Text "Ubah foto profil"
+                      Positioned(
+                        top: context.scaleHeight(94),
+                        left: context.scaleWidth(149),
+                        child: GestureDetector(
+                          onTap: () {
+                            print('Ubah foto profil tapped');
+                          },
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            width: context.scaleWidth(212),
+                            height: context.scaleHeight(54),
+                            child: Text(
+                              'Ubah foto profil',
+                              style: GoogleFonts.roboto(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF5CC4BB),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Input Fields
+              Positioned(
+                top: context.scaleHeight(271),
+                left: context.scaleWidth(25),
+                right: context.scaleWidth(25),
+                child: Container(
+                  width: context.scaleWidth(380),
+                  decoration: BoxDecoration(
+                    color: AppColor.putihNormal,
+                    borderRadius: BorderRadius.circular(context.scaleWidth(18)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(height: context.scaleHeight(60)),
-
-                          // Bagian Foto Profil
-                          Container(
-                            width: context.scaleWidth(104),
-                            height: context.scaleHeight(104),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(context.scaleWidth(52)),
-                              border: Border.all(
-                                color: AppColor.putihNormal.withOpacity(0.5),
-                                width: context.scaleWidth(2),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.25),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(context.scaleWidth(52)),
-                              child: Image.asset(
-                                'assets/images/profile_photo_pink.png',
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: Icon(Icons.person, size: context.scaleWidth(60), color: Colors.grey),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: context.scaleHeight(15)),
-
-                          Text(
-                            'Ubah foto profil',
-                            style: GoogleFonts.roboto(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF5CC4BB),
-                            ),
-                          ),
-                          SizedBox(height: context.scaleHeight(50)), // Jarak ke input fields
+                          SizedBox(height: context.scaleHeight(30)),
 
                           // Input Field Display Name
                           _buildInputField(
@@ -278,15 +339,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                             focusNode: _displayNameFocusNode,
                             hintText: 'Nama',
                             width: context.scaleWidth(297),
-                            height: context.scaleHeight(50), // Ubah tinggi menjadi 50
+                            height: context.scaleHeight(50),
                             validator: (value) {
-                              return null; // Validasi akan dilakukan di _handleUpdateProfile
+                              return null;
                             },
                           ),
-                          // Untuk menampilkan error Display Name
                           if (_displayNameErrorText != null)
                             Padding(
-                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              padding:
+                                  EdgeInsets.only(top: context.scaleHeight(5)),
                               child: Text(
                                 _displayNameErrorText!,
                                 style: GoogleFonts.roboto(
@@ -305,15 +366,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                             focusNode: _usernameFocusNode,
                             hintText: 'Nama pengguna',
                             width: context.scaleWidth(297),
-                            height: context.scaleHeight(50), // Ubah tinggi menjadi 50
+                            height: context.scaleHeight(50),
                             validator: (value) {
-                              return null; // Validasi akan dilakukan di _handleUpdateProfile
+                              return null;
                             },
                           ),
-                          // Untuk menampilkan error Username
                           if (_usernameErrorText != null)
                             Padding(
-                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              padding:
+                                  EdgeInsets.only(top: context.scaleHeight(5)),
                               child: Text(
                                 _usernameErrorText!,
                                 style: GoogleFonts.roboto(
@@ -323,9 +384,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                 ),
                               ),
                             ),
-                          SizedBox(height: context.scaleHeight(50)), // Jarak ke tombol
+                          SizedBox(height: context.scaleHeight(50)),
 
-                          // Buttons: Reset dan Done
+                          // Button: Reset dan Done
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -339,7 +400,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                 onPressed: _handleReset,
                                 isActive: _isResetButtonActive,
                                 onActiveStateChanged: (isActive) {
-                                  setState(() => _isResetButtonActive = isActive);
+                                  setState(
+                                      () => _isResetButtonActive = isActive);
                                 },
                               ),
                               SizedBox(width: context.scaleWidth(20)),
@@ -353,12 +415,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                 onPressed: _handleUpdateProfile,
                                 isActive: _isDoneButtonActive,
                                 onActiveStateChanged: (isActive) {
-                                  setState(() => _isDoneButtonActive = isActive);
+                                  setState(
+                                      () => _isDoneButtonActive = isActive);
                                 },
                               ),
                             ],
                           ),
-                          SizedBox(height: context.scaleHeight(20)), // Jarak di bawah tombol
+                          SizedBox(height: context.scaleHeight(20)),
                         ],
                       ),
                     ),
@@ -388,7 +451,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(
+                              context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -399,7 +463,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(
+                              context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',
@@ -419,7 +484,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
-  // _buildInputField kustom
+  // _buildInputField
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -431,12 +496,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     String? Function(String?)? validator,
   }) {
     Color boxColor = AppColor.hijauTosca;
-    Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
+    Color borderColor =
+        focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
     double borderWidth = focusNode.hasFocus ? 2 : 1;
     double blurRadius = focusNode.hasFocus ? 8 : 0;
-    Offset offset = focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
+    Offset offset =
+        focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
 
-    final double textFontSize = 16.0; // Ukuran font dari Figma
+    final double textFontSize = 16.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -458,7 +525,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: context.scaleWidth(20),
-            vertical: (height - textFontSize * 1.0 - borderWidth * 2) / 2, // Sesuaikan padding vertikal
+            vertical: (height - textFontSize * 1.0 - borderWidth * 2) / 2,
           ).clamp(
             EdgeInsets.zero,
             EdgeInsets.all(context.scaleWidth(10)),
@@ -471,16 +538,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               controller: controller,
               focusNode: focusNode,
               obscureText: obscureText,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.start,
               textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.fredoka( // Menggunakan Fredoka agar konsisten
+              style: GoogleFonts.fredoka(
                 color: AppColor.whiteText,
                 fontSize: textFontSize,
                 fontWeight: FontWeight.normal,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: GoogleFonts.fredoka( // Menggunakan Fredoka agar konsisten
+                hintStyle: GoogleFonts.fredoka(
                   color: AppColor.whiteText.withOpacity(0.7),
                   fontSize: textFontSize,
                   fontWeight: FontWeight.w400,
@@ -497,7 +564,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
-  // Widget untuk button Reset dan Done (sama dengan ProfileUpdatePasswordScreen)
+  // Widget untuk button Reset dan Done
   Widget _buildActionButton({
     required BuildContext context,
     required String text,
