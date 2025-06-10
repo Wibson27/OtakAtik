@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +15,15 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// Custom errors for JWT validation for better error handling
+var (
+	ErrInvalidToken          = errors.New("token is invalid")
+	ErrMismatchedTokenType   = errors.New("token type is mismatched")
+	ErrMismatchedIssuer      = errors.New("token issuer is mismatched")
+	ErrUserNotFoundOrInactive = errors.New("user account not found or inactive")
+)
+
 
 // TenangJWTClaims represents JWT token claims for Tenang.in platform
 type TenangJWTClaims struct {
@@ -47,13 +58,15 @@ func TenangAuthMiddleware() gin.HandlerFunc {
 		// Parse and validate token
 		claims, err := ValidateTenangJWT(tokenString, "access")
 		if err != nil {
-			respondWithAuthError(c, "Invalid or expired token", "invalid_token")
-			return
-		}
-
-		// Check token expiration
-		if claims.ExpiresAt.Time.Before(time.Now()) {
-			respondWithAuthError(c, "Token has expired", "token_expired")
+			// Handle specific token errors with tailored responses
+			switch {
+			case errors.Is(err, ErrInvalidToken):
+				respondWithAuthError(c, "Invalid or expired token", "invalid_token")
+			case errors.Is(err, jwt.ErrTokenExpired):
+				respondWithAuthError(c, "Token has expired", "token_expired")
+			default:
+				respondWithAuthError(c, "Authentication failed", "auth_error")
+			}
 			return
 		}
 
@@ -74,7 +87,7 @@ func TenangAuthMiddleware() gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("user_email", claims.Email)
 		c.Set("is_admin", claims.IsAdmin)
-		c.Set("privacy_level", claims.PrivacyLevel)
+		c.Set("privacy_level", user.PrivacyLevel)
 		c.Set("session_id", claims.SessionID)
 		c.Set("user", user) // Full user object for convenience
 
@@ -114,7 +127,7 @@ func OptionalAuth() gin.HandlerFunc {
 		parts := strings.Split(authHeader, " ")
 		if len(parts) == 2 && parts[0] == "Bearer" {
 			claims, err := ValidateTenangJWT(parts[1], "access")
-			if err == nil && claims.ExpiresAt.Time.After(time.Now()) {
+			if err == nil {
 				// Valid token, set user context
 				c.Set("user_id", claims.UserID)
 				c.Set("user_email", claims.Email)
@@ -141,7 +154,7 @@ func GenerateTenangJWT(user models.User, tokenType string, sessionID string) (st
 		secret = cfg.JWT.RefreshSecret
 		expiry = cfg.JWT.RefreshExpiry
 	} else {
-		return "", jwt.ErrInvalidKey
+		return "", jwt.ErrInvalidKeyType
 	}
 
 	// Determine if user is admin (check by email pattern for Tenang.in)
@@ -189,39 +202,39 @@ func ValidateTenangJWT(tokenString, expectedType string) (*TenangJWTClaims, erro
 		}
 
 		// Get claims to determine which secret to use
-		claims := token.Claims.(*TenangJWTClaims)
+		claims, ok := token.Claims.(*TenangJWTClaims)
+		if !ok {
+			return nil, jwt.ErrInvalidKey
+		}
+
 		if claims.TokenType == "access" {
 			return []byte(cfg.JWT.AccessSecret), nil
 		} else if claims.TokenType == "refresh" {
 			return []byte(cfg.JWT.RefreshSecret), nil
 		}
 
-		return nil, jwt.ErrInvalidKey
+		return nil, jwt.ErrInvalidKeyType
 	})
 
+	// Handle parsing errors (e.g., expired, malformed)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate token
-	if !token.Valid {
-		return nil, jwt.ErrTokenInvalid
-	}
-
 	// Get claims
 	claims, ok := token.Claims.(*TenangJWTClaims)
-	if !ok {
-		return nil, jwt.ErrInvalidKey
+	if !ok || !token.Valid {
+		return nil, ErrInvalidToken
 	}
 
 	// Validate token type
 	if claims.TokenType != expectedType {
-		return nil, jwt.ErrInvalidKey
+		return nil, ErrMismatchedTokenType
 	}
 
 	// Validate issuer for security
 	if claims.Issuer != "tenang.in" {
-		return nil, jwt.ErrInvalidKey
+		return nil, ErrMismatchedIssuer
 	}
 
 	return claims, nil
@@ -238,7 +251,7 @@ func RefreshTenangTokens(refreshToken string, db *gorm.DB) (string, string, erro
 	// Get user from database
 	var user models.User
 	if err := db.Where("id = ? AND is_active = ?", claims.UserID, true).First(&user).Error; err != nil {
-		return "", "", err
+		return "", "", ErrUserNotFoundOrInactive
 	}
 
 	// Generate new session ID for security
@@ -260,39 +273,58 @@ func RefreshTenangTokens(refreshToken string, db *gorm.DB) (string, string, erro
 
 // GetUserFromTenangContext extracts user information from Gin context
 func GetUserFromTenangContext(c *gin.Context) (uuid.UUID, string, bool, string, error) {
-	userID, exists := c.Get("user_id")
+	userIDVal, exists := c.Get("user_id")
 	if !exists {
-		return uuid.Nil, "", false, "", jwt.ErrInvalidKey
+		return uuid.Nil, "", false, "", ErrInvalidToken
 	}
 
-	email, exists := c.Get("user_email")
+	emailVal, exists := c.Get("user_email")
 	if !exists {
-		return uuid.Nil, "", false, "", jwt.ErrInvalidKey
+		return uuid.Nil, "", false, "", ErrInvalidToken
 	}
 
-	isAdmin, exists := c.Get("is_admin")
+	isAdminVal, exists := c.Get("is_admin")
 	if !exists {
-		return uuid.Nil, "", false, "", jwt.ErrInvalidKey
+		return uuid.Nil, "", false, "", ErrInvalidToken
 	}
 
-	privacyLevel, exists := c.Get("privacy_level")
+	privacyLevelVal, exists := c.Get("privacy_level")
 	if !exists {
-		return uuid.Nil, "", false, "", jwt.ErrInvalidKey
+		return uuid.Nil, "", false, "", ErrInvalidToken
 	}
 
-	return userID.(uuid.UUID), email.(string), isAdmin.(bool), privacyLevel.(string), nil
+	// Type assertions
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		return uuid.Nil, "", false, "", ErrInvalidToken
+	}
+	email, ok := emailVal.(string)
+	if !ok {
+		return uuid.Nil, "", false, "", ErrInvalidToken
+	}
+	isAdmin, ok := isAdminVal.(bool)
+	if !ok {
+		return uuid.Nil, "", false, "", ErrInvalidToken
+	}
+	privacyLevel, ok := privacyLevelVal.(string)
+	if !ok {
+		return uuid.Nil, "", false, "", ErrInvalidToken
+	}
+
+	return userID, email, isAdmin, privacyLevel, nil
 }
+
 
 // GetFullUserFromContext gets the complete User object from context
 func GetFullUserFromContext(c *gin.Context) (*models.User, error) {
-	user, exists := c.Get("user")
+	userVal, exists := c.Get("user")
 	if !exists {
-		return nil, jwt.ErrInvalidKey
+		return nil, ErrInvalidToken
 	}
 
-	userObj, ok := user.(models.User)
+	userObj, ok := userVal.(models.User)
 	if !ok {
-		return nil, jwt.ErrInvalidKey
+		return nil, ErrInvalidToken
 	}
 
 	return &userObj, nil
@@ -302,49 +334,41 @@ func GetFullUserFromContext(c *gin.Context) (*models.User, error) {
 func ValidateUserOwnership() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user ID from token
-		tokenUserID, _, _, _, err := GetUserFromTenangContext(c)
+		tokenUserID, _, isAdminVal, _, err := GetUserFromTenangContext(c)
 		if err != nil {
 			respondWithAuthError(c, "Authentication required", "auth_required")
 			return
 		}
 
-		// Get user ID from URL parameter
-		paramUserID := c.Param("userId")
-		if paramUserID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "User ID required in URL",
-				"code":    "user_id_required",
-				"message": "This endpoint requires a user ID parameter",
-			})
-			c.Abort()
+		// Admins can access any user's data
+		if isAdminVal {
+			c.Next()
 			return
 		}
 
-		// Parse URL user ID
-		urlUserID, err := uuid.Parse(paramUserID)
+		// Get user ID from URL parameter, if it exists
+		paramUserIDStr := c.Param("userId")
+		if paramUserIDStr == "" {
+			c.Next()
+			return // No ownership to check if userId is not in the URL
+		}
+
+		urlUserID, err := uuid.Parse(paramUserIDStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "Invalid user ID format",
-				"code":    "invalid_user_id",
-				"message": "User ID must be a valid UUID",
+				"error":   "Invalid user ID format in URL",
+				"code":    "invalid_user_id_format",
 			})
 			c.Abort()
-			return
-		}
-
-		// Check if user is admin (admins can access any user's data)
-		isAdmin, _ := c.Get("is_admin")
-		if isAdmin.(bool) {
-			c.Next()
 			return
 		}
 
 		// Check if token user ID matches URL user ID
 		if tokenUserID != urlUserID {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error":   "Access denied",
+				"error":   "Access Denied",
 				"code":    "access_denied",
-				"message": "You can only access your own data",
+				"message": "You do not have permission to access this resource.",
 			})
 			c.Abort()
 			return
@@ -360,14 +384,13 @@ func respondWithAuthError(c *gin.Context, message string, code string) {
 	clientIP := c.ClientIP()
 	userAgent := c.GetHeader("User-Agent")
 
-	// TODO: Add proper logging to audit system
-	// log.Printf("Auth failure: %s | IP: %s | UA: %s", code, clientIP, userAgent)
+	log.Printf("Auth failure: %s | IP: %s | User-Agent: %s", code, clientIP, userAgent)
 
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error":   "Authentication failed",
 		"code":    code,
 		"message": message,
-		"support": "If you're experiencing issues, please reach out to our support team",
+		"support": "If you're experiencing issues, please reach out to our support team.",
 	})
 	c.Abort()
 }
