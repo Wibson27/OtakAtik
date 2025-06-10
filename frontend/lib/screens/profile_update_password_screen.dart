@@ -1,11 +1,8 @@
-// lib/screens/profile_update_password_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-// Import model User jika nanti akan menampilkan data user dari model
-// import 'package:frontend/data/models/user.dart';
 
 class ProfileUpdatePasswordScreen extends StatefulWidget {
   const ProfileUpdatePasswordScreen({super.key});
@@ -19,14 +16,14 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
-  // FocusNodes
+
   final FocusNode _passwordFocusNode = FocusNode();
   final FocusNode _confirmPasswordFocusNode = FocusNode();
-
-  // GlobalKey for Form
   final _formKey = GlobalKey<FormState>();
+  String? _passwordErrorText;
+  String? _confirmPasswordErrorText;
 
-  // untuk efek animasi di button
+  // efek animation button reset and done
   bool _isResetButtonActive = false;
   bool _isDoneButtonActive = false;
 
@@ -35,14 +32,34 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     super.initState();
     _passwordFocusNode.addListener(_onFocusChange);
     _confirmPasswordFocusNode.addListener(_onFocusChange);
+    _passwordController.addListener(_clearPasswordError);
+    _confirmPasswordController.addListener(_clearConfirmPasswordError);
   }
 
   void _onFocusChange() {
-    setState(() {}); // Untuk me-rebuild UI saat fokus berubah
+    setState(() {}); 
+  }
+
+  void _clearPasswordError() {
+    if (_passwordErrorText != null && _passwordController.text.isNotEmpty) {
+      setState(() {
+        _passwordErrorText = null;
+      });
+    }
+  }
+
+  void _clearConfirmPasswordError() {
+    if (_confirmPasswordErrorText != null && _confirmPasswordController.text.isNotEmpty) {
+      setState(() {
+        _confirmPasswordErrorText = null;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _passwordController.removeListener(_clearPasswordError);
+    _confirmPasswordController.removeListener(_clearConfirmPasswordError);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _passwordFocusNode.dispose();
@@ -50,16 +67,45 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     super.dispose();
   }
 
-  // Metode untuk menangani proses update password
+  // method untuk handle update password
   void _handleUpdatePassword() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // Jika form valid, lakukan proses update password
+    setState(() {
+      _passwordErrorText = null;
+      _confirmPasswordErrorText = null;
+    });
+
+    bool isValid = true;
+
+    // nge-validate Password
+    if (_passwordController.text.isEmpty) {
+      setState(() {
+        _passwordErrorText = 'Password tidak boleh kosong';
+      });
+      isValid = false;
+    } else if (_passwordController.text.length < 6) {
+      setState(() {
+        _passwordErrorText = 'Password minimal 6 karakter';
+      });
+      isValid = false;
+    }
+
+    // nge-validate Confirm Password
+    if (_confirmPasswordController.text.isEmpty) {
+      setState(() {
+        _confirmPasswordErrorText = 'Konfirmasi password tidak boleh kosong';
+      });
+      isValid = false;
+    } else if (_confirmPasswordController.text != _passwordController.text) {
+      setState(() {
+        _confirmPasswordErrorText = 'Password tidak cocok';
+      });
+      isValid = false;
+    }
+
+    if (isValid) {
       print('Password: ${_passwordController.text}');
       print('Confirm Password: ${_confirmPasswordController.text}');
-      // TODO: Panggil API backend untuk update password
-      // Misalnya: context.read<UserCubit>().updatePassword(_passwordController.text);
-      Navigator.pop(context); // Kembali ke ProfileScreen setelah berhasil update
-      // Tampilkan SnackBar sukses
+      Navigator.pop(context); 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Password berhasil diupdate!', style: GoogleFonts.roboto(color: AppColor.putihNormal)),
@@ -76,6 +122,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
       _confirmPasswordController.clear();
       _passwordFocusNode.unfocus();
       _confirmPasswordFocusNode.unfocus();
+      _passwordErrorText = null; 
+      _confirmPasswordErrorText = null; 
     });
     print('Password reset');
   }
@@ -86,33 +134,30 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     final double screenHeight = context.screenHeight;
 
     return Scaffold(
-      backgroundColor: AppColor.putihNormal, // Warna background dasar putih
+      backgroundColor: AppColor.putihNormal,
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png (background atas) - Sama seperti ProfileScreen
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: Image.asset(
                   'assets/images/wave_top.png',
-                  width: context.scaleWidth(431.5), // Sesuaikan dengan width di Figma
-                  height: context.scaleHeight(200), // Sesuaikan dengan height di Figma
+                  width: context.scaleWidth(431.5),
+                  height: context.scaleHeight(200),
                   fit: BoxFit.fill,
                 ),
               ),
-
-              // arrow.png (tombol kembali) - Sama seperti ProfileScreen
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pop(context); // Kembali ke ProfileScreen
+                    Navigator.pop(context);
                   },
                   child: Image.asset(
                     'assets/images/arrow.png',
@@ -122,8 +167,6 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                   ),
                 ),
               ),
-
-              // Text 'Update Password' (diganti dari 'Profile')
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -134,23 +177,20 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: AppColor.navyText,
+                      color: AppColor.putihNormal,
                     ),
                   ),
                 ),
               ),
-
-              // Konten Utama Update Password
               Positioned(
-                top: context.scaleHeight(130), // Rectangle 31 top dari Figma
+                top: context.scaleHeight(200),
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Container(
-                  width: context.scaleWidth(380), // Rectangle 31 width
-                  height: context.scaleHeight(373), // Rectangle 31 height
+                  width: context.scaleWidth(380),
                   decoration: BoxDecoration(
-                    color: AppColor.putihNormal, // Rectangle 31 color
-                    borderRadius: BorderRadius.circular(context.scaleWidth(18)), // Rectangle 31 radius
+                    color: AppColor.putihNormal,
+                    borderRadius: BorderRadius.circular(context.scaleWidth(18)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.25),
@@ -159,163 +199,150 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                       ),
                     ],
                   ),
-                  child: Form( // Wrap dengan Form widget
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: context.scaleHeight(15)), // Padding atas
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: _formKey, 
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: context.scaleHeight(60)),
 
-                        // Profile Picture Section (sama seperti di ProfileScreen)
-                        Container(
-                          width: context.scaleWidth(104),
-                          height: context.scaleHeight(104),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(context.scaleWidth(52)),
-                            image: const DecorationImage(
-                              // Menggunakan user_placeholder.png sebagai pengganti, karena profile_photo_pink.jpg tidak ada di assets
-                              // Jika profile_photo_pink.jpg adalah gambar yang seharusnya ada, pastikan ditambahkan ke pubspec.yaml assets.
-                              image: AssetImage('assets/images/profile_photo_pink.png'), // Pastikan file ini ada
-                              fit: BoxFit.cover,
+                          // bagian profile picture 
+                          Container(
+                            width: context.scaleWidth(104),
+                            height: context.scaleHeight(104),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(context.scaleWidth(52)),
+                              border: Border.all(
+                                color: AppColor.putihNormal.withOpacity(0.5),
+                                width: context.scaleWidth(2),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            border: Border.all(
-                              color: AppColor.putihNormal.withOpacity(0.5), // Warna border dari figma #D9D9D9
-                              width: context.scaleWidth(2), // Tebal border
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(context.scaleWidth(52)),
+                              child: Image.asset(
+                                'assets/images/profile_photo_pink.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                                  );
+                                },
+                              ),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
+                          ),
+                          SizedBox(height: context.scaleHeight(15)),
+
+                          Text(
+                            'Ubah foto profil',
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF5CC4BB),
+                            ),
+                          ),
+                          SizedBox(height: context.scaleHeight(50)),
+
+                          // Input Field Password
+                          _buildInputField(
+                            context: context,
+                            controller: _passwordController,
+                            focusNode: _passwordFocusNode,
+                            hintText: 'Password',
+                            width: context.scaleWidth(297),
+                            height: context.scaleHeight(50),
+                            obscureText: true,
+                            validator: (value) {
+                              return null; 
+                            },
+                          ),
+                          // untuk kalo password tidak valid
+                          if (_passwordErrorText != null)
+                            Padding(
+                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              child: Text(
+                                _passwordErrorText!,
+                                style: GoogleFonts.roboto(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          SizedBox(height: context.scaleHeight(20)), 
+
+                          // Input Field Correct Password
+                          _buildInputField(
+                            context: context,
+                            controller: _confirmPasswordController,
+                            focusNode: _confirmPasswordFocusNode,
+                            hintText: 'Correct Password',
+                            width: context.scaleWidth(297),
+                            height: context.scaleHeight(50),
+                            obscureText: true,
+                            validator: (value) {
+                              return null; 
+                            },
+                          ),
+                          // untuk kalo password dan password correct tidak sama
+                          if (_confirmPasswordErrorText != null)
+                            Padding(
+                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              child: Text(
+                                _confirmPasswordErrorText!,
+                                style: GoogleFonts.roboto(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          SizedBox(height: context.scaleHeight(50)), 
+
+                          // Button Reset dan Done
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildActionButton(
+                                context: context,
+                                text: 'Reset',
+                                buttonWidth: 127,
+                                buttonHeight: 46,
+                                backgroundColor: AppColor.hijauTosca,
+                                textColor: AppColor.whiteText,
+                                onPressed: _handleReset,
+                                isActive: _isResetButtonActive,
+                                onActiveStateChanged: (isActive) {
+                                  setState(() => _isResetButtonActive = isActive);
+                                },
+                              ),
+                              SizedBox(width: context.scaleWidth(20)),
+                              _buildActionButton(
+                                context: context,
+                                text: 'Done',
+                                buttonWidth: 157,
+                                buttonHeight: 46,
+                                backgroundColor: AppColor.kuning, 
+                                textColor: AppColor.whiteText,
+                                onPressed: _handleUpdatePassword,
+                                isActive: _isDoneButtonActive,
+                                onActiveStateChanged: (isActive) {
+                                  setState(() => _isDoneButtonActive = isActive);
+                                },
                               ),
                             ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(context.scaleWidth(52)),
-                            child: Image.asset( // Placeholder image, replace with actual user photo
-                              // Gunakan path gambar asli jika sudah ada, atau tetap placeholder
-                              'assets/images/user_placeholder.png', // Ganti dengan placeholder gambar user
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: context.scaleHeight(5)),
-
-                        // 1. Text "Ubah foto profil"
-                        Text(
-                          'Ubah foto profil',
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF5CC4BB), // Warna dari Figma #5CC4BB
-                          ),
-                        ),
-                        SizedBox(height: context.scaleHeight(10)),
-
-                        // Input Field Password (Menggunakan `_buildInputField` kustom)
-                        _buildInputField(
-                          context: context,
-                          controller: _passwordController,
-                          focusNode: _passwordFocusNode,
-                          hintText: 'Password',
-                          width: context.scaleWidth(297), // Dari Figma Nama field
-                          height: context.scaleHeight(33), // Dari Figma Nama field
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Password tidak boleh kosong';
-                            }
-                            if (value.length < 6) {
-                              return 'Password minimal 6 karakter';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: context.scaleHeight(10)),
-
-                        // Input Field Correct Password (Menggunakan `_buildInputField` kustom)
-                        _buildInputField(
-                          context: context,
-                          controller: _confirmPasswordController,
-                          focusNode: _confirmPasswordFocusNode,
-                          hintText: 'Correct Password', 
-                          width: context.scaleWidth(297), 
-                          height: context.scaleHeight(33), 
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Konfirmasi password tidak boleh kosong';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Password tidak cocok';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: context.scaleHeight(20)),
-
-                        // Buttons: Reset dan Done
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // reset_button.png (kotak hijau tosca)
-                            GestureDetector(
-                              onTapDown: (_) => setState(() => _isResetButtonActive = true),
-                              onTapUp: (_) => setState(() => _isResetButtonActive = false),
-                              onTapCancel: () => setState(() => _isResetButtonActive = false),
-                              onTap: _handleReset,
-                              child: AnimatedScale(
-                                scale: _isResetButtonActive ? 0.95 : 1.0,
-                                duration: const Duration(milliseconds: 100),
-                                child: Container( 
-                                  width: context.scaleWidth(127), 
-                                  height: context.scaleHeight(33), 
-                                  decoration: BoxDecoration( 
-                                    color: AppColor.hijauTosca, 
-                                    borderRadius: BorderRadius.circular(context.scaleWidth(25)), 
-                                    boxShadow: [ 
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center( 
-                                    child: Text(
-                                      'Reset',
-                                      style: GoogleFonts.roboto( 
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w400, 
-                                        color: AppColor.whiteText, 
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: context.scaleWidth(20)), 
-                            // done_button.png 
-                            GestureDetector(
-                              onTapDown: (_) => setState(() => _isDoneButtonActive = true),
-                              onTapUp: (_) => setState(() => _isDoneButtonActive = false),
-                              onTapCancel: () => setState(() => _isDoneButtonActive = false),
-                              onTap: _handleUpdatePassword,
-                              child: AnimatedScale(
-                                scale: _isDoneButtonActive ? 0.95 : 1.0,
-                                duration: const Duration(milliseconds: 100),
-                                child: Image.asset(
-                                  'assets/images/done_button.png', 
-                                  width: context.scaleWidth(157), 
-                                  height: context.scaleHeight(46), 
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          SizedBox(height: context.scaleHeight(20)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -341,7 +368,6 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // home_button_profile.png
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacementNamed(context, AppRoute.dashboard);
@@ -353,13 +379,12 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           fit: BoxFit.contain,
                         ),
                       ),
-                      // profile_button.png
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.profile); 
+                          Navigator.pushReplacementNamed(context, AppRoute.profile);
                         },
                         child: Image.asset(
-                          'assets/images/profile_button.png',
+                          'assets/images/button_profile.png',
                           width: context.scaleWidth(68),
                           height: context.scaleHeight(68),
                           fit: BoxFit.contain,
@@ -376,7 +401,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     );
   }
 
-  // _buildInputField (password input)
+  // _buildInputField untuk password input
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -385,15 +410,15 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     required double width,
     required double height,
     bool obscureText = false,
-    String? Function(String?)? validator,
+    String? Function(String?)? validator, 
   }) {
-    Color boxColor = AppColor.hijauTosca; 
+    Color boxColor = AppColor.hijauTosca;
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
     double borderWidth = focusNode.hasFocus ? 2 : 1;
     double blurRadius = focusNode.hasFocus ? 8 : 0;
     Offset offset = focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
 
-    final double textFontSize = 16.0; 
+    final double textFontSize = 16.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -401,7 +426,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
       height: height,
       decoration: BoxDecoration(
         color: boxColor,
-        borderRadius: BorderRadius.circular(context.scaleWidth(25)), 
+        borderRadius: BorderRadius.circular(context.scaleWidth(25)),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
           BoxShadow(
@@ -413,41 +438,90 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
       ),
       child: Center(
         child: Padding(
-          
           padding: EdgeInsets.symmetric(
-            horizontal: context.scaleWidth(20), 
-            vertical: (height - textFontSize * 1.0 - borderWidth * 2) / 2,
+            horizontal: context.scaleWidth(20),
+            vertical: (height - textFontSize * 1.0 - borderWidth * 2) / 2, // Sesuaikan jika perlu
           ).clamp(
             EdgeInsets.zero,
-            EdgeInsets.all(context.scaleWidth(10)), 
+            EdgeInsets.all(context.scaleWidth(10)),
           ),
           child: TextSelectionTheme(
             data: const TextSelectionThemeData(
-              cursorColor: AppColor.navyText, 
+              cursorColor: AppColor.navyText,
             ),
             child: TextFormField(
               controller: controller,
               focusNode: focusNode,
               obscureText: obscureText,
               textAlign: TextAlign.center,
-              textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.fredoka( 
-                color: AppColor.whiteText, 
+              textAlignVertical: TextAlignVertical.center, 
+              style: GoogleFonts.fredoka(
+                color: AppColor.whiteText,
                 fontSize: textFontSize,
                 fontWeight: FontWeight.normal,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: GoogleFonts.fredoka( 
-                  color: AppColor.whiteText.withOpacity(0.7), 
-                  fontSize: textFontSize, 
-                  fontWeight: FontWeight.w400, 
+                hintStyle: GoogleFonts.fredoka(
+                  color: AppColor.whiteText.withOpacity(0.7),
+                  fontSize: textFontSize,
+                  fontWeight: FontWeight.w400,
                 ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero, 
-                isDense: true, 
+                contentPadding: EdgeInsets.zero,
+                isDense: true,
               ),
               validator: validator,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget untuk button Reset dan Done
+  Widget _buildActionButton({
+    required BuildContext context,
+    required String text,
+    required double buttonWidth,
+    required double buttonHeight,
+    required Color backgroundColor,
+    required Color textColor,
+    required VoidCallback onPressed,
+    required bool isActive,
+    required Function(bool) onActiveStateChanged,
+  }) {
+    return GestureDetector(
+      onTapDown: (_) => onActiveStateChanged(true),
+      onTapUp: (_) => onActiveStateChanged(false),
+      onTapCancel: () => onActiveStateChanged(false),
+      onTap: onPressed,
+      child: AnimatedScale(
+        scale: isActive ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width: context.scaleWidth(buttonWidth),
+          height: context.scaleHeight(buttonHeight),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(context.scaleWidth(25)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: GoogleFonts.roboto(
+                fontSize: 24,
+                fontWeight: FontWeight.w400,
+                color: textColor,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ),
