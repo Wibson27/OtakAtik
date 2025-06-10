@@ -12,4 +12,5 @@ class AppRoute {
   static const String voiceSentimentHistory = '/voice-sentiment/history';
   static const String chatbot = '/chatbot';
   static const String chatbotHistory = '/chatbot/history';
+  static const String feedback = '/feedback';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/screens/profile_feedback_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/common/app_color.dart';
@@ -80,6 +81,7 @@ class MyApp extends StatelessWidget {
           AppRoute.chatbot: (context) => const ChatbotScreen(),
           AppRoute.profile: (context) => const ProfileScreen(),
           AppRoute.profileEdit: (context) => const ProfileEditScreen(),
+          AppRoute.feedback: (context) => const ProfileFeedbackScreen(), 
         },
       ),
     );

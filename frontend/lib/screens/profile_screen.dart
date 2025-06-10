@@ -197,7 +197,7 @@ class ProfileScreen extends StatelessWidget {
                 right: context.scaleWidth(25), 
                 child: GestureDetector(
                   onTap: () {
-                    print('Feedback menu tapped');
+                    Navigator.pushNamed(context, AppRoute.feedback);
                   },
                   child: Image.asset(
                     'assets/images/menu_feedback.png',
