@@ -157,7 +157,7 @@ class ProfileScreen extends StatelessWidget {
                         left: context.scaleWidth(149), 
                         child: GestureDetector(
                           onTap: () {
-                            print('Edit Profile tapped');
+                            Navigator.pushNamed(context, AppRoute.profileEdit);
                           },
                           child: Image.asset(
                             'assets/images/edit_profile_button.png',

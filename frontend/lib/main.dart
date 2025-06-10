@@ -15,6 +15,7 @@ import 'package:frontend/screens/voice_recorder_screen.dart';
 import 'package:frontend/screens/chatbot_screen.dart';
 import 'package:frontend/screens/history_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/screens/profile_edit_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
           AppRoute.voiceSentimentHistory: (context) => HistoryScreen(),
           AppRoute.chatbot: (context) => const ChatbotScreen(),
           AppRoute.profile: (context) => const ProfileScreen(),
+          AppRoute.profileEdit: (context) => const ProfileEditScreen(),
         },
       ),
     );
