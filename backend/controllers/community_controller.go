@@ -101,6 +101,12 @@ type ModerationRequest struct {
 	IsPinned  *bool  `json:"is_pinned"`
 }
 
+type UpdatePostRequest struct {
+	PostTitle       *string        `json:"post_title" binding:"omitempty,min=5,max=200"`
+	PostContent     *string        `json:"post_content" binding:"omitempty,min=10"`
+	ContentWarnings pq.StringArray `json:"content_warnings" gorm:"type:text[]"`
+}
+
 // --- Controller Handlers (Kode fungsi tidak berubah, hanya perbaikan di DTO dan helper) ---
 
 // GetCategories returns all active community categories.
@@ -112,6 +118,73 @@ func (co *CommunityController) GetCategories(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, categories)
+}
+
+// UpdatePost allows an author to update their own post.
+// ROUTE: PUT /api/v1/community/posts/:postId
+func (co *CommunityController) UpdatePost(c *gin.Context) {
+	postID, err := uuid.Parse(c.Param("postId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format", "code": "invalid_post_id"})
+		return
+	}
+
+	var req UpdatePostRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "code": "validation_failed"})
+		return
+	}
+
+	authedUser, _ := middleware.GetFullUserFromContext(c)
+
+	var post models.CommunityPost
+	if err := co.DB.Where("id = ? AND user_id = ?", postID, authedUser.ID).First(&post).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Post not found or you are not the author", "code": "forbidden"})
+		return
+	}
+
+	if req.PostTitle != nil {
+		post.PostTitle = *req.PostTitle
+	}
+	if req.PostContent != nil {
+		post.PostContent = *req.PostContent
+	}
+	if req.ContentWarnings != nil {
+		post.ContentWarnings = req.ContentWarnings
+	}
+
+	if err := co.DB.Save(&post).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post", "code": "db_update_failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully", "post_id": post.ID})
+}
+
+// DeletePost allows an author to soft-delete their own post.
+// ROUTE: DELETE /api/v1/community/posts/:postId
+func (co *CommunityController) DeletePost(c *gin.Context) {
+	postID, err := uuid.Parse(c.Param("postId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format", "code": "invalid_post_id"})
+		return
+	}
+
+	authedUser, _ := middleware.GetFullUserFromContext(c)
+
+	var post models.CommunityPost
+	if err := co.DB.Where("id = ? AND user_id = ?", postID, authedUser.ID).First(&post).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Post not found or you are not the author", "code": "forbidden"})
+		return
+	}
+
+	// Soft delete dengan mengubah status, sesuai skema database
+	post.PostStatus = "deleted"
+	if err := co.DB.Save(&post).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post", "code": "db_delete_failed"})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 // CreatePost creates a new community post.
