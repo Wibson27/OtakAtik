@@ -100,8 +100,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                 right: 0,
                 child: Image.asset(
                   'assets/images/wave_top.png',
-                  width: context.scaleWidth(431.5),
-                  height: context.scaleHeight(200),
+                  width: context.scaleWidth(431.5), // Sesuaikan dengan width di Figma
+                  height: context.scaleHeight(200), // Sesuaikan dengan height di Figma
                   fit: BoxFit.fill,
                 ),
               ),
@@ -173,12 +173,14 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(context.scaleWidth(52)),
                             image: const DecorationImage(
-                              image: AssetImage('assets/images/profile_photo_pink.jpg'),
+                              // Menggunakan user_placeholder.png sebagai pengganti, karena profile_photo_pink.jpg tidak ada di assets
+                              // Jika profile_photo_pink.jpg adalah gambar yang seharusnya ada, pastikan ditambahkan ke pubspec.yaml assets.
+                              image: AssetImage('assets/images/profile_photo_pink.png'), // Pastikan file ini ada
                               fit: BoxFit.cover,
                             ),
                             border: Border.all(
-                              color: AppColor.putihNormal.withOpacity(0.5),
-                              width: context.scaleWidth(2),
+                              color: AppColor.putihNormal.withOpacity(0.5), // Warna border dari figma #D9D9D9
+                              width: context.scaleWidth(2), // Tebal border
                             ),
                             boxShadow: [
                               BoxShadow(
@@ -191,6 +193,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(context.scaleWidth(52)),
                             child: Image.asset( // Placeholder image, replace with actual user photo
+                              // Gunakan path gambar asli jika sudah ada, atau tetap placeholder
                               'assets/images/user_placeholder.png', // Ganti dengan placeholder gambar user
                               fit: BoxFit.cover,
                             ),
@@ -235,9 +238,9 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           context: context,
                           controller: _confirmPasswordController,
                           focusNode: _confirmPasswordFocusNode,
-                          hintText: 'Correct Password', // Dari Figma
-                          width: context.scaleWidth(297), // Dari Figma Nama field
-                          height: context.scaleHeight(33), // Dari Figma Nama field
+                          hintText: 'Correct Password', 
+                          width: context.scaleWidth(297), 
+                          height: context.scaleHeight(33), 
                           obscureText: true,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -255,7 +258,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // 5. Frame Google (reset_button.png) - Sekarang jadi Reset button
+                            // reset_button.png (kotak hijau tosca)
                             GestureDetector(
                               onTapDown: (_) => setState(() => _isResetButtonActive = true),
                               onTapUp: (_) => setState(() => _isResetButtonActive = false),
@@ -264,16 +267,36 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                               child: AnimatedScale(
                                 scale: _isResetButtonActive ? 0.95 : 1.0,
                                 duration: const Duration(milliseconds: 100),
-                                child: Image.asset(
-                                  'assets/images/reset_button.png', // Aset gambar untuk Reset
-                                  width: context.scaleWidth(122), // Dari Figma Frame Google width
-                                  height: context.scaleHeight(33), // Dari Figma Frame Google height
-                                  fit: BoxFit.contain,
+                                child: Container( 
+                                  width: context.scaleWidth(127), 
+                                  height: context.scaleHeight(33), 
+                                  decoration: BoxDecoration( 
+                                    color: AppColor.hijauTosca, 
+                                    borderRadius: BorderRadius.circular(context.scaleWidth(25)), 
+                                    boxShadow: [ 
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center( 
+                                    child: Text(
+                                      'Reset',
+                                      style: GoogleFonts.roboto( 
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w400, 
+                                        color: AppColor.whiteText, 
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                            SizedBox(width: context.scaleWidth(20)), // Jarak antara tombol
-                            // 4. Frame Login (done_button.png) - Sekarang jadi Done button
+                            SizedBox(width: context.scaleWidth(20)), 
+                            // done_button.png 
                             GestureDetector(
                               onTapDown: (_) => setState(() => _isDoneButtonActive = true),
                               onTapUp: (_) => setState(() => _isDoneButtonActive = false),
@@ -283,9 +306,9 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                                 scale: _isDoneButtonActive ? 0.95 : 1.0,
                                 duration: const Duration(milliseconds: 100),
                                 child: Image.asset(
-                                  'assets/images/done_button.png', // Aset gambar untuk Done
-                                  width: context.scaleWidth(157), // Dari Figma Frame Login width
-                                  height: context.scaleHeight(46), // Dari Figma Frame Login height
+                                  'assets/images/done_button.png', 
+                                  width: context.scaleWidth(157), 
+                                  height: context.scaleHeight(46), 
                                   fit: BoxFit.contain,
                                 ),
                               ),
@@ -298,7 +321,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                 ),
               ),
 
-              // Bottom Navigation Bar - Sama seperti ProfileScreen
+              // Navigation Bar Bawah
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -333,7 +356,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                       // profile_button.png
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.profile); // Kembali ke ProfileScreen
+                          Navigator.pushReplacementNamed(context, AppRoute.profile); 
                         },
                         child: Image.asset(
                           'assets/images/profile_button.png',
@@ -353,7 +376,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     );
   }
 
-  // Widget _buildInputField kustom untuk password input
+  // _buildInputField (password input)
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -364,14 +387,13 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     bool obscureText = false,
     String? Function(String?)? validator,
   }) {
-    Color boxColor = AppColor.hijauTosca; // Warna dari Figma #5CB1A9
+    Color boxColor = AppColor.hijauTosca; 
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
     double borderWidth = focusNode.hasFocus ? 2 : 1;
     double blurRadius = focusNode.hasFocus ? 8 : 0;
     Offset offset = focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
 
-    // Estimasi tinggi font Fredoka untuk kalkulasi padding vertikal
-    final double textFontSize = GoogleFonts.fredoka().fontSize ?? 16.0;
+    final double textFontSize = 16.0; 
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -379,7 +401,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
       height: height,
       decoration: BoxDecoration(
         color: boxColor,
-        borderRadius: BorderRadius.circular(context.scaleWidth(25)), // Radius 25px
+        borderRadius: BorderRadius.circular(context.scaleWidth(25)), 
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
           BoxShadow(
@@ -391,16 +413,17 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
       ),
       child: Center(
         child: Padding(
+          
           padding: EdgeInsets.symmetric(
-            horizontal: context.scaleWidth(20), // Padding horizontal 20px
-            vertical: (height - textFontSize - 2) / 2, // Perhitungan vertikal disesuaikan
+            horizontal: context.scaleWidth(20), 
+            vertical: (height - textFontSize * 1.0 - borderWidth * 2) / 2,
           ).clamp(
             EdgeInsets.zero,
-            EdgeInsets.all(context.scaleWidth(10)), // Clamp max padding
+            EdgeInsets.all(context.scaleWidth(10)), 
           ),
           child: TextSelectionTheme(
             data: const TextSelectionThemeData(
-              cursorColor: AppColor.navyText, // Kursor hitam
+              cursorColor: AppColor.navyText, 
             ),
             child: TextFormField(
               controller: controller,
@@ -408,21 +431,21 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
               obscureText: obscureText,
               textAlign: TextAlign.center,
               textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.fredoka( // Menggunakan Fredoka
-                color: AppColor.whiteText, // Warna teks putih
-                fontSize: 16,
+              style: GoogleFonts.fredoka( 
+                color: AppColor.whiteText, 
+                fontSize: textFontSize,
                 fontWeight: FontWeight.normal,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: GoogleFonts.fredoka( // Menggunakan Fredoka untuk hint
-                  color: AppColor.whiteText.withOpacity(0.7), // Hint lebih transparan
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400, // Fredoka default hint weight
+                hintStyle: GoogleFonts.fredoka( 
+                  color: AppColor.whiteText.withOpacity(0.7), 
+                  fontSize: textFontSize, 
+                  fontWeight: FontWeight.w400, 
                 ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
+                contentPadding: EdgeInsets.zero, 
+                isDense: true, 
               ),
               validator: validator,
             ),
