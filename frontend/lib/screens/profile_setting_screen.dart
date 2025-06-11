@@ -7,30 +7,19 @@ import 'package:frontend/common/screen_utils.dart';
 class ProfileSettingScreen extends StatelessWidget {
   const ProfileSettingScreen({super.key});
 
-  // widget untuk menu setting (ada 4 menu: General, Notifikasi, Privacy, Voice Journal)
+  // Widget pembangun item menu setting menggunakan gambar PNG
   Widget _buildSettingMenuItem(
     BuildContext context,
-    String assetPath,
-    String text,
+    String assetPath, 
     VoidCallback onTap,
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: Image.asset(
+        assetPath,
         width: context.scaleWidth(380), 
         height: context.scaleHeight(62), 
-        decoration: BoxDecoration(
-          color: AppColor.putihNormal, 
-          borderRadius:
-              BorderRadius.circular(context.scaleWidth(18)), 
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25), 
-              blurRadius: 5, 
-              offset: const Offset(0, 2), 
-            ),
-          ],
-        ),
+        fit: BoxFit.fill, 
       ),
     );
   }
@@ -48,7 +37,7 @@ class ProfileSettingScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png 
+              // wave_top.png
               Positioned(
                 top: 0,
                 left: 0,
@@ -61,7 +50,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png 
+              // arrow.png
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -78,7 +67,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'Settings' 
+              // Text 'Settings'
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -95,32 +84,25 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // daftar menu setting (General, Notifikasi, Privacy, Voice Journal)
+              // Daftar menu setting ada 4 (General, Notifikasi, Privacy, Voice Journal)
               Positioned(
-                top: context.scaleHeight(
-                    230),
+                top: context.scaleHeight(230),
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
-                    SizedBox(
-                        height: context.scaleHeight(
-                            20)), 
+                    SizedBox(height: context.scaleHeight(20)), 
                     _buildSettingMenuItem(
                       context,
                       'assets/images/menu_setting_general.png',
-                      'General',
                       () {
                         print('General Tapped');
                       },
                     ),
-                    SizedBox(
-                        height:
-                            context.scaleHeight(20)), 
+                    SizedBox(height: context.scaleHeight(20)), 
                     _buildSettingMenuItem(
                       context,
-                      'assets/images/menu_setting_notifikasi.png', 
-                      'Notifikasi',
+                      'assets/images/menu_setting_notifikasi.png',
                       () {
                         print('Notifikasi Tapped');
                       },
@@ -128,8 +110,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     SizedBox(height: context.scaleHeight(20)),
                     _buildSettingMenuItem(
                       context,
-                      'assets/images/menu_setting_privacy.png', 
-                      'Privacy',
+                      'assets/images/menu_setting_privacy.png',
                       () {
                         print('Privacy Tapped');
                       },
@@ -137,8 +118,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     SizedBox(height: context.scaleHeight(20)),
                     _buildSettingMenuItem(
                       context,
-                      'assets/images/menu_setting_voice_journal.png', 
-                      'Voice Journal',
+                      'assets/images/menu_setting_voice_journal.png',
                       () {
                         print('Voice Journal Tapped');
                       },
