@@ -256,7 +256,7 @@ func (s *SocialController) syncAccountPosts(account models.SocialMediaAccount) {
 
 // encryptToken securely encrypts a token using AES-GCM and the key from config.
 func (s *SocialController) encryptToken(token string) (string, error) {
-	key, err := base64.StdEncoding.DecodeString(s.Cfg.Security.EncryptionKey)
+	key, err := base64.StdEncoding.DecodeString(string(s.Cfg.Security.EncryptionKey))
 	if err != nil || len(key) != 32 {
 		return "", errors.New("invalid encryption key: must be a 32-byte base64 encoded string")
 	}
@@ -276,7 +276,7 @@ func (s *SocialController) encryptToken(token string) (string, error) {
 
 // decryptToken securely decrypts a token using the key from config.
 func (s *SocialController) decryptToken(encryptedToken string) (string, error) {
-	key, err := base64.StdEncoding.DecodeString(s.Cfg.Security.EncryptionKey)
+	key, err := base64.StdEncoding.DecodeString(string(s.Cfg.Security.EncryptionKey))
 	if err != nil || len(key) != 32 {
 		return "", errors.New("invalid encryption key: must be a 32-byte base64 encoded string")
 	}

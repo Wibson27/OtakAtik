@@ -6,6 +6,7 @@ import (
 	"time"
 	"math"
 
+	"backend/config"
 	"backend/middleware"
 	"backend/models"
 
@@ -16,10 +17,11 @@ import (
 
 type NotificationController struct {
 	DB *gorm.DB
+	Cfg *config.Config
 }
 
-func NewNotificationController(db *gorm.DB) *NotificationController {
-	return &NotificationController{DB: db}
+func NewNotificationController(db *gorm.DB, cfg *config.Config) *NotificationController {
+	return &NotificationController{DB: db, Cfg: cfg}
 }
 
 // --- DTOs and Request Structs ---

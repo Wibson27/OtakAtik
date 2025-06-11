@@ -21,6 +21,7 @@ func main() {
 	log.Println("🌸 Starting Tenang.in - Mental Health Platform...")
 	cfg := config.LoadConfig()
 	gin.SetMode(cfg.Server.Environment)
+
 	db := config.DatabaseConnection()
 
 	log.Println("📊 Starting database migration...")
@@ -31,7 +32,7 @@ func main() {
 
 	config.CreateInitialData(db)
 
-	appControllers := initializeTenangControllers(db)
+	appControllers := initializeTenangControllers(db, cfg)
 	router := setupTenangRouter(cfg, db)
 	setupTenangRoutes(router, appControllers)
 	setupStaticFileServing(router, cfg)
@@ -45,6 +46,7 @@ func main() {
 	}
 }
 
+// migrateTenangModels mencakup semua model dalam aplikasi.
 func migrateTenangModels(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&models.User{}, &models.UserCredentials{}, &models.UserPreferences{}, &models.UserSession{},
@@ -56,37 +58,33 @@ func migrateTenangModels(db *gorm.DB) error {
 	)
 }
 
-// TenangControllers holds all controller instances for the platform
+// TenangControllers menampung semua instance controller.
 type TenangControllers struct {
 	Auth         *controllers.AuthController
 	User         *controllers.UserController
 	Community    *controllers.CommunityController
 	Notification *controllers.NotificationController
-	// Placeholders for controllers yet to be implemented
-	Chat      *controllers.ChatController
-	Vocal     *controllers.VocalController
-	Social    *controllers.SocialController
-	Analytics *controllers.AnalyticsController
+	Chat         *controllers.ChatController
+	Vocal        *controllers.VocalController
+	Social       *controllers.SocialController
+	Analytics    *controllers.AnalyticsController
 }
 
-// initializeTenangControllers creates all controller instances with database injection
-func initializeTenangControllers(db *gorm.DB) *TenangControllers {
+// initializeTenangControllers membuat semua instance controller dengan dependensinya.
+func initializeTenangControllers(db *gorm.DB, cfg *config.Config) *TenangControllers {
 	return &TenangControllers{
-		// Menggunakan konstruktor yang sudah ada di file controller Anda
-		Auth:         &controllers.AuthController{DB: db},
-		// Menggunakan konstruktor yang sudah kita buat bersama
+		Auth:         controllers.NewAuthController(db, cfg),
 		User:         controllers.NewUserController(db),
 		Community:    controllers.NewCommunityController(db),
-		Notification: controllers.NewNotificationController(db),
-		// Placeholder untuk controller yang akan kita buat selanjutnya
-		Chat:      &controllers.ChatController{DB: db},
-		Vocal:     &controllers.VocalController{DB: db},
-		Social:    &controllers.SocialController{DB: db},
-		Analytics: &controllers.AnalyticsController{DB: db},
+		Notification: controllers.NewNotificationController(db, cfg),
+		Chat:         controllers.NewChatController(db, cfg),
+		Vocal:        controllers.NewVocalController(db, cfg),
+		Social:       controllers.NewSocialController(db, cfg),
+		Analytics:    controllers.NewAnalyticsController(db, cfg),
 	}
 }
 
-// setupTenangRouter configures the Gin router
+// setupTenangRouter mengonfigurasi Gin router dengan middleware.
 func setupTenangRouter(cfg *config.Config, db *gorm.DB) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
@@ -103,7 +101,7 @@ func setupTenangRouter(cfg *config.Config, db *gorm.DB) *gin.Engine {
 	return router
 }
 
-// setupTenangRoutes configures all API routes for the mental health platform
+// setupTenangRoutes mengonfigurasi semua rute API.
 func setupTenangRoutes(router *gin.Engine, c *TenangControllers) {
 	router.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"status": "healthy"}) })
 
@@ -119,11 +117,10 @@ func setupTenangRoutes(router *gin.Engine, c *TenangControllers) {
 	setupAdminRoutes(admin, c)
 }
 
-// setupPublicRoutes configures routes that don't require authentication
+// setupPublicRoutes untuk endpoint yang tidak memerlukan otentikasi.
 func setupPublicRoutes(v1 *gin.RouterGroup, c *TenangControllers) {
 	auth := v1.Group("/auth")
 	{
-		// Rute-rute ini sekarang valid karena kita sudah memiliki AuthController
 		auth.POST("/register", c.Auth.Register)
 		auth.POST("/login", c.Auth.Login)
 		auth.POST("/google", c.Auth.GoogleAuth)
@@ -142,7 +139,7 @@ func setupPublicRoutes(v1 *gin.RouterGroup, c *TenangControllers) {
 	}
 }
 
-// setupProtectedRoutes configures routes that require JWT authentication
+// setupProtectedRoutes untuk endpoint yang memerlukan otentikasi JWT.
 func setupProtectedRoutes(protected *gin.RouterGroup, c *TenangControllers) {
 	users := protected.Group("/users")
 	users.Use(middleware.ValidateUserOwnership())
@@ -160,11 +157,11 @@ func setupProtectedRoutes(protected *gin.RouterGroup, c *TenangControllers) {
 	{
 		community.GET("/posts", c.Community.GetUserPosts)
 		community.POST("/posts", c.Community.CreatePost)
+		community.PUT("/posts/:postId", c.Community.UpdatePost)
+		community.DELETE("/posts/:postId", c.Community.DeletePost)
 		community.POST("/replies", c.Community.CreateReply)
 		community.POST("/reactions", c.Community.AddReaction)
 		community.POST("/posts/:postId/report", c.Community.ReportPost)
-		community.PUT("/posts/:postId", c.Community.UpdatePost)
-		community.DELETE("/posts/:postId", c.Community.DeletePost)
 	}
 
 	notifications := protected.Group("/notifications")
@@ -177,16 +174,56 @@ func setupProtectedRoutes(protected *gin.RouterGroup, c *TenangControllers) {
 		notifications.DELETE("/:notificationId", c.Notification.DeleteNotification)
 	}
 
+	chat := protected.Group("/chat")
+	{
+		chat.POST("/sessions", c.Chat.CreateSession)
+		chat.GET("/sessions", c.Chat.GetSessions)
+		chat.GET("/sessions/:sessionId", c.Chat.GetSession)
+		chat.POST("/messages", c.Chat.SendMessage)
+		chat.PUT("/sessions/:sessionId/end", c.Chat.EndSession)
+		chat.GET("/checkins", c.Chat.GetScheduledCheckins)
+		chat.POST("/checkins", c.Chat.CreateScheduledCheckin)
+		chat.PUT("/checkins/:checkinId", c.Chat.UpdateScheduledCheckin)
+		chat.DELETE("/checkins/:checkinId", c.Chat.DeleteScheduledCheckin)
+	}
+
+	vocal := protected.Group("/vocal")
+	{
+		vocal.POST("/entries", c.Vocal.CreateEntry)
+		vocal.GET("/entries", c.Vocal.GetEntries)
+		vocal.GET("/entries/:entryId", c.Vocal.GetEntry)
+		vocal.DELETE("/entries/:entryId", c.Vocal.DeleteEntry)
+		vocal.GET("/entries/:entryId/audio", c.Vocal.GetAudioFile)
+		vocal.GET("/trends", c.Vocal.GetWellbeingTrends)
+	}
+
+	social := protected.Group("/social")
+	{
+		social.POST("/connect", c.Social.ConnectAccount)
+		social.GET("/accounts", c.Social.GetConnectedAccounts)
+		social.PUT("/accounts/:accountId", c.Social.UpdateAccountSettings)
+		social.DELETE("/accounts/:accountId", c.Social.DisconnectAccount)
+		social.POST("/accounts/:accountId/sync", c.Social.SyncAccount)
+		social.GET("/accounts/:accountId/posts", c.Social.GetMonitoredPosts)
+		social.GET("/insights", c.Social.GetSocialMediaInsights)
+		social.POST("/webhooks/:platform", c.Social.HandleWebhook)
+	}
+
+	analytics := protected.Group("/analytics")
+	{
+		analytics.POST("/events", c.Analytics.RecordEvent)
+		analytics.GET("/user", c.Analytics.GetUserAnalytics)
+		analytics.GET("/wellbeing-report", c.Analytics.GetWellbeingReport)
+	}
+
 	authProtected := protected.Group("/auth")
 	{
 		authProtected.POST("/logout", c.Auth.Logout)
 		authProtected.POST("/change-password", c.Auth.ChangePassword)
 	}
-
-	// TODO: Implementasikan rute untuk Chat, Vocal, Social, dan Analytics
 }
 
-// setupAdminRoutes configures admin-only routes for platform management
+// setupAdminRoutes mengonfigurasi rute khusus admin.
 func setupAdminRoutes(admin *gin.RouterGroup, c *TenangControllers) {
 	admin.GET("/users", c.User.GetAllUsers)
 	admin.PUT("/users/:userId/status", c.User.UpdateUserStatus)
@@ -197,7 +234,8 @@ func setupAdminRoutes(admin *gin.RouterGroup, c *TenangControllers) {
 	admin.POST("/notifications/broadcast", c.Notification.BroadcastNotification)
 	admin.POST("/notifications/process-scheduled", c.Notification.ProcessScheduledNotifications)
 
-	// TODO: Add other admin routes
+	admin.GET("/analytics/system/metrics", c.Analytics.GetSystemMetrics)
+	admin.GET("/analytics/platform-health", c.Analytics.GetPlatformHealth)
 }
 
 // setupStaticFileServing configures static file serving for mental health content
