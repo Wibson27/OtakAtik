@@ -1,25 +1,26 @@
+// lib/screens/setting_general_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
-class ProfileSettingScreen extends StatelessWidget {
-  const ProfileSettingScreen({super.key});
+class SettingGeneralScreen extends StatelessWidget {
+  const SettingGeneralScreen({super.key});
 
-  // Widget pembangun item menu setting menggunakan gambar PNG
-  Widget _buildSettingMenuItem(
+  // Widget pembangun item menu general menggunakan gambar PNG
+  Widget _buildGeneralMenuItem(
     BuildContext context,
-    String assetPath, 
+    String assetPath, // Path ke gambar PNG utuh (misal: menu_timezone.png)
     VoidCallback onTap,
   ) {
     return GestureDetector(
       onTap: onTap,
       child: Image.asset(
         assetPath,
-        width: context.scaleWidth(380), 
-        height: context.scaleHeight(62), 
-        fit: BoxFit.fill, 
+        width: context.scaleWidth(380), // Lebar dari Figma
+        height: context.scaleHeight(62), // Tinggi dari Figma
+        fit: BoxFit.fill, // Penting agar gambar mengisi area
       ),
     );
   }
@@ -37,7 +38,7 @@ class ProfileSettingScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png
+              // wave_top.png (background atas)
               Positioned(
                 top: 0,
                 left: 0,
@@ -50,7 +51,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png
+              // arrow.png (tombol kembali)
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -67,14 +68,14 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'Settings'
+              // Text 'General' - posisinya di wave_top
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Settings',
+                    'General',
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -84,50 +85,45 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Daftar menu setting ada 4 (General, Notifikasi, Privacy, Voice Journal)
+              // Daftar menu General (Time Zone, Language, About Application)
               Positioned(
-                top: context.scaleHeight(230),
+                top: context.scaleHeight(230), // Posisi disesuaikan
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
+                    SizedBox(height: context.scaleHeight(20)), // Jarak dari wave_top
+                    _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_setting_general.png',
+                      'assets/images/menu_timezone.png', // Pastikan path ini benar
                       () {
-                        Navigator.pushNamed(context, AppRoute.generalSettings);
+                        print('Time Zone Tapped');
+                        // TODO: Navigasi ke halaman Time Zone
                       },
                     ),
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
+                    SizedBox(height: context.scaleHeight(20)), // Jarak antar item menu
+                    _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_setting_notifikasi.png',
+                      'assets/images/menu_language.png', // Pastikan path ini benar
                       () {
-                        Navigator.pushNamed(context, AppRoute.notificationSettings);
-                      },
-                    ),
-                    SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_privacy.png',
-                      () {
-                        print('Privacy Tapped');
+                        print('Language Tapped');
+                        // TODO: Navigasi ke halaman Language
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
+                    _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_setting_voice_journal.png',
+                      'assets/images/menu_about_application.png', // Pastikan path ini benar
                       () {
-                        print('Voice Journal Tapped');
+                        print('About Application Tapped');
+                        // TODO: Navigasi ke halaman About Application
                       },
                     ),
                   ],
                 ),
               ),
 
-              // Navigation Bar Bawah
+              // Navigation Bar Bawah (sama dengan halaman lainnya)
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -149,8 +145,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -161,8 +156,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',
