@@ -35,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              // 2. arrow.png
+              // arrow.png
               Positioned(
                 top: context.scaleHeight(16), 
                 left: context.scaleWidth(8), 
@@ -52,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              // 3. Text 'Profile'
+              // Text 'Profile'
               Positioned(
                 top: context.scaleHeight(35), 
                 left: 0,
@@ -63,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
                     style: GoogleFonts.inter( 
                       fontSize: 24, 
                       fontWeight: FontWeight.w700, 
-                      color: AppColor.navyText, 
+                      color: AppColor.putihNormal, 
                     ),
                   ),
                 ),
@@ -90,7 +90,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Stack(
                     children: [
-                      // profile_photo_pink.jpg
+                      // profile_photo_pink.png
                       Positioned(
                         top: context.scaleHeight(31.5), 
                         left: context.scaleWidth(24.5), 
@@ -100,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(context.scaleWidth(52)), 
                             image: const DecorationImage(
-                              image: AssetImage('assets/images/profile_photo_pink.jpg'),
+                              image: AssetImage('assets/images/profile_photo_pink.png'),
                               fit: BoxFit.cover,
                             ),
                             border: Border.all(
@@ -119,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
                           child: ClipRRect( 
                             borderRadius: BorderRadius.circular(context.scaleWidth(52)),
                             child: Image.asset( 
-                              'assets/images/profile_photo_pink.jpg', 
+                              'assets/images/profile_photo_pink.png', 
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -157,7 +157,7 @@ class ProfileScreen extends StatelessWidget {
                         left: context.scaleWidth(149), 
                         child: GestureDetector(
                           onTap: () {
-                            print('Edit Profile tapped');
+                            Navigator.pushNamed(context, AppRoute.profileEdit);
                           },
                           child: Image.asset(
                             'assets/images/edit_profile_button.png',
@@ -179,7 +179,7 @@ class ProfileScreen extends StatelessWidget {
                 right: context.scaleWidth(25), 
                 child: GestureDetector(
                   onTap: () {
-                    print('Setting menu tapped');
+                    Navigator.pushNamed(context, AppRoute.settings);
                   },
                   child: Image.asset(
                     'assets/images/menu_setting.png',
@@ -197,7 +197,7 @@ class ProfileScreen extends StatelessWidget {
                 right: context.scaleWidth(25), 
                 child: GestureDetector(
                   onTap: () {
-                    print('Feedback menu tapped');
+                    Navigator.pushNamed(context, AppRoute.feedback);
                   },
                   child: Image.asset(
                     'assets/images/menu_feedback.png',

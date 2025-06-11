@@ -4,24 +4,24 @@ import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
-class ProfileUpdatePasswordScreen extends StatefulWidget {
-  const ProfileUpdatePasswordScreen({super.key});
+class ProfileEditScreen extends StatefulWidget {
+  const ProfileEditScreen({super.key});
 
   @override
-  State<ProfileUpdatePasswordScreen> createState() => _ProfileUpdatePasswordScreenState();
+  State<ProfileEditScreen> createState() => _ProfileEditScreenState();
 }
 
-class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScreen> {
-  // Controllers input
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-
-
-  final FocusNode _passwordFocusNode = FocusNode();
-  final FocusNode _confirmPasswordFocusNode = FocusNode();
+class _ProfileEditScreenState extends State<ProfileEditScreen> {
+  // Controller input
+  final TextEditingController _displayNameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final FocusNode _displayNameFocusNode = FocusNode();
+  final FocusNode _usernameFocusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
-  String? _passwordErrorText;
-  String? _confirmPasswordErrorText;
+
+  // Error  text
+  String? _displayNameErrorText;
+  String? _usernameErrorText;
 
   // efek animation button reset and done
   bool _isResetButtonActive = false;
@@ -30,85 +30,85 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
   @override
   void initState() {
     super.initState();
-    _passwordFocusNode.addListener(_onFocusChange);
-    _confirmPasswordFocusNode.addListener(_onFocusChange);
-    _passwordController.addListener(_clearPasswordError);
-    _confirmPasswordController.addListener(_clearConfirmPasswordError);
+    _displayNameFocusNode.addListener(_onFocusChange);
+    _usernameFocusNode.addListener(_onFocusChange);
+    _displayNameController.addListener(_clearDisplayNameError);
+    _usernameController.addListener(_clearUsernameError);
+
+    _displayNameController.text = 'El fonso mantey';
+    _usernameController.text = '@Elcuphacabra';
   }
 
   void _onFocusChange() {
     setState(() {});
   }
 
-  void _clearPasswordError() {
-    if (_passwordErrorText != null && _passwordController.text.isNotEmpty) {
+  void _clearDisplayNameError() {
+    if (_displayNameErrorText != null &&
+        _displayNameController.text.isNotEmpty) {
       setState(() {
-        _passwordErrorText = null;
+        _displayNameErrorText = null;
       });
     }
   }
 
-  void _clearConfirmPasswordError() {
-    if (_confirmPasswordErrorText != null && _confirmPasswordController.text.isNotEmpty) {
+  void _clearUsernameError() {
+    if (_usernameErrorText != null && _usernameController.text.isNotEmpty) {
       setState(() {
-        _confirmPasswordErrorText = null;
+        _usernameErrorText = null;
       });
     }
   }
 
   @override
   void dispose() {
-    _passwordController.removeListener(_clearPasswordError);
-    _confirmPasswordController.removeListener(_clearConfirmPasswordError);
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _passwordFocusNode.dispose();
-    _confirmPasswordFocusNode.dispose();
+    _displayNameController.removeListener(_clearDisplayNameError);
+    _usernameController.removeListener(_clearUsernameError);
+    _displayNameController.dispose();
+    _usernameController.dispose();
+    _displayNameFocusNode.dispose();
+    _usernameFocusNode.dispose();
     super.dispose();
   }
 
-  // method untuk handle update password
-  void _handleUpdatePassword() {
+  // method untuk handle update profile
+  void _handleUpdateProfile() {
     setState(() {
-      _passwordErrorText = null;
-      _confirmPasswordErrorText = null;
+      _displayNameErrorText = null;
+      _usernameErrorText = null;
     });
 
     bool isValid = true;
 
-    // nge-validate Password
-    if (_passwordController.text.isEmpty) {
+    // Validate Display Name
+    if (_displayNameController.text.isEmpty) {
       setState(() {
-        _passwordErrorText = 'Password tidak boleh kosong';
-      });
-      isValid = false;
-    } else if (_passwordController.text.length < 6) {
-      setState(() {
-        _passwordErrorText = 'Password minimal 6 karakter';
+        _displayNameErrorText = 'Nama tidak boleh kosong';
       });
       isValid = false;
     }
 
-    // nge-validate Confirm Password
-    if (_confirmPasswordController.text.isEmpty) {
+    // Validate Username
+    if (_usernameController.text.isEmpty) {
       setState(() {
-        _confirmPasswordErrorText = 'Konfirmasi password tidak boleh kosong';
+        _usernameErrorText = 'Nama pengguna tidak boleh kosong';
       });
       isValid = false;
-    } else if (_confirmPasswordController.text != _passwordController.text) {
+    } else if (!_usernameController.text.startsWith('@')) {
       setState(() {
-        _confirmPasswordErrorText = 'Password tidak cocok';
+        _usernameErrorText = 'Username harus diawali dengan @';
       });
       isValid = false;
     }
 
     if (isValid) {
-      print('Password: ${_passwordController.text}');
-      print('Confirm Password: ${_confirmPasswordController.text}');
+      print('Display Name: ${_displayNameController.text}');
+      print('Username: ${_usernameController.text}');
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Password berhasil diupdate!', style: GoogleFonts.roboto(color: AppColor.putihNormal)),
+          content: Text('Profil berhasil diupdate!',
+              style: GoogleFonts.roboto(color: AppColor.putihNormal)),
           backgroundColor: AppColor.hijauSuccess,
           duration: const Duration(seconds: 2),
         ),
@@ -118,14 +118,14 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
 
   void _handleReset() {
     setState(() {
-      _passwordController.clear();
-      _confirmPasswordController.clear();
-      _passwordFocusNode.unfocus();
-      _confirmPasswordFocusNode.unfocus();
-      _passwordErrorText = null;
-      _confirmPasswordErrorText = null;
+      _displayNameController.text = 'El fonso mantey';
+      _usernameController.text = '@Elcuphacabra';
+      _displayNameFocusNode.unfocus();
+      _usernameFocusNode.unfocus();
+      _displayNameErrorText = null;
+      _usernameErrorText = null;
     });
-    print('Password reset');
+    print('Profile reset');
   }
 
   @override
@@ -141,6 +141,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
           height: screenHeight,
           child: Stack(
             children: [
+              // wave_top.png
               Positioned(
                 top: 0,
                 left: 0,
@@ -152,6 +153,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                   fit: BoxFit.fill,
                 ),
               ),
+
+              // arrow.png
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -167,13 +170,15 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                   ),
                 ),
               ),
+
+              // Text 'Edit Profile'
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Update Password',
+                    'Edit Profile',
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -184,7 +189,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
               ),
 
               Positioned(
-                top: context.scaleHeight(94), 
+                top: context.scaleHeight(94),
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Container(
@@ -203,7 +208,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                   ),
                   child: Stack(
                     children: [
-                      // profile_photo_pink.jpg
+                      // profile_photo_pink.png
                       Positioned(
                         top: context.scaleHeight(31.5),
                         left: context.scaleWidth(24.5),
@@ -211,7 +216,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           width: context.scaleWidth(104),
                           height: context.scaleHeight(104),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(context.scaleWidth(52)),
+                            borderRadius:
+                                BorderRadius.circular(context.scaleWidth(52)),
                             border: Border.all(
                               color: AppColor.putihNormal.withOpacity(0.5),
                               width: context.scaleWidth(2),
@@ -225,26 +231,31 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                             ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(context.scaleWidth(52)),
+                            borderRadius:
+                                BorderRadius.circular(context.scaleWidth(52)),
                             child: Image.asset(
                               'assets/images/profile_photo_pink.png',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey[200],
-                                  child: Icon(Icons.person, size: context.scaleWidth(60), color: Colors.grey),
+                                  child: Icon(Icons.person,
+                                      size: context.scaleWidth(60),
+                                      color: Colors.grey),
                                 );
                               },
                             ),
                           ),
                         ),
                       ),
-
+                      // Display Name
                       Positioned(
                         top: context.scaleHeight(53),
                         left: context.scaleWidth(149),
                         child: Text(
-                          'El fonso mantey', 
+                          _displayNameController.text.isNotEmpty
+                              ? _displayNameController.text
+                              : 'Nama Anda',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -252,12 +263,14 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                           ),
                         ),
                       ),
-                      // Dummy Username
+                      // Username
                       Positioned(
                         top: context.scaleHeight(75),
                         left: context.scaleWidth(149),
                         child: Text(
-                          '@Elcuphacabra', 
+                          _usernameController.text.isNotEmpty
+                              ? _usernameController.text
+                              : '@usernameAnda',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -271,7 +284,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                         left: context.scaleWidth(149),
                         child: GestureDetector(
                           onTap: () {
-                            print('Ubah foto profil tapped dari Update Password');
+                            print('Ubah foto profil tapped');
                           },
                           child: Container(
                             alignment: Alignment.centerLeft,
@@ -293,9 +306,9 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                 ),
               ),
 
-              // Input fields
+              // Input Fields
               Positioned(
-                top: context.scaleHeight(271), 
+                top: context.scaleHeight(271),
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Container(
@@ -319,24 +332,24 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                         children: [
                           SizedBox(height: context.scaleHeight(30)),
 
-                          // Input Field Password
+                          // Input Field Display Name
                           _buildInputField(
                             context: context,
-                            controller: _passwordController,
-                            focusNode: _passwordFocusNode,
-                            hintText: 'Password',
+                            controller: _displayNameController,
+                            focusNode: _displayNameFocusNode,
+                            hintText: 'Nama',
                             width: context.scaleWidth(297),
                             height: context.scaleHeight(50),
-                            obscureText: true,
                             validator: (value) {
                               return null;
                             },
                           ),
-                          if (_passwordErrorText != null)
+                          if (_displayNameErrorText != null)
                             Padding(
-                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              padding:
+                                  EdgeInsets.only(top: context.scaleHeight(5)),
                               child: Text(
-                                _passwordErrorText!,
+                                _displayNameErrorText!,
                                 style: GoogleFonts.roboto(
                                   color: Colors.red,
                                   fontSize: 12,
@@ -346,24 +359,24 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                             ),
                           SizedBox(height: context.scaleHeight(20)),
 
-                          // Input Field Confirm Password
+                          // Input Field Username
                           _buildInputField(
                             context: context,
-                            controller: _confirmPasswordController,
-                            focusNode: _confirmPasswordFocusNode,
-                            hintText: 'Konfirmasi Password', 
+                            controller: _usernameController,
+                            focusNode: _usernameFocusNode,
+                            hintText: 'Nama pengguna',
                             width: context.scaleWidth(297),
                             height: context.scaleHeight(50),
-                            obscureText: true,
                             validator: (value) {
                               return null;
                             },
                           ),
-                          if (_confirmPasswordErrorText != null)
+                          if (_usernameErrorText != null)
                             Padding(
-                              padding: EdgeInsets.only(top: context.scaleHeight(5)),
+                              padding:
+                                  EdgeInsets.only(top: context.scaleHeight(5)),
                               child: Text(
-                                _confirmPasswordErrorText!,
+                                _usernameErrorText!,
                                 style: GoogleFonts.roboto(
                                   color: Colors.red,
                                   fontSize: 12,
@@ -373,7 +386,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                             ),
                           SizedBox(height: context.scaleHeight(50)),
 
-                          // Button Reset dan Done
+                          // Button: Reset dan Done
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -387,7 +400,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                                 onPressed: _handleReset,
                                 isActive: _isResetButtonActive,
                                 onActiveStateChanged: (isActive) {
-                                  setState(() => _isResetButtonActive = isActive);
+                                  setState(
+                                      () => _isResetButtonActive = isActive);
                                 },
                               ),
                               SizedBox(width: context.scaleWidth(20)),
@@ -398,10 +412,11 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                                 buttonHeight: 46,
                                 backgroundColor: AppColor.kuning,
                                 textColor: AppColor.whiteText,
-                                onPressed: _handleUpdatePassword,
+                                onPressed: _handleUpdateProfile,
                                 isActive: _isDoneButtonActive,
                                 onActiveStateChanged: (isActive) {
-                                  setState(() => _isDoneButtonActive = isActive);
+                                  setState(
+                                      () => _isDoneButtonActive = isActive);
                                 },
                               ),
                             ],
@@ -436,7 +451,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(
+                              context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -447,7 +463,8 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(
+                              context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',
@@ -467,7 +484,7 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     );
   }
 
-  // _buildInputField 
+  // _buildInputField
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -479,10 +496,12 @@ class _ProfileUpdatePasswordScreenState extends State<ProfileUpdatePasswordScree
     String? Function(String?)? validator,
   }) {
     Color boxColor = AppColor.hijauTosca;
-    Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
+    Color borderColor =
+        focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
     double borderWidth = focusNode.hasFocus ? 2 : 1;
     double blurRadius = focusNode.hasFocus ? 8 : 0;
-    Offset offset = focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
+    Offset offset =
+        focusNode.hasFocus ? const Offset(0, 4) : const Offset(0, 0);
 
     final double textFontSize = 16.0;
 

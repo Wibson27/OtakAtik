@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/screens/profile_feedback_screen.dart';
+import 'package:frontend/screens/profile_setting_screen.dart';
+import 'package:frontend/screens/setting_notification_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/common/app_color.dart';
@@ -15,6 +18,7 @@ import 'package:frontend/screens/voice_recorder_screen.dart';
 import 'package:frontend/screens/chatbot_screen.dart';
 import 'package:frontend/screens/history_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/screens/profile_edit_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +82,10 @@ class MyApp extends StatelessWidget {
           AppRoute.voiceSentimentHistory: (context) => HistoryScreen(),
           AppRoute.chatbot: (context) => const ChatbotScreen(),
           AppRoute.profile: (context) => const ProfileScreen(),
+          AppRoute.profileEdit: (context) => const ProfileEditScreen(),
+          AppRoute.feedback: (context) => const ProfileFeedbackScreen(),
+          AppRoute.settings: (context) => const ProfileSettingScreen(), 
+          AppRoute.notificationSettings: (context) => const SettingNotificationScreen(),
         },
       ),
     );
