@@ -96,7 +96,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       context,
                       'assets/images/menu_setting_general.png',
                       () {
-                        print('General Tapped');
+                        Navigator.pushNamed(context, AppRoute.generalSettings);
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)), 

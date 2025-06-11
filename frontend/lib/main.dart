@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:frontend/screens/profile_feedback_screen.dart';
-import 'package:frontend/screens/profile_setting_screen.dart';
-import 'package:frontend/screens/setting_notification_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_localizations/flutter_localizations.dart'; 
+import 'package:flutter_localized_locales/flutter_localized_locales.dart'; 
 
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
@@ -19,9 +20,16 @@ import 'package:frontend/screens/chatbot_screen.dart';
 import 'package:frontend/screens/history_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/screens/profile_edit_screen.dart';
+import 'package:frontend/screens/profile_feedback_screen.dart';
+import 'package:frontend/screens/profile_setting_screen.dart';
+import 'package:frontend/screens/setting_notification_screen.dart';
+import 'package:frontend/screens/setting_general_screen.dart';
+import 'package:frontend/screens/general_timezone_screen.dart';
+import 'package:frontend/screens/general_language_screen.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then(
     (_) {
       runApp(const MyApp());
@@ -51,7 +59,7 @@ class MyApp extends StatelessWidget {
             secondary: AppColor.kuning,
           ),
           scaffoldBackgroundColor: AppColor.putihNormal,
-          textTheme: GoogleFonts.poppinsTextTheme(), 
+          textTheme: GoogleFonts.poppinsTextTheme(),
           appBarTheme: AppBarTheme(
             surfaceTintColor: AppColor.hijauTosca,
             backgroundColor: AppColor.hijauTosca,
@@ -71,6 +79,17 @@ class MyApp extends StatelessWidget {
             backgroundColor: AppColor.putihNormal,
           ),
         ),
+        // untuk localization
+        localizationsDelegates: const [
+          LocaleNamesLocalizationsDelegate(), 
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate, 
+          GlobalCupertinoLocalizations.delegate, 
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('id'), 
+        ],
         initialRoute: AppRoute.splash,
         routes: {
           AppRoute.splash: (context) => const SplashScreen(),
@@ -84,8 +103,11 @@ class MyApp extends StatelessWidget {
           AppRoute.profile: (context) => const ProfileScreen(),
           AppRoute.profileEdit: (context) => const ProfileEditScreen(),
           AppRoute.feedback: (context) => const ProfileFeedbackScreen(),
-          AppRoute.settings: (context) => const ProfileSettingScreen(), 
+          AppRoute.settings: (context) => const ProfileSettingScreen(),
           AppRoute.notificationSettings: (context) => const SettingNotificationScreen(),
+          AppRoute.generalSettings: (context) => const SettingGeneralScreen(),
+          AppRoute.timeZone: (context) => const GeneralTimeZoneScreen(),
+          AppRoute.language: (context) => const GeneralLanguageScreen(),
         },
       ),
     );
