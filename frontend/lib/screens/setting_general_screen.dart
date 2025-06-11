@@ -1,4 +1,3 @@
-// lib/screens/setting_general_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
@@ -8,19 +7,18 @@ import 'package:frontend/common/screen_utils.dart';
 class SettingGeneralScreen extends StatelessWidget {
   const SettingGeneralScreen({super.key});
 
-  // Widget pembangun item menu general menggunakan gambar PNG
   Widget _buildGeneralMenuItem(
     BuildContext context,
-    String assetPath, // Path ke gambar PNG utuh (misal: menu_timezone.png)
+    String assetPath, 
     VoidCallback onTap,
   ) {
     return GestureDetector(
       onTap: onTap,
       child: Image.asset(
         assetPath,
-        width: context.scaleWidth(380), // Lebar dari Figma
-        height: context.scaleHeight(62), // Tinggi dari Figma
-        fit: BoxFit.fill, // Penting agar gambar mengisi area
+        width: context.scaleWidth(380), 
+        height: context.scaleHeight(62), 
+        fit: BoxFit.fill, 
       ),
     );
   }
@@ -38,7 +36,7 @@ class SettingGeneralScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png (background atas)
+              // wave_top.png 
               Positioned(
                 top: 0,
                 left: 0,
@@ -51,7 +49,7 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png (tombol kembali)
+              // arrow.png
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -68,7 +66,7 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'General' - posisinya di wave_top
+              // Text 'General' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -85,45 +83,42 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // Daftar menu General (Time Zone, Language, About Application)
+              // list menu General ada 3 (Time Zone, Language, About Application)
               Positioned(
-                top: context.scaleHeight(230), // Posisi disesuaikan
+                top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
-                    SizedBox(height: context.scaleHeight(20)), // Jarak dari wave_top
+                    SizedBox(height: context.scaleHeight(20)), 
                     _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_timezone.png', // Pastikan path ini benar
+                      'assets/images/menu_timezone.png', 
                       () {
                         print('Time Zone Tapped');
-                        // TODO: Navigasi ke halaman Time Zone
                       },
                     ),
-                    SizedBox(height: context.scaleHeight(20)), // Jarak antar item menu
+                    SizedBox(height: context.scaleHeight(20)), 
                     _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_language.png', // Pastikan path ini benar
+                      'assets/images/menu_language.png',
                       () {
                         print('Language Tapped');
-                        // TODO: Navigasi ke halaman Language
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
                     _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_about_application.png', // Pastikan path ini benar
+                      'assets/images/menu_about_application.png',
                       () {
                         print('About Application Tapped');
-                        // TODO: Navigasi ke halaman About Application
                       },
                     ),
                   ],
                 ),
               ),
 
-              // Navigation Bar Bawah (sama dengan halaman lainnya)
+              // Navigation Bar Bawah 
               Positioned(
                 bottom: 0,
                 left: 0,
