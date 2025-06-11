@@ -3,8 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-import 'package:timezone/timezone.dart' as tz; 
+import 'package:timezone/timezone.dart' as tz;
 import 'package:intl/intl.dart';
+import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 
 class SettingGeneralScreen extends StatefulWidget {
   const SettingGeneralScreen({super.key});
@@ -15,12 +16,18 @@ class SettingGeneralScreen extends StatefulWidget {
 
 class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
   String? _selectedTimeZoneId;
-  String _selectedTimeZoneDisplayName = 'Not Set'; 
+  String _selectedTimeZoneDisplayName = 'Not Set';
+
+  String? _selectedLanguageCode;
+  String _selectedLanguageDisplayName = 'English'; // default
 
   @override
   void initState() {
     super.initState();
-    _initializeTimeZone();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeTimeZone();
+      _initializeLanguage();
+    });
   }
 
   void _initializeTimeZone() async {
@@ -31,15 +38,28 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
     });
   }
 
+  void _initializeLanguage() {
+    final String defaultLocaleCode = WidgetsBinding.instance.window.locale?.languageCode ?? 'en';
+    setState(() {
+      _selectedLanguageCode = defaultLocaleCode;
+      _selectedLanguageDisplayName = LocaleNames.of(context)!.nameOf(defaultLocaleCode) ?? defaultLocaleCode;
+    });
+  }
+
+  // untuk ambil nama bahasa dari kode ISO menggunakan package 'flutter_localized_locales'
+  String _getLanguageDisplayNameFromCode(String isoCode) {
+    return LocaleNames.of(context)!.nameOf(isoCode) ?? isoCode; 
+  }
+
   String _formatTimeZoneDisplay(String tzId) {
     try {
       final location = tz.getLocation(tzId);
       final nowInLocation = tz.TZDateTime.now(location);
       final cityName = _extractCityName(tzId);
-      final formattedTime = DateFormat('h:mm a').format(nowInLocation); 
+      final formattedTime = DateFormat('h:mm a').format(nowInLocation);
       return '$cityName ($formattedTime)';
     } catch (e) {
-      return tzId; 
+      return tzId;
     }
   }
 
@@ -51,10 +71,10 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
 
   Widget _buildGeneralMenuItem(
     BuildContext context,
-    String assetPath, 
-    String text, 
+    String assetPath,
+    String text,
     VoidCallback onTap,
-    {String? subText} 
+    {String? subText}
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -69,16 +89,16 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                 fit: BoxFit.fill,
               ),
             ),
-            if (subText != null && subText.isNotEmpty && text == 'Time Zone') 
+            if (subText != null && subText.isNotEmpty && (text == 'Time Zone' || text == 'Language'))
               Positioned(
-                right: context.scaleWidth(35), 
+                right: context.scaleWidth(35),
                 top: 0,
                 bottom: 0,
                 child: Center(
                   child: Text(
                     subText,
                     style: GoogleFonts.inter(
-                      fontSize: 14, 
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Colors.black.withOpacity(0.7),
                     ),
@@ -117,7 +137,7 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                 ),
               ),
 
-              // arrow.png
+              // arrow.png 
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -134,7 +154,7 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                 ),
               ),
 
-              // Text 'General'
+              // Text 'General' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -151,14 +171,14 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                 ),
               ),
 
-              // Daftar menu general ada 3 (Time Zone, Language, About Application)
+              // Daftar menu general - ada 3 (Time Zone, Language, About Application)
               Positioned(
                 top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
-                    SizedBox(height: context.scaleHeight(20)), 
+                    SizedBox(height: context.scaleHeight(20)),
                     _buildGeneralMenuItem(
                       context,
                       'assets/images/menu_timezone.png',
@@ -178,16 +198,29 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                           );
                         }
                       },
-                      subText: _selectedTimeZoneDisplayName, 
+                      subText: _selectedTimeZoneDisplayName,
                     ),
-                    SizedBox(height: context.scaleHeight(20)), 
+                    SizedBox(height: context.scaleHeight(20)),
                     _buildGeneralMenuItem(
                       context,
                       'assets/images/menu_language.png',
                       'Language',
-                      () {
-                        print('Language Tapped');
+                      () async {
+                        final result = await Navigator.pushNamed(context, AppRoute.language);
+                        if (result != null && result is String) {
+                          setState(() {
+                            _selectedLanguageCode = result;
+                            _selectedLanguageDisplayName = _getLanguageDisplayNameFromCode(result);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Bahasa diatur ke $_selectedLanguageDisplayName'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
                       },
+                      subText: _selectedLanguageDisplayName,
                     ),
                     SizedBox(height: context.scaleHeight(20)),
                     _buildGeneralMenuItem(
