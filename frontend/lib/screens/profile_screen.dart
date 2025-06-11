@@ -179,7 +179,7 @@ class ProfileScreen extends StatelessWidget {
                 right: context.scaleWidth(25), 
                 child: GestureDetector(
                   onTap: () {
-                    print('Setting menu tapped');
+                    Navigator.pushNamed(context, AppRoute.settings);
                   },
                   child: Image.asset(
                     'assets/images/menu_setting.png',
