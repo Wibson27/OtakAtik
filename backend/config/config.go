@@ -1,9 +1,11 @@
 package config
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -11,35 +13,16 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	// Server Configuration
-	Server ServerConfig
-
-	// Database Configuration
-	Database DatabaseConfig
-
-	// JWT Configuration
-	JWT JWTConfig
-
-	// Azure AI Services
-	Azure AzureConfig
-
-	// HuggingFace Configuration
+	Server      ServerConfig
+	Database    DatabaseConfig
+	JWT         JWTConfig
+	Azure       AzureConfig
 	HuggingFace HuggingFaceConfig
-
-	// Social Media OAuth
-	OAuth OAuthConfig
-
-	// Google OAuth Configuration
-	Google GoogleOAuthConfig
-
-	// Email Configuration
-	Email EmailConfig
-
-	// File Storage
-	Storage StorageConfig
-
-	// Security
-	Security SecurityConfig
+	OAuth       OAuthConfig
+	Google      GoogleOAuthConfig
+	Email       EmailConfig
+	Storage     StorageConfig
+	Security    SecurityConfig
 }
 
 type ServerConfig struct {
@@ -50,29 +33,29 @@ type ServerConfig struct {
 }
 
 type JWTConfig struct {
-	AccessSecret     string
-	RefreshSecret    string
-	AccessExpiry     time.Duration
-	RefreshExpiry    time.Duration
-	EncryptionKey    string // 32-byte key for token encryption
+	AccessSecret  string
+	RefreshSecret string
+	AccessExpiry  time.Duration
+	RefreshExpiry time.Duration
+	EncryptionKey []byte
 }
 
 type AzureConfig struct {
-	OpenAIAPIKey      string
-	OpenAIEndpoint    string
-	SpeechAPIKey      string
-	SpeechRegion      string
-	TextAnalyticsKey  string
+	OpenAIAPIKey        string
+	OpenAIEndpoint      string
+	SpeechAPIKey        string
+	SpeechRegion        string
+	TextAnalyticsKey    string
 	TextAnalyticsEndpoint string
-	BlobStorageAccount    string
-	BlobStorageKey        string
-	BlobContainerName     string
+	BlobStorageAccount  string
+	BlobStorageKey      string
+	BlobContainerName   string
 }
 
 type HuggingFaceConfig struct {
-	APIKey     string
-	ModelName  string // e.g., "facebook/wav2vec2-base-960h"
-	Endpoint   string
+	APIKey    string
+	ModelName string
+	Endpoint  string
 }
 
 type GoogleOAuthConfig struct {
@@ -82,22 +65,15 @@ type GoogleOAuthConfig struct {
 }
 
 type OAuthConfig struct {
-	// Instagram
 	InstagramClientID     string
 	InstagramClientSecret string
 	InstagramRedirectURI  string
-
-	// Twitter/X
 	TwitterClientID       string
 	TwitterClientSecret   string
 	TwitterRedirectURI    string
-
-	// Facebook
 	FacebookAppID         string
 	FacebookAppSecret     string
 	FacebookRedirectURI   string
-
-	// TikTok
 	TikTokClientKey       string
 	TikTokClientSecret    string
 	TikTokRedirectURI     string
@@ -114,12 +90,12 @@ type EmailConfig struct {
 
 type StorageConfig struct {
 	AudioUploadPath   string
-	MaxFileSize       int64  // in bytes
+	MaxFileSize       int64 // in bytes
 	AllowedExtensions []string
 }
 
 type SecurityConfig struct {
-	EncryptionKey    string // 32-byte key for general encryption
+	EncryptionKey    []byte 
 	RateLimitPerMin  int
 	MaxLoginAttempts int
 	LockoutDuration  time.Duration
@@ -129,19 +105,20 @@ var AppConfig *Config
 
 // LoadConfig loads all configuration from environment variables
 func LoadConfig() *Config {
-	// Load .env file if it exists (for development)
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
 
-	// Parse durations
-	accessExpiry, _ := time.ParseDuration(getEnv("JWT_ACCESS_EXPIRY", "15m"))
-	refreshExpiry, _ := time.ParseDuration(getEnv("JWT_REFRESH_EXPIRY", "168h")) // 7 days
-	lockoutDuration, _ := time.ParseDuration(getEnv("LOCKOUT_DURATION", "15m"))
+	// --- Membaca dan Mem-validasi Kunci Enkripsi dengan Benar ---
+	jwtKey := decodeKey("JWT_ENCRYPTION_KEY")
+	securityKey := decodeKey("ENCRYPTION_KEY")
 
-	// Parse integers
+	// --- Mem-parsing nilai-nilai lain ---
+	accessExpiry, _ := time.ParseDuration(getEnv("JWT_ACCESS_EXPIRY", "15m"))
+	refreshExpiry, _ := time.ParseDuration(getEnv("JWT_REFRESH_EXPIRY", "168h"))
+	lockoutDuration, _ := time.ParseDuration(getEnv("LOCKOUT_DURATION", "15m"))
 	smtpPort, _ := strconv.Atoi(getEnv("SMTP_PORT", "587"))
-	maxFileSize, _ := strconv.ParseInt(getEnv("MAX_FILE_SIZE", "10485760"), 10, 64) // 10MB
+	maxFileSize, _ := strconv.ParseInt(getEnv("MAX_FILE_SIZE", "10485760"), 10, 64)
 	rateLimitPerMin, _ := strconv.Atoi(getEnv("RATE_LIMIT_PER_MIN", "60"))
 	maxLoginAttempts, _ := strconv.Atoi(getEnv("MAX_LOGIN_ATTEMPTS", "5"))
 
@@ -150,36 +127,33 @@ func LoadConfig() *Config {
 			Port:        getEnv("PORT", "8080"),
 			Host:        getEnv("HOST", "localhost"),
 			Environment: getEnv("GIN_MODE", "debug"),
-			CORSOrigins: []string{
-				getEnv("FRONTEND_URL", "http://localhost:3000"),
-				getEnv("MOBILE_APP_URL", "http://localhost:8081"),
-			},
+			CORSOrigins: strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8081"), ","),
 		},
 
-		Database: *LoadDatabaseConfig(),
+		Database: *LoadDatabaseConfig(), // Memanggil fungsi dari database.go
 
 		JWT: JWTConfig{
 			AccessSecret:  getEnvRequired("JWT_ACCESS_SECRET"),
 			RefreshSecret: getEnvRequired("JWT_REFRESH_SECRET"),
 			AccessExpiry:  accessExpiry,
 			RefreshExpiry: refreshExpiry,
-			EncryptionKey: getEnvRequired("JWT_ENCRYPTION_KEY"), // Must be 32 bytes
+			EncryptionKey: jwtKey, // Menyimpan hasil decode
 		},
 
 		Azure: AzureConfig{
-			OpenAIAPIKey:          getEnvRequired("AZURE_OPENAI_API_KEY"),
-			OpenAIEndpoint:        getEnvRequired("AZURE_OPENAI_ENDPOINT"),
-			SpeechAPIKey:          getEnvRequired("AZURE_SPEECH_API_KEY"),
-			SpeechRegion:          getEnvRequired("AZURE_SPEECH_REGION"),
-			TextAnalyticsKey:      getEnvRequired("AZURE_TEXT_ANALYTICS_KEY"),
-			TextAnalyticsEndpoint: getEnvRequired("AZURE_TEXT_ANALYTICS_ENDPOINT"),
-			BlobStorageAccount:    getEnvRequired("AZURE_BLOB_STORAGE_ACCOUNT"),
-			BlobStorageKey:        getEnvRequired("AZURE_BLOB_STORAGE_KEY"),
-			BlobContainerName:     getEnv("AZURE_BLOB_CONTAINER", "audio-files"),
+			OpenAIAPIKey:        getEnv("AZURE_OPENAI_API_KEY", ""),
+			OpenAIEndpoint:      getEnv("AZURE_OPENAI_ENDPOINT", ""),
+			SpeechAPIKey:        getEnv("AZURE_SPEECH_API_KEY", ""),
+			SpeechRegion:        getEnv("AZURE_SPEECH_REGION", ""),
+			TextAnalyticsKey:    getEnv("AZURE_TEXT_ANALYTICS_KEY", ""),
+			TextAnalyticsEndpoint: getEnv("AZURE_TEXT_ANALYTICS_ENDPOINT", ""),
+			BlobStorageAccount:  getEnv("AZURE_BLOB_STORAGE_ACCOUNT", ""),
+			BlobStorageKey:      getEnv("AZURE_BLOB_STORAGE_KEY", ""),
+			BlobContainerName:   getEnv("AZURE_BLOB_CONTAINER", "audio-files"),
 		},
 
 		HuggingFace: HuggingFaceConfig{
-			APIKey:    getEnvRequired("HUGGINGFACE_API_KEY"),
+			APIKey:    getEnv("HUGGINGFACE_API_KEY", ""),
 			ModelName: getEnv("HUGGINGFACE_MODEL", "facebook/wav2vec2-base-960h"),
 			Endpoint:  getEnv("HUGGINGFACE_ENDPOINT", "https://api-inference.huggingface.co"),
 		},
@@ -191,22 +165,15 @@ func LoadConfig() *Config {
 		},
 
 		OAuth: OAuthConfig{
-			// Instagram
 			InstagramClientID:     getEnv("INSTAGRAM_CLIENT_ID", ""),
 			InstagramClientSecret: getEnv("INSTAGRAM_CLIENT_SECRET", ""),
 			InstagramRedirectURI:  getEnv("INSTAGRAM_REDIRECT_URI", ""),
-
-			// Twitter/X
 			TwitterClientID:       getEnv("TWITTER_CLIENT_ID", ""),
 			TwitterClientSecret:   getEnv("TWITTER_CLIENT_SECRET", ""),
 			TwitterRedirectURI:    getEnv("TWITTER_REDIRECT_URI", ""),
-
-			// Facebook
 			FacebookAppID:         getEnv("FACEBOOK_APP_ID", ""),
 			FacebookAppSecret:     getEnv("FACEBOOK_APP_SECRET", ""),
 			FacebookRedirectURI:   getEnv("FACEBOOK_REDIRECT_URI", ""),
-
-			// TikTok
 			TikTokClientKey:       getEnv("TIKTOK_CLIENT_KEY", ""),
 			TikTokClientSecret:    getEnv("TIKTOK_CLIENT_SECRET", ""),
 			TikTokRedirectURI:     getEnv("TIKTOK_REDIRECT_URI", ""),
@@ -224,58 +191,68 @@ func LoadConfig() *Config {
 		Storage: StorageConfig{
 			AudioUploadPath:   getEnv("AUDIO_UPLOAD_PATH", "./uploads/audio"),
 			MaxFileSize:       maxFileSize,
-			AllowedExtensions: []string{".wav", ".mp3", ".m4a", ".flac"},
+			AllowedExtensions: []string{".wav", ".mp3", ".m4a"},
 		},
 
 		Security: SecurityConfig{
-			EncryptionKey:    getEnvRequired("ENCRYPTION_KEY"), // Must be 32 bytes
+			EncryptionKey:    securityKey, // Menyimpan hasil decode
 			RateLimitPerMin:  rateLimitPerMin,
 			MaxLoginAttempts: maxLoginAttempts,
 			LockoutDuration:  lockoutDuration,
 		},
 	}
 
-	// Validate critical configuration
-	validateConfig(config)
+	validateConfig(config) // Tetap memanggil fungsi validasi utama
 
 	AppConfig = config
 	return config
 }
 
-// getEnvRequired gets environment variable and panics if not found
+// getEnvRequired mengambil environment variable dan panic jika tidak ada.
 func getEnvRequired(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Fatalf("Required environment variable %s is not set", key)
+		log.Fatalf("FATAL: Required environment variable %s is not set", key)
 	}
 	return value
 }
 
-// getEnv gets environment variable with fallback
+// getEnv mengambil environment variable dengan nilai default.
 func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
+	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
 	return fallback
 }
 
-// validateConfig validates critical configuration values
+// decodeKey adalah helper untuk men-decode dan memvalidasi kunci Base64.
+func decodeKey(envKey string) []byte {
+	keyStr := getEnvRequired(envKey)
+
+	decodedKey, err := base64.StdEncoding.DecodeString(keyStr)
+	if err != nil {
+		log.Fatalf("FATAL: '%s' is not a valid base64 string: %v", envKey, err)
+	}
+
+	// Validasi panjang dilakukan di sini, di satu tempat.
+	if len(decodedKey) != 32 {
+		log.Fatalf("FATAL: Decoded '%s' must be exactly 32 bytes, but got %d bytes", envKey, len(decodedKey))
+	}
+
+	return decodedKey
+}
+
+// validateConfig memvalidasi nilai-nilai konfigurasi penting lainnya.
 func validateConfig(config *Config) {
-	// Validate JWT secrets
 	if len(config.JWT.AccessSecret) < 32 {
-		log.Fatal("JWT_ACCESS_SECRET must be at least 32 characters")
+		log.Println("WARNING: JWT_ACCESS_SECRET should be at least 32 characters for security.")
 	}
 	if len(config.JWT.RefreshSecret) < 32 {
-		log.Fatal("JWT_REFRESH_SECRET must be at least 32 characters")
+		log.Println("WARNING: JWT_REFRESH_SECRET should be at least 32 characters for security.")
 	}
 
-	// Validate encryption keys (must be exactly 32 bytes for AES-256)
-	if len(config.JWT.EncryptionKey) != 32 {
-		log.Fatal("JWT_ENCRYPTION_KEY must be exactly 32 bytes")
-	}
-	if len(config.Security.EncryptionKey) != 32 {
-		log.Fatal("ENCRYPTION_KEY must be exactly 32 bytes")
-	}
+	// Validasi untuk kunci enkripsi sudah dilakukan di dalam decodeKey,
+	// sehingga tidak perlu diulang di sini.
 
-	log.Println("✅ Configuration validation passed")
+	log.Println("✅ Configuration values loaded and validated.")
 }

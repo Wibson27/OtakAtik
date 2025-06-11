@@ -1,329 +1,158 @@
 package config
 
 import (
-	"backend/models"
 	"log"
 	"time"
+	"os"
 
-	"github.com/google/uuid"
+	"backend/models"
+
+	// "github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-// CreateInitialData creates essential seed data for the application
-func CreateInitialData(db *gorm.DB) {
-	log.Println("🌱 Creating initial seed data...")
-
-	// Create community categories
-	createCommunityCategories(db)
-
-	// Create admin user (optional, for development)
-	createAdminUser(db)
-
-	// Create notification templates
-	createNotificationTemplates(db)
-
-	log.Println("✅ Initial seed data created successfully")
-}
-
-// stringPtr is a helper function to get a pointer to a string
+// stringPtr adalah helper untuk mendapatkan pointer dari string.
 func stringPtr(s string) *string {
 	return &s
 }
 
-// createCommunityCategories creates the community forum categories
-func createCommunityCategories(db *gorm.DB) {
+// CreateInitialData mengisi database dengan data awal jika belum ada.
+// Termasuk data esensial (kategori, admin) dan data sampel untuk pengembangan.
+func CreateInitialData(db *gorm.DB) {
+	tx := db.Begin()
+	if tx.Error != nil {
+		log.Printf("ERROR: Failed to begin transaction for initial data: %v", tx.Error)
+		return
+	}
+	defer tx.Rollback() // Akan diabaikan jika tx.Commit() berhasil
+
+	log.Println("🌱 Seeding essential data...")
+	createCommunityCategories(tx)
+	createAdminUser(tx)
+
+	// Hanya buat data sampel jika kita tidak di lingkungan produksi
+	if GIN_MODE := os.Getenv("GIN_MODE"); GIN_MODE != "release" {
+		log.Println("🧪 Seeding sample data for development...")
+		createSampleUsers(tx)
+		createSamplePosts(tx)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Printf("ERROR: Failed to commit initial data transaction: %v", err)
+	}
+}
+
+// createCommunityCategories menggunakan FirstOrCreate untuk membuat kategori hanya jika belum ada.
+func createCommunityCategories(tx *gorm.DB) {
 	categories := []models.CommunityCategory{
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Mengelola Kecemasan",
-			CategoryDescription: stringPtr("Space khusus untuk berbagi pengalaman dan tips mengatasi kecemasan sehari-hari"),
-			CategoryColor:       "#6366F1", // Indigo
-			IconName:            stringPtr("🧘"),
-			IsActive:            true,
-			DisplayOrder:        1,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Tips Produktivitas & Stress",
-			CategoryDescription: stringPtr("Diskusi tentang keseimbangan hidup, manajemen stress, dan tips produktivitas yang sehat"),
-			CategoryColor:       "#10B981", // Emerald
-			IconName:            stringPtr("⚖️"),
-			IsActive:            true,
-			DisplayOrder:        2,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Cerita Inspiratif",
-			CategoryDescription: stringPtr("Berbagi cerita positif, pencapaian, dan momen-momen yang memberikan harapan"),
-			CategoryColor:       "#F59E0B", // Amber
-			IconName:            stringPtr("✨"),
-			IsActive:            true,
-			DisplayOrder:        3,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Support Group",
-			CategoryDescription: stringPtr("Ruang aman untuk saling mendukung dan berbagi pengalaman dalam perjalanan pemulihan"),
-			CategoryColor:       "#EF4444", // Red
-			IconName:            stringPtr("🤗"),
-			IsActive:            true,
-			DisplayOrder:        4,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Self Care Tips",
-			CategoryDescription: stringPtr("Tips praktis untuk self-care, mindfulness, dan aktivitas yang membantu kesehatan mental"),
-			CategoryColor:       "#8B5CF6", // Violet
-			IconName:            stringPtr("💆"),
-			IsActive:            true,
-			DisplayOrder:        5,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
-		{
-			ID:                  uuid.New(),
-			CategoryName:        "Professional Help Experience",
-			CategoryDescription: stringPtr("Berbagi pengalaman dengan terapis, psikolog, atau bantuan profesional lainnya"),
-			CategoryColor:       "#06B6D4", // Cyan
-			IconName:            stringPtr("👩‍⚕️"),
-			IsActive:            true,
-			DisplayOrder:        6,
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		},
+		{CategoryName: "Mengelola Kecemasan", CategoryDescription: stringPtr("Ruang untuk berbagi pengalaman dan tips mengatasi kecemasan."), IconName: stringPtr("🧘")},
+		{CategoryName: "Tips Produktivitas & Stres", CategoryDescription: stringPtr("Diskusi tentang keseimbangan hidup dan manajemen stres."), IconName: stringPtr("⚖️")},
+		{CategoryName: "Cerita Inspiratif", CategoryDescription: stringPtr("Bagikan cerita positif dan momen yang memberi harapan."), IconName: stringPtr("✨")},
+		{CategoryName: "Support Group", CategoryDescription: stringPtr("Ruang aman untuk saling mendukung dalam perjalanan pemulihan."), IconName: stringPtr("🤗")},
+		{CategoryName: "Self Care Tips", CategoryDescription: stringPtr("Tips praktis untuk self-care dan mindfulness."), IconName: stringPtr("💆")},
 	}
 
-	for _, category := range categories {
-		var existingCategory models.CommunityCategory
-		result := db.Where("category_name = ?", category.CategoryName).First(&existingCategory)
-
-		if result.Error == gorm.ErrRecordNotFound {
-			if err := db.Create(&category).Error; err != nil {
-				log.Printf("❌ Failed to create category '%s': %v", category.CategoryName, err)
-			} else {
-				log.Printf("✅ Created community category: %s", category.CategoryName)
-			}
-		} else {
-			log.Printf("⚠️  Category '%s' already exists, skipping", category.CategoryName)
+	for i, category := range categories {
+		result := tx.FirstOrCreate(&models.CommunityCategory{}, models.CommunityCategory{
+			CategoryName:        category.CategoryName,
+			CategoryDescription: category.CategoryDescription,
+			IconName:            category.IconName,
+			DisplayOrder:        i + 1,
+			IsActive:            true,
+		})
+		if result.Error != nil {
+			log.Printf("ERROR: Failed to seed category '%s': %v", category.CategoryName, result.Error)
+			return
 		}
 	}
+	log.Println("✅ Community categories checked/seeded.")
 }
 
-// createAdminUser creates a default admin user for development
-func createAdminUser(db *gorm.DB) {
-	// Check if admin user already exists
-	var existingUser models.User
-	result := db.Where("email = ?", "admin@tenang.in").First(&existingUser)
+// createAdminUser menggunakan FirstOrCreate untuk memastikan hanya ada satu admin.
+func createAdminUser(tx *gorm.DB) {
+	adminEmail := "admin@tenang.in"
 
-	if result.Error == gorm.ErrRecordNotFound {
-		// Create admin user
-		adminID := uuid.New()
-		now := time.Now()
+	var adminUser models.User
+	result := tx.FirstOrCreate(&adminUser, models.User{
+		Email:           adminEmail,
+		FullName:        stringPtr("Admin Tenang"),
+		Username:        stringPtr("admin"),
+		IsActive:        true,
+		EmailVerifiedAt: func() *time.Time { t := time.Now(); return &t }(),
+	})
 
-		// Hash password
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Printf("❌ Failed to hash admin password: %v", err)
-			return
-		}
+	if result.Error != nil {
+		log.Printf("ERROR: Failed to seed admin user: %v", result.Error)
+		return
+	}
 
-		// Create user
-		adminUser := models.User{
-			ID:              adminID,
-			Email:           "admin@tenang.in",
-			FullName:        stringPtr("Admin Tenang"),
-			Username:        stringPtr("admin"),
-			IsActive:        true,
-			EmailVerifiedAt: &now,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-		}
-
-		if err := db.Create(&adminUser).Error; err != nil {
-			log.Printf("❌ Failed to create admin user: %v", err)
-			return
-		}
-
-		// Create user credentials
-		adminCredentials := models.UserCredentials{
-			ID:           uuid.New(),
-			UserID:       adminID,
-			PasswordHash: string(hashedPassword),
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
-		}
-
-		if err := db.Create(&adminCredentials).Error; err != nil {
-			log.Printf("❌ Failed to create admin credentials: %v", err)
-			return
-		}
-
-		// Create user preferences
-		adminPreferences := models.UserPreferences{
-			ID:                        uuid.New(),
-			UserID:                    adminID,
-			NotificationChat:          true,
-			NotificationCommunity:     true,
-			NotificationSchedule:      "[]", // Empty JSON array
-			CommunityAnonymousDefault: false,
-			SocialMediaMonitoring:     false,
-			CreatedAt:                 time.Now(),
-			UpdatedAt:                 time.Now(),
-		}
-
-		if err := db.Create(&adminPreferences).Error; err != nil {
-			log.Printf("❌ Failed to create admin preferences: %v", err)
-			return
-		}
-
-		log.Println("✅ Created admin user (admin@tenang.in / admin123)")
+	if result.RowsAffected > 0 {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("superadmin123!"), bcrypt.DefaultCost)
+		tx.Create(&models.UserCredentials{UserID: adminUser.ID, PasswordHash: string(hashedPassword)})
+		tx.Create(&models.UserPreferences{UserID: adminUser.ID})
+		log.Println("✅ Admin user 'admin@tenang.in' created.")
 	} else {
-		log.Println("⚠️  Admin user already exists, skipping")
+		log.Println("👍 Admin user 'admin@tenang.in' already exists.")
 	}
 }
 
-// createNotificationTemplates creates default notification templates
-func createNotificationTemplates(db *gorm.DB) {
-	// Note: This would require a NotificationTemplate model
-	// For now, we'll skip this and implement later when needed
-	log.Println("📝 Notification templates will be created when NotificationTemplate model is implemented")
-}
-
-// CreateSampleData creates sample data for development/testing (optional)
-func CreateSampleData(db *gorm.DB) {
-	log.Println("🧪 Creating sample data for development...")
-
-	// Create sample users for testing
-	createSampleUsers(db)
-
-	// Create sample posts
-	createSamplePosts(db)
-
-	log.Println("✅ Sample data created successfully")
-}
-
-// createSampleUsers creates sample users for development
-func createSampleUsers(db *gorm.DB) {
-	sampleUsers := []struct {
-		Email    string
-		FullName string
-		Username string
-	}{
-		{"alice@example.com", "Alice Johnson", "alice_j"},
-		{"bob@example.com", "Bob Smith", "bob_smith"},
-		{"clara@example.com", "Clara Rodriguez", "clara_r"},
+// createSampleUsers membuat beberapa pengguna sampel untuk pengembangan.
+func createSampleUsers(tx *gorm.DB) {
+	sampleUsers := []models.User{
+		{Email: "alice@example.com", FullName: stringPtr("Alice Johnson"), Username: stringPtr("alice_j")},
+		{Email: "bob@example.com", FullName: stringPtr("Bob Smith"), Username: stringPtr("bob_smith")},
 	}
 
 	for _, userData := range sampleUsers {
 		var existingUser models.User
-		result := db.Where("email = ?", userData.Email).First(&existingUser)
+		result := tx.FirstOrCreate(&existingUser, models.User{
+			Email:           userData.Email,
+			FullName:        userData.FullName,
+			Username:        userData.Username,
+			IsActive:        true,
+			EmailVerifiedAt: func() *time.Time { t := time.Now(); return &t }(),
+		})
 
-		if result.Error == gorm.ErrRecordNotFound {
-			userID := uuid.New()
-			now := time.Now()
-
-			// Hash password
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-			if err != nil {
-				log.Printf("❌ Failed to hash password for %s: %v", userData.Email, err)
-				continue
-			}
-
-			// Create user
-			user := models.User{
-				ID:              userID,
-				Email:           userData.Email,
-				FullName:        stringPtr(userData.FullName),
-				Username:        stringPtr(userData.Username),
-				IsActive:        true,
-				EmailVerifiedAt: &now,
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			}
-
-			if err := db.Create(&user).Error; err != nil {
-				log.Printf("❌ Failed to create user %s: %v", userData.Email, err)
-				continue
-			}
-
-			// Create credentials
-			credentials := models.UserCredentials{
-				ID:           uuid.New(),
-				UserID:       userID,
-				PasswordHash: string(hashedPassword),
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
-			}
-
-			if err := db.Create(&credentials).Error; err != nil {
-				log.Printf("❌ Failed to create credentials for %s: %v", userData.Email, err)
-				continue
-			}
-
-			log.Printf("✅ Created sample user: %s", userData.Email)
+		if result.RowsAffected > 0 {
+			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+			tx.Create(&models.UserCredentials{UserID: existingUser.ID, PasswordHash: string(hashedPassword)})
+			log.Printf("✅ Sample user '%s' created.", userData.Email)
 		}
 	}
 }
 
-// createSamplePosts creates sample community posts
-func createSamplePosts(db *gorm.DB) {
-	// Get first category
+// createSamplePosts membuat beberapa postingan sampel untuk pengembangan.
+func createSamplePosts(tx *gorm.DB) {
 	var category models.CommunityCategory
-	if err := db.First(&category).Error; err != nil {
-		log.Printf("❌ No categories found for sample posts: %v", err)
+	if err := tx.Where("category_name = ?", "Mengelola Kecemasan").First(&category).Error; err != nil {
+		log.Println("WARNING: 'Mengelola Kecemasan' category not found, cannot create sample posts.")
 		return
 	}
 
-	// Get sample user
 	var user models.User
-	if err := db.Where("email = ?", "alice@example.com").First(&user).Error; err != nil {
-		log.Printf("❌ No sample user found for posts: %v", err)
+	if err := tx.Where("email = ?", "alice@example.com").First(&user).Error; err != nil {
+		log.Println("WARNING: Sample user 'alice@example.com' not found, cannot create sample posts.")
 		return
 	}
 
 	samplePosts := []models.CommunityPost{
-		{
-			ID:                   uuid.New(),
-			UserID:               user.ID,
-			CategoryID:           category.ID,
-			PostTitle:            "Tips Mengatasi Kecemasan di Pagi Hari",
-			PostContent:          "Halo semua! Aku mau berbagi tips yang membantu aku mengatasi kecemasan di pagi hari. Pertama, aku selalu mulai dengan breathing exercise selama 5 menit...",
-			IsAnonymous:          false,
-			AnonymousDisplayName: nil,
-			PostStatus:           "published",
-			ViewCount:            0,
-			CreatedAt:            time.Now(),
-			UpdatedAt:            time.Now(),
-		},
-		{
-			ID:                   uuid.New(),
-			UserID:               user.ID,
-			CategoryID:           category.ID,
-			PostTitle:            "Cara Aku Belajar Menerima Diri Sendiri",
-			PostContent:          "Journey self-acceptance aku dimulai ketika aku sadar bahwa aku terlalu keras sama diri sendiri. Aku ingin berbagi beberapa hal yang membantu...",
-			IsAnonymous:          true,
-			AnonymousDisplayName: stringPtr("WiseCat123"),
-			PostStatus:           "published",
-			ViewCount:            0,
-			CreatedAt:            time.Now().Add(-24 * time.Hour),
-			UpdatedAt:            time.Now().Add(-24 * time.Hour),
-		},
+		{PostTitle: "Tips Mengatasi Cemas di Pagi Hari", PostContent: "Halo semua! Aku mau berbagi tips yang membantu aku mengatasi kecemasan di pagi hari..."},
+		{PostTitle: "Apakah ada yang pernah merasa seperti ini?", PostContent: "Akhir-akhir ini aku merasa sulit untuk fokus pada pekerjaan. Rasanya pikiranku melayang ke mana-mana..."},
 	}
 
-	for _, post := range samplePosts {
-		if err := db.Create(&post).Error; err != nil {
-			log.Printf("❌ Failed to create sample post: %v", err)
-		} else {
-			log.Printf("✅ Created sample post: %s", post.PostTitle)
+	for _, postData := range samplePosts {
+		var existingPost models.CommunityPost
+		result := tx.FirstOrCreate(&existingPost, models.CommunityPost{
+			UserID:      user.ID,
+			CategoryID:  category.ID,
+			PostTitle:   postData.PostTitle,
+			PostContent: postData.PostContent,
+			PostStatus:  "published",
+		})
+
+		if result.RowsAffected > 0 {
+			log.Printf("✅ Sample post '%s' created.", postData.PostTitle)
 		}
 	}
 }
