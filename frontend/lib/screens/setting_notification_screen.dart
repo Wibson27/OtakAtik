@@ -1,4 +1,3 @@
-// lib/screens/setting_notification_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
@@ -13,63 +12,47 @@ class SettingNotificationScreen extends StatefulWidget {
 }
 
 class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
-  // State untuk setiap toggle notifikasi
   bool _chatNotificationEnabled = true;
   bool _communityNotificationsEnabled = true;
   bool _dailyCheckinScheduleEnabled = true;
 
-  // Widget pembangun item notifikasi dengan toggle
   Widget _buildNotificationItem(
     BuildContext context,
-    String assetPath, // Path ke gambar PNG utuh (misal: menu_chat_notification.png)
+    String assetPath, 
     bool isEnabled,
-    ValueSetter<bool> onChanged, // Callback saat toggle berubah
+    ValueSetter<bool> onChanged, 
   ) {
     return GestureDetector(
       onTap: () {
-        // Ketika seluruh area item di-tap, ubah status toggle
         onChanged(!isEnabled);
       },
       child: Container(
         width: context.scaleWidth(380),
         height: context.scaleHeight(62),
-        // *** BAGIAN INI SUDAH TIDAK ADA BoxDecoration AGAR TIDAK ADA KOTAK BERTUMPUK ***
-        // decoration: BoxDecoration(
-        //   color: AppColor.putihNormal,
-        //   borderRadius: BorderRadius.circular(context.scaleWidth(18)),
-        //   boxShadow: [
-        //     BoxShadow(
-        //       color: Colors.black.withOpacity(0.25),
-        //       blurRadius: 5,
-        //       offset: const Offset(0, 2),
-        //     ),
-        //   ],
-        // ),
         child: Stack(
           children: [
-            // Gambar PNG utama (sudah termasuk ikon, teks, dan background putih)
             Positioned.fill(
               child: Image.asset(
                 assetPath,
-                fit: BoxFit.fill, // Penting agar gambar mengisi area
+                fit: BoxFit.fill, 
               ),
             ),
-            // *** BAGIAN INI ADALAH SWITCH YANG TETAP ADA DAN INTERAKTIF ***
+            // bagian toggle switch
             Positioned(
-              right: context.scaleWidth(15), // Posisi dari kanan
+              right: context.scaleWidth(15), 
               top: 0,
               bottom: 0,
               child: Center(
-                child: SizedBox( // Menggunakan SizedBox untuk mengatur ukuran Switch
-                  width: context.scaleWidth(46), // Lebar dari Figma: 46px
-                  height: context.scaleHeight(29), // Tinggi dari Figma: 29px
+                child: SizedBox( 
+                  width: context.scaleWidth(46), 
+                  height: context.scaleHeight(29),
                   child: Switch(
                     value: isEnabled,
-                    onChanged: onChanged, // Mengelola perubahan state toggle
-                    activeColor: AppColor.putihNormal, // Warna Thumb saat aktif (FFFFFF)
-                    activeTrackColor: const Color(0xFF8FDAB6), // Warna Track saat aktif (8FDAB6)
-                    inactiveThumbColor: AppColor.putihNormal, // Warna Thumb saat tidak aktif (FFFFFF)
-                    inactiveTrackColor: Colors.grey.withOpacity(0.6), // Warna Track saat tidak aktif (mirip Figma)
+                    onChanged: onChanged,
+                    activeColor: AppColor.putihNormal, 
+                    activeTrackColor: AppColor.hijauToggle, 
+                    inactiveThumbColor: AppColor.putihNormal, 
+                    inactiveTrackColor: AppColor.abuAbuNormal, 
                   ),
                 ),
               ),
@@ -93,7 +76,7 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png (background atas)
+              // wave_top.png 
               Positioned(
                 top: 0,
                 left: 0,
@@ -106,7 +89,7 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                 ),
               ),
 
-              // arrow.png (tombol kembali)
+              // arrow.png 
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -123,7 +106,7 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                 ),
               ),
 
-              // Text 'Notifications' - posisinya di wave_top
+              // Text 'Notifications' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -140,14 +123,14 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                 ),
               ),
 
-              // Daftar menu notifikasi
+              // list menu notifikasi - ada 3
               Positioned(
-                top: context.scaleHeight(230), // Posisi disesuaikan
+                top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
-                    SizedBox(height: context.scaleHeight(20)), // Jarak dari wave_top
+                    SizedBox(height: context.scaleHeight(20)), 
                     _buildNotificationItem(
                       context,
                       'assets/images/menu_chat_notification.png',
@@ -157,7 +140,6 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                           _chatNotificationEnabled = newValue;
                         });
                         print('Chat Notification: $newValue');
-                        // TODO: Simpan status notifikasi ke preferensi pengguna
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
@@ -170,7 +152,6 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                           _communityNotificationsEnabled = newValue;
                         });
                         print('Community Notifications: $newValue');
-                        // TODO: Simpan status notifikasi ke preferensi pengguna
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
@@ -183,7 +164,6 @@ class _SettingNotificationScreenState extends State<SettingNotificationScreen> {
                           _dailyCheckinScheduleEnabled = newValue;
                         });
                         print('Daily Check-in Schedule: $newValue');
-                        // TODO: Simpan status notifikasi ke preferensi pengguna
                       },
                     ),
                   ],
