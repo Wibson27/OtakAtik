@@ -104,7 +104,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       context,
                       'assets/images/menu_setting_notifikasi.png',
                       () {
-                        print('Notifikasi Tapped');
+                        Navigator.pushNamed(context, AppRoute.notificationSettings);
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),

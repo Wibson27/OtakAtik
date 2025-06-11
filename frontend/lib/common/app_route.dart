@@ -13,4 +13,5 @@ class AppRoute {
   static const String chatbot = '/chatbot';
   static const String chatbotHistory = '/chatbot/history';
   static const String feedback = '/feedback';
+  static const String notificationSettings = '/settings/notifications';
 }
