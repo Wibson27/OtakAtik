@@ -3,22 +3,90 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:timezone/timezone.dart' as tz; 
+import 'package:intl/intl.dart';
 
-class SettingGeneralScreen extends StatelessWidget {
+class SettingGeneralScreen extends StatefulWidget {
   const SettingGeneralScreen({super.key});
+
+  @override
+  State<SettingGeneralScreen> createState() => _SettingGeneralScreenState();
+}
+
+class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
+  String? _selectedTimeZoneId;
+  String _selectedTimeZoneDisplayName = 'Not Set'; 
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTimeZone();
+  }
+
+  void _initializeTimeZone() async {
+    final localTimeZone = tz.local;
+    setState(() {
+      _selectedTimeZoneId = localTimeZone.name;
+      _selectedTimeZoneDisplayName = _formatTimeZoneDisplay(localTimeZone.name);
+    });
+  }
+
+  String _formatTimeZoneDisplay(String tzId) {
+    try {
+      final location = tz.getLocation(tzId);
+      final nowInLocation = tz.TZDateTime.now(location);
+      final cityName = _extractCityName(tzId);
+      final formattedTime = DateFormat('h:mm a').format(nowInLocation); 
+      return '$cityName ($formattedTime)';
+    } catch (e) {
+      return tzId; 
+    }
+  }
+
+  String _extractCityName(String tzId) {
+    List<String> parts = tzId.split('/');
+    String city = parts.last.replaceAll('_', ' ');
+    return city;
+  }
 
   Widget _buildGeneralMenuItem(
     BuildContext context,
     String assetPath, 
+    String text, 
     VoidCallback onTap,
+    {String? subText} 
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Image.asset(
-        assetPath,
-        width: context.scaleWidth(380), 
-        height: context.scaleHeight(62), 
-        fit: BoxFit.fill, 
+      child: Container(
+        width: context.scaleWidth(380),
+        height: context.scaleHeight(62),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.fill,
+              ),
+            ),
+            if (subText != null && subText.isNotEmpty && text == 'Time Zone') 
+              Positioned(
+                right: context.scaleWidth(35), 
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Text(
+                    subText,
+                    style: GoogleFonts.inter(
+                      fontSize: 14, 
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -66,7 +134,7 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'General' 
+              // Text 'General'
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
@@ -83,7 +151,7 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // list menu General ada 3 (Time Zone, Language, About Application)
+              // Daftar menu general ada 3 (Time Zone, Language, About Application)
               Positioned(
                 top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
@@ -93,15 +161,30 @@ class SettingGeneralScreen extends StatelessWidget {
                     SizedBox(height: context.scaleHeight(20)), 
                     _buildGeneralMenuItem(
                       context,
-                      'assets/images/menu_timezone.png', 
-                      () {
-                        print('Time Zone Tapped');
+                      'assets/images/menu_timezone.png',
+                      'Time Zone',
+                      () async {
+                        final result = await Navigator.pushNamed(context, AppRoute.timeZone);
+                        if (result != null && result is String) {
+                          setState(() {
+                            _selectedTimeZoneId = result;
+                            _selectedTimeZoneDisplayName = _formatTimeZoneDisplay(result);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Zona waktu diatur ke $_selectedTimeZoneDisplayName'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
                       },
+                      subText: _selectedTimeZoneDisplayName, 
                     ),
                     SizedBox(height: context.scaleHeight(20)), 
                     _buildGeneralMenuItem(
                       context,
                       'assets/images/menu_language.png',
+                      'Language',
                       () {
                         print('Language Tapped');
                       },
@@ -110,6 +193,7 @@ class SettingGeneralScreen extends StatelessWidget {
                     _buildGeneralMenuItem(
                       context,
                       'assets/images/menu_about_application.png',
+                      'About Application',
                       () {
                         print('About Application Tapped');
                       },
@@ -118,7 +202,7 @@ class SettingGeneralScreen extends StatelessWidget {
                 ),
               ),
 
-              // Navigation Bar Bawah 
+              // Navigation Bar Bawah
               Positioned(
                 bottom: 0,
                 left: 0,

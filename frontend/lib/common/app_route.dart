@@ -15,4 +15,5 @@ class AppRoute {
   static const String feedback = '/feedback';
   static const String notificationSettings = '/settings/notifications';
   static const String generalSettings = '/settings/general';
+  static const String timeZone = '/settings/general/timezone';
 }
