@@ -12,7 +12,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _formKey = GlobalKey<FormState>(); // GlobalKey for Form
+  final _formKey = GlobalKey<FormState>(); 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -157,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               Positioned(
                 child: Form(
-                  key: _formKey, // Attach GlobalKey to Form
+                  key: _formKey, 
                   child: Column(
                     children: [
                       _buildInputField(
@@ -280,18 +280,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
               children: [
                 Text(
                   'you have account? ',
-                  style: GoogleFonts.roboto( // Use GoogleFonts consistently
+                  style: GoogleFonts.roboto( 
                     color: Colors.black,
                     fontSize: context.scaleWidth(20),
                   ),
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.signIn); // Push to SignInScreen
+                    Navigator.pushNamed(context, AppRoute.signIn); 
                   },
                   child: Text(
                     'Sign in',
-                    style: GoogleFonts.roboto( // Use GoogleFonts consistently
+                    style: GoogleFonts.roboto( 
                       color: AppColor.biruNormal,
                       fontSize: context.scaleWidth(20),
                       fontWeight: FontWeight.bold,
@@ -314,7 +314,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required double width,
     required double height,
     bool obscureText = false,
-    String? Function(String?)? validator, // Add validator
+    String? Function(String?)? validator,
   }) {
     Color boxColor = AppColor.hijauTosca;
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
@@ -375,7 +375,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 contentPadding: EdgeInsets.zero,
                 isDense: true,
               ),
-              validator: validator, // Assign the validator
+              validator: validator,
             ),
           ),
         ),

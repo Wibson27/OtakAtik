@@ -4,25 +4,8 @@ import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
-class ProfileSettingScreen extends StatelessWidget {
-  const ProfileSettingScreen({super.key});
-
-  // Widget pembangun item menu setting menggunakan gambar PNG
-  Widget _buildSettingMenuItem(
-    BuildContext context,
-    String assetPath, 
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Image.asset(
-        assetPath,
-        width: context.scaleWidth(380), 
-        height: context.scaleHeight(62), 
-        fit: BoxFit.fill, 
-      ),
-    );
-  }
+class GeneralAboutApplicationScreen extends StatelessWidget {
+  const GeneralAboutApplicationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +20,7 @@ class ProfileSettingScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png
+              // wave_top.png 
               Positioned(
                 top: 0,
                 left: 0,
@@ -50,7 +33,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png
+              // arrow.png 
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -67,14 +50,14 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'Settings'
+              // Text 'About Application' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Settings',
+                    'About Application',
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -84,46 +67,38 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Daftar menu setting ada 4 (General, Notifikasi, Privacy, Voice Journal)
+              // card
               Positioned(
-                top: context.scaleHeight(230),
-                left: context.scaleWidth(25),
-                right: context.scaleWidth(25),
-                child: Column(
-                  children: [
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_general.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.generalSettings);
-                      },
+                top: context.scaleHeight(265), 
+                left: context.scaleWidth((431.5 - 380) / 2),
+                right: context.scaleWidth((431.5 - 380) / 2),
+                child: Container(
+                  width: context.scaleWidth(380),
+                  height: context.scaleHeight(160),
+                  clipBehavior: Clip.antiAlias, 
+                  decoration: BoxDecoration(
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/frame_about_application.png'),
+                      fit: BoxFit.fill, 
                     ),
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_notifikasi.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.notificationSettings);
-                      },
+                    borderRadius: BorderRadius.circular(context.scaleWidth(18)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      context.scaleWidth(20), 
+                      context.scaleHeight(70), 
+                      context.scaleWidth(20), 
+                      context.scaleHeight(20), 
                     ),
-                    SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_privacy.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.privacySettings);
-                      },
-                    ),
-                    SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_voice_journal.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.voiceJournalSettings);
-                      },
-                    ),
-                  ],
+                    
+                  ),
                 ),
               ),
 
@@ -149,8 +124,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -161,8 +135,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',

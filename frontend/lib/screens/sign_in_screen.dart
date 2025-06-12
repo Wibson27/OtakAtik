@@ -12,7 +12,7 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _formKey = GlobalKey<FormState>(); // GlobalKey untuk Form
+  final _formKey = GlobalKey<FormState>(); 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -44,10 +44,8 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Logic for authentication (e.g., API call)
       print('Username: ${_usernameController.text}');
       print('Password: ${_passwordController.text}');
-      // Simulating successful login
       Navigator.pushReplacementNamed(context, AppRoute.dashboard);
     }
   }
@@ -98,7 +96,7 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Image.asset(
               'assets/images/wave_shark_signin.png',
               width: screenWidth,
-              height: context.scaleHeight(165),
+              height: context.scaleHeight(200),
               fit: BoxFit.cover,
             ),
           ),
@@ -163,7 +161,7 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               Positioned(
                 child: Form(
-                  key: _formKey, // Attach GlobalKey to Form
+                  key: _formKey, 
                   child: Column(
                     children: [
                       _buildInputField(
@@ -241,7 +239,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   onTapDown: (_) => setState(() => _isLoginButtonActive = true),
                   onTapUp: (_) => setState(() => _isLoginButtonActive = false),
                   onTapCancel: () => setState(() => _isLoginButtonActive = false),
-                  onTap: _handleLogin, // Call the validation method
+                  onTap: _handleLogin,
                   child: AnimatedScale(
                     scale: _isLoginButtonActive ? 0.95 : 1.0,
                     duration: const Duration(milliseconds: 100),
@@ -258,7 +256,7 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ],
           ),
-          SizedBox(height: context.scaleHeight(70)),
+          SizedBox(height: context.scaleHeight(30)),
           SizedBox(
             width: context.scaleWidth(350),
             height: context.scaleHeight(50),
@@ -267,18 +265,18 @@ class _SignInScreenState extends State<SignInScreen> {
               children: [
                 Text(
                   'you don\'t have account? ',
-                  style: GoogleFonts.roboto( // Use GoogleFonts consistently
+                  style: GoogleFonts.roboto( 
                     color: Colors.black,
                     fontSize: context.scaleWidth(20),
                   ),
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.signUp); // Push to SignUpScreen
+                    Navigator.pushNamed(context, AppRoute.signUp); 
                   },
                   child: Text(
                     'Sign up',
-                    style: GoogleFonts.roboto( // Use GoogleFonts consistently
+                    style: GoogleFonts.roboto( 
                       color: AppColor.biruNormal,
                       fontSize: context.scaleWidth(20),
                       fontWeight: FontWeight.bold,
@@ -301,7 +299,7 @@ class _SignInScreenState extends State<SignInScreen> {
     required double width,
     required double height,
     bool obscureText = false,
-    String? Function(String?)? validator, // Add validator
+    String? Function(String?)? validator, 
   }) {
     Color boxColor = AppColor.hijauTosca;
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
@@ -362,7 +360,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 contentPadding: EdgeInsets.zero,
                 isDense: true,
               ),
-              validator: validator, // Assign the validator
+              validator: validator,
             ),
           ),
         ),

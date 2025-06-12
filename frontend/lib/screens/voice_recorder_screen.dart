@@ -252,7 +252,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen>
             child: Image.asset(
               'assets/images/blur_top_history.png',
               width: context.screenWidth,
-              height: context.scaleHeight(88),
+              height: context.scaleHeight(45),
               fit: BoxFit.fill,
             ),
           ),

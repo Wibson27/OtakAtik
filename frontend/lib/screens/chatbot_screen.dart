@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Pastikan path ini sesuai dengan struktur proyek Anda
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
@@ -43,8 +42,6 @@ class TimeFormatter {
     return '$hour:$minute';
   }
 }
-
-// Discussion Model with copyWith method
 class Discussion {
   final String id;
   final String title;
@@ -60,7 +57,6 @@ class Discussion {
     required this.createdAt,
   });
 
-  // Method copyWith untuk membuat copy dengan perubahan tertentu
   Discussion copyWith({
     String? id,
     String? title,
@@ -77,7 +73,6 @@ class Discussion {
     );
   }
 
-  // Helper methods
   @override
   String toString() {
     return 'Discussion(id: $id, title: $title, content: $content, authorName: $authorName, createdAt: $createdAt)';
@@ -109,13 +104,11 @@ class ChatDataService {
   factory ChatDataService() => _instance;
   ChatDataService._internal();
 
-  // Map untuk menyimpan pesan berdasarkan chatSessionId
   final Map<String, List<ChatMessage>> _allMessages = {};
-  // List untuk menyimpan semua diskusi/history chat
   final List<Discussion> _allDiscussions = [];
 
-  String _currentChatSessionId = ""; // Session ID aktif
-  Discussion? _currentChatDiscussion; // Diskusi aktif
+  String _currentChatSessionId = "";
+  Discussion? _currentChatDiscussion; 
 
   List<Discussion> get allDiscussions => List.unmodifiable(_allDiscussions);
   List<ChatMessage> get currentMessages {
@@ -126,12 +119,10 @@ class ChatDataService {
   }
   Discussion? get currentDiscussion => _currentChatDiscussion;
 
-  // Initialize with dummy data or load from storage
+  // dummy data
   void initialize() {
-    // Inisialisasi jika belum ada sesi
     if (_allMessages.isEmpty) {
-      _startNewChatSession(); // Start a default session
-      // Add initial bot message to the first session
+      _startNewChatSession(); 
       addMessage(
         ChatMessage(
           id: "bot_msg_001",
@@ -169,7 +160,7 @@ class ChatDataService {
         ),
       );
 
-      // Add dummy discussions
+      // Add discussion dummy
       _allDiscussions.add(Discussion(
         id: "chatbot_session_001",
         title: "Overthinking Session",
@@ -206,7 +197,7 @@ class ChatDataService {
     );
 
     if (discussionIndex != -1) {
-      // Discussion found, update it
+      // update discussion
       if (message.messageContent.isNotEmpty) {
         _allDiscussions[discussionIndex] = _allDiscussions[discussionIndex].copyWith(
           content: message.messageContent,
@@ -214,7 +205,7 @@ class ChatDataService {
         _currentChatDiscussion = _allDiscussions[discussionIndex];
       }
     } else {
-      // Discussion not found, create a new one
+      // create new discussion
       final newDisc = Discussion(
         id: message.chatSessionId,
         title: message.messageContent.isNotEmpty ? message.messageContent : "New Chat Session",
@@ -234,10 +225,10 @@ class ChatDataService {
       id: _currentChatSessionId,
       title: "New Chat Session",
       content: "Mulai percakapan baru.",
-      authorName: "User", // Assuming new chat is initiated by user
+      authorName: "User",
       createdAt: DateTime.now(),
     );
-    _allDiscussions.insert(0, _currentChatDiscussion!); // Add to the top of the list
+    _allDiscussions.insert(0, _currentChatDiscussion!); 
   }
 
   void loadChatSession(String sessionId) {
@@ -245,14 +236,12 @@ class ChatDataService {
       _currentChatSessionId = sessionId;
       _currentChatDiscussion = _allDiscussions.firstWhere((disc) => disc.id == sessionId);
     } else {
-      // Handle case where session ID is not found, maybe create a new empty one
       _startNewChatSession();
     }
   }
 
   void startNewChat() {
     _startNewChatSession();
-    // Add initial bot message for the new chat
     addMessage(
       ChatMessage(
         id: "bot_msg_${DateTime.now().millisecondsSinceEpoch}",
@@ -270,13 +259,10 @@ class ChatDataService {
   String generateMessageId() {
     return "msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}";
   }
-
-  // Method to update discussion title based on first user message
   void updateDiscussionTitle(String sessionId, String newTitle) {
     final index = _allDiscussions.indexWhere((disc) => disc.id == sessionId);
     if (index != -1) {
       _allDiscussions[index] = _allDiscussions[index].copyWith(title: newTitle);
-      // Update current discussion if it's the active one
       if (_currentChatDiscussion?.id == sessionId) {
         _currentChatDiscussion = _allDiscussions[index];
       }
@@ -292,7 +278,7 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-  // GlobalKey untuk ScaffoldState, diperlukan untuk membuka Drawer
+  // GlobalKey untuk buka drawer
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Controllers
@@ -330,7 +316,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
-    _dataService.initialize(); // Initialize data service with dummy data or load existing
+    _dataService.initialize(); 
     _initializeData();
     _messageController.addListener(() {
       setState(() {
@@ -338,11 +324,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _isTyping = _currentMessage.isNotEmpty || _pendingAttachments.isNotEmpty;
       });
     });
-    // Menambahkan listener untuk FocusNode untuk rebuild UI saat fokus berubah
     _messageFocusNode.addListener(() {
       setState(() {
-        // Hanya perlu setState untuk me-rebuild _buildBottomMessageArea
-        // Agar dekorasi Container berubah saat fokus TextField berubah
       });
     });
   }
@@ -359,7 +342,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void dispose() {
     _messageController.dispose();
-    _messageFocusNode.removeListener(() {}); // Hapus listener
+    _messageFocusNode.removeListener(() {}); 
     _messageFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -371,10 +354,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final screenHeight = context.screenHeight;
 
     return Scaffold(
-      key: _scaffoldKey, // Tetapkan GlobalKey ke Scaffold
+      key: _scaffoldKey, 
       backgroundColor: AppColor.putihNormal,
       resizeToAvoidBottomInset: true,
-      endDrawer: _buildHistoryDrawer(context), // Implementasi drawer di sini
+      endDrawer: _buildHistoryDrawer(context),  
       body: SafeArea(
         child: SizedBox(
           width: screenWidth,
@@ -386,7 +369,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               _buildChatMessagesArea(context),
               _buildBottomSection(context),
               if (_showEmojiPicker) _buildSimpleEmojiPicker(context),
-              if (_pendingAttachments.isNotEmpty && !_showEmojiPicker) _buildUploadingIndicator(), // Hanya tampilkan jika tidak ada emoji picker
+              if (_pendingAttachments.isNotEmpty && !_showEmojiPicker) _buildUploadingIndicator(), 
             ],
           ),
         ),
@@ -439,7 +422,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 // Title "chatbot"
                 Expanded(
                   child: Text(
-                    _dataService.currentDiscussion?.title ?? 'Chatbot', // Display current discussion title
+                    _dataService.currentDiscussion?.title ?? 'Chatbot', 
                     style: GoogleFonts.fredoka(
                       fontSize: 24,
                       color: AppColor.navyText,
@@ -450,10 +433,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
                 SizedBox(width: context.scaleWidth(10)),
-                // history_button.png (diganti untuk membuka drawer)
+                // history_button.png 
                 GestureDetector(
                   onTap: () {
-                    _scaffoldKey.currentState?.openEndDrawer(); // Buka drawer dari kanan
+                    _scaffoldKey.currentState?.openEndDrawer(); 
                   },
                   child: Image.asset(
                     'assets/images/history_button.png',
@@ -470,7 +453,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // _buildChatMessagesArea
   Widget _buildChatMessagesArea(BuildContext context) {
     return Positioned(
       top: context.scaleHeight(88),
@@ -491,7 +473,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildBottomSection(BuildContext currentContext) {
     return Positioned(
-      bottom: 25, // Mengatur bottom ke 0 agar tepat di atas keyboard
+      bottom: 25, 
       left: 0,
       right: 0,
       child: Column(
@@ -503,7 +485,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // Upload indicator
+  // upload indicator
   Widget _buildUploadingIndicator() {
     return Positioned.fill(
       child: Container(
@@ -538,7 +520,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // _buildBottomMessageArea
   Widget _buildBottomMessageArea(BuildContext areaContext) {
     double dynamicHeight = _calculateMessageBoxHeight(areaContext);
 
@@ -557,23 +538,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // Pending attachments preview
           if (_pendingAttachments.isNotEmpty)
             Positioned(
-              left: areaContext.scaleWidth(60), // Adjusted to give space for emoji button
-              right: areaContext.scaleWidth(60), // Adjusted
-              bottom: dynamicHeight - areaContext.scaleHeight(40), // Position above the text input
+              left: areaContext.scaleWidth(60), 
+              right: areaContext.scaleWidth(60), 
+              bottom: dynamicHeight - areaContext.scaleHeight(40), 
               child: _buildPendingAttachmentsPreview(areaContext),
             ),
 
           // Text inputan
           Positioned(
-            left: areaContext.scaleWidth(100), // Adjusted
-            right: areaContext.scaleWidth(60), // Adjusted
+            left: areaContext.scaleWidth(100), 
+            right: areaContext.scaleWidth(60), 
             bottom: areaContext.scaleHeight(10),
             top: _pendingAttachments.isNotEmpty
-                ? areaContext.scaleHeight(20) // Move down if attachments are present
-                : areaContext.scaleHeight(10), // Original top position
+                ? areaContext.scaleHeight(20) 
+                : areaContext.scaleHeight(10), 
             child: Container(
               decoration: BoxDecoration(
                 color: AppColor.putihNormal,
@@ -615,7 +595,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // happy_emoji.png (Tombol Emoji)
+          // happy_emoji.png 
           Positioned(
             left: areaContext.scaleWidth(14),
             bottom: areaContext.scaleHeight(8),
@@ -629,7 +609,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // paper_clip.png (Tombol Attachment)
+          // paper_clip.png 
           Positioned(
             left: areaContext.scaleWidth(60),
             bottom: areaContext.scaleHeight(9),
@@ -661,7 +641,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // _buildPendingAttachmentsPreview
   Widget _buildPendingAttachmentsPreview(BuildContext previewContext) {
     return SizedBox(
       height: previewContext.scaleHeight(30),
@@ -716,11 +695,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // _calculateMessageBoxHeight
   double _calculateMessageBoxHeight(BuildContext calcContext) {
-    double baseImageHeight = calcContext.scaleHeight(50); // Tinggi default message_box.png
+    double baseImageHeight = calcContext.scaleHeight(50); 
 
-    // Calculate text content height
+    // tinggi konten
     final textPainter = TextPainter(
       text: TextSpan(
         text: _currentMessage.isEmpty ? 'Ketik pesan...' : _currentMessage,
@@ -733,38 +711,31 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       textDirection: TextDirection.ltr,
     );
 
-    // This width should match the actual TextField's width
-    // left: areaContext.scaleWidth(60), right: areaContext.scaleWidth(60),
-    // So, total width of the image asset is 417, so 417 - 60 - 60 = 297
-    double availableWidthForText = calcContext.scaleWidth(297 - 20); // 20 for internal horizontal padding of TextField
+    double availableWidthForText = calcContext.scaleWidth(297 - 20); 
     if (availableWidthForText <= 0) availableWidthForText = calcContext.scaleWidth(100);
 
     textPainter.layout(maxWidth: availableWidthForText);
 
     double textContentHeight = textPainter.height;
 
-    // Minimum height for an empty text field (approx. one line height)
-    final double minTextHeight = calcContext.scaleHeight(16); // Approximated height of one line of text
+    // tinggi minimum untuk field kosong
+    final double minTextHeight = calcContext.scaleHeight(16); 
     textContentHeight = max(minTextHeight, textContentHeight);
 
 
-    // Adjust vertical padding based on attachment presence
+    // untuk adjust padding vertical attachment
     double textFieldPaddingTop = _pendingAttachments.isNotEmpty ? calcContext.scaleHeight(35) : calcContext.scaleHeight(10);
     double textFieldPaddingBottom = calcContext.scaleHeight(10);
     double requiredContentHeight = textContentHeight + textFieldPaddingTop + textFieldPaddingBottom;
 
-    // Maximum height for the message box
+    // tinggi max message box
     double maxMessageBoxHeight = calcContext.scaleHeight(200);
-
-    // The final height will be the max of base image height and content height, clamped by max height
     return max(baseImageHeight, requiredContentHeight).clamp(baseImageHeight, maxMessageBoxHeight);
   }
 
-
-  // _buildSimpleEmojiPicker
   Widget _buildSimpleEmojiPicker(BuildContext emojiContext) {
     return Positioned(
-      bottom: 0, // At the very bottom
+      bottom: 0, 
       left: 0,
       right: 0,
       child: Container(
@@ -805,7 +776,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     onTap: () {
                       _messageController.text += _emojiList[index];
                       setState(() => _showEmojiPicker = false);
-                      _messageFocusNode.requestFocus(); // Kembalikan fokus ke TextField setelah memilih emoji
+                      _messageFocusNode.requestFocus(); 
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -829,7 +800,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // _toggleEmojiPicker
   void _toggleEmojiPicker(BuildContext toggleContext) {
     setState(() {
       _showEmojiPicker = !_showEmojiPicker;
@@ -968,7 +938,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _messageFocusNode.requestFocus(); // Kembalikan fokus ke TextField setelah menutup dialog
+                _messageFocusNode.requestFocus(); 
               },
               child: Text(
                 'Batal',
@@ -1060,7 +1030,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final fileName = file.path.split('/').last;
     final size = fileSize ?? await file.length();
 
-    if (size > 10 * 1024 * 1024) { // Max 10MB
+    if (size > 10 * 1024 * 1024) { 
       _showErrorSnackbar('File terlalu besar. Maksimal 10MB.');
       return;
     }
@@ -1138,7 +1108,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final messageText = _currentMessage.trim();
     final currentSessionId = _dataService._currentChatSessionId;
 
-    // Update discussion title if it's the first user message in a new session
     final firstBotMsg = _dataService.currentMessages.isNotEmpty
         ? _dataService.currentMessages.firstWhere(
             (msg) => msg.senderType == 'ai_bot',
@@ -1188,7 +1157,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _messageFocusNode.unfocus();
     _scrollToBottom();
 
-    // Simulate bot reply
+    // reply bot
     Future.delayed(const Duration(seconds: 1), () {
       final botReplyMessage = ChatMessage(
         id: _dataService.generateMessageId(),
@@ -1208,7 +1177,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
   }
 
-  // _buildChatMessageBubbleItem
   Widget _buildChatMessageBubbleItem(ChatMessage message) {
     final double messageMaxWidth = context.screenWidth * 0.7;
 
@@ -1285,28 +1253,26 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  // --- Start of new Drawer (History) implementation ---
 
   Widget _buildHistoryDrawer(BuildContext drawerContext) {
     return Drawer(
-      width: drawerContext.screenWidth * 0.75, // Lebar drawer 75% dari lebar layar
+      width: drawerContext.screenWidth * 0.75, 
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(0), // Tidak ada radius di kiri atas
-          bottomLeft: Radius.circular(0), // Tidak ada radius di kiri bawah
+          topLeft: Radius.circular(0), 
+          bottomLeft: Radius.circular(0), 
         ),
       ),
       child: Container(
-        color: AppColor.putihNormal, // Background Drawer putih
+        color: AppColor.putihNormal, 
         child: Column(
           children: [
-            // Header Drawer (History & Close button)
             Container(
               width: double.infinity,
-              height: drawerContext.scaleHeight(88), // Tinggi header sama dengan main header
+              height: drawerContext.scaleHeight(88), 
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/blur_top_history.png'), // Gambar background header
+                  image: AssetImage('assets/images/blur_top_history.png'), 
                   fit: BoxFit.fill,
                 ),
               ),
@@ -1321,7 +1287,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   Row(
                     children: [
                       Image.asset(
-                        'assets/images/history_button.png', // Icon jam
+                        'assets/images/history_button.png',
                         width: drawerContext.scaleWidth(34),
                         height: drawerContext.scaleHeight(34),
                         fit: BoxFit.contain,
@@ -1338,7 +1304,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.of(drawerContext).pop(), // Tutup drawer
+                    onTap: () => Navigator.of(drawerContext).pop(), 
                     child: Icon(
                       Icons.close,
                       color: AppColor.navyText,
@@ -1348,26 +1314,26 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ],
               ),
             ),
-            SizedBox(height: drawerContext.scaleHeight(20)), // Jarak antara header dan list chips
-            // List History Chips
+            SizedBox(height: drawerContext.scaleHeight(20)), 
+            // list history
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: drawerContext.scaleWidth(16)),
-                itemCount: _dataService.allDiscussions.length + 1, // +1 for "New Chat" button
+                itemCount: _dataService.allDiscussions.length + 1, 
                 itemBuilder: (context, index) {
                   if (index < _dataService.allDiscussions.length) {
-                    // Item history
+                    // history
                     final discussion = _dataService.allDiscussions[index];
                     return Padding(
                       padding: EdgeInsets.only(bottom: drawerContext.scaleHeight(12)),
                       child: _buildHistoryChipItem(drawerContext, discussion),
                     );
                   } else {
-                    // Tombol New Chat (plus icon)
+                    // plus icon (new chat)
                     return Padding(
                       padding: EdgeInsets.only(
                         top: drawerContext.scaleHeight(10),
-                        bottom: drawerContext.scaleHeight(20), // Padding bawah agar tidak mepet
+                        bottom: drawerContext.scaleHeight(20), 
                       ),
                       child: _buildNewChatButton(drawerContext),
                     );
@@ -1386,7 +1352,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       onTap: () {
         // Logika saat history chip diklik
         print('History chip tapped: ${discussion.title} (ID: ${discussion.id})');
-        Navigator.of(context).pop(); // Tutup drawer setelah memilih
+        Navigator.of(context).pop(); 
         setState(() {
           _dataService.loadChatSession(discussion.id);
           _messages = _dataService.currentMessages;
@@ -1404,9 +1370,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           vertical: context.scaleHeight(15),
         ),
         decoration: BoxDecoration(
-          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauTosca.withOpacity(0.3) : AppColor.hijauTosca, // Highlight active discussion
+          color: _dataService.currentDiscussion?.id == discussion.id ? AppColor.hijauTosca.withOpacity(0.3) : AppColor.hijauTosca, 
           borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
+          border: Border.all(color: AppColor.navyElement, width: 1), 
         ),
         child: Text(
           discussion.title,
@@ -1425,12 +1391,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildNewChatButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Logika saat tombol new chat diklik
         print('New chat button tapped');
-        Navigator.of(context).pop(); // Tutup drawer
-        _dataService.startNewChat(); // Start a new chat session
+        Navigator.of(context).pop(); 
+        _dataService.startNewChat(); 
         setState(() {
-          _messages = _dataService.currentMessages; // Update messages to the new empty session
+          _messages = _dataService.currentMessages;
           _messageController.clear();
           _pendingAttachments.clear();
           _isTyping = false;
@@ -1440,11 +1405,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       },
       child: Container(
         width: double.infinity,
-        height: context.scaleHeight(50), // Tinggi tombol
+        height: context.scaleHeight(50), 
         decoration: BoxDecoration(
-          color: AppColor.putihNormal, // Background putih
+          color: AppColor.putihNormal, 
           borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-          border: Border.all(color: AppColor.navyElement, width: 1), // Border navyElement
+          border: Border.all(color: AppColor.navyElement, width: 1), 
         ),
         child: Center(
           child: Icon(
@@ -1456,5 +1421,4 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
     );
   }
-  // --- End of new Drawer (History) implementation ---
 }
