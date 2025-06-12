@@ -174,7 +174,7 @@ class _SettingPrivacyScreenState extends State<SettingPrivacyScreen> {
                       context,
                       'assets/images/menu_data_privacy.png', 
                       () {
-                        Navigator.pushNamed(context, AppRoute.privacySettings);
+                        Navigator.pushNamed(context, AppRoute.dataPrivacyLevel);
                       },
                     ),
                   ],
