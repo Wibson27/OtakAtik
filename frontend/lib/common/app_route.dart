@@ -17,4 +17,5 @@ class AppRoute {
   static const String generalSettings = '/settings/general';
   static const String timeZone = '/settings/general/timezone';
   static const String language = '/settings/general/language';
+  static const String privacySettings = '/settings/privacy';
 }

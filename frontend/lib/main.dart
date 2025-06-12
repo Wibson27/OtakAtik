@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/screens/setting_privacy_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -108,6 +109,7 @@ class MyApp extends StatelessWidget {
           AppRoute.generalSettings: (context) => const SettingGeneralScreen(),
           AppRoute.timeZone: (context) => const GeneralTimeZoneScreen(),
           AppRoute.language: (context) => const GeneralLanguageScreen(),
+          AppRoute.privacySettings: (context) => const SettingPrivacyScreen(),
         },
       ),
     );
