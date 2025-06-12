@@ -74,7 +74,6 @@ Jika Anda memiliki pertanyaan atau kekhawatiran tentang Kebijakan Privasi ini at
     final double cardWidth = context.scaleWidth(380);
     final double scrollableAreaPaddingTop = context.scaleHeight(78);
     final double scrollableAreaPaddingBottom = context.scaleHeight(30); 
-    final double effectiveScrollableHeight = cardHeight - scrollableAreaPaddingTop - scrollableAreaPaddingBottom;
 
 
     return Scaffold(

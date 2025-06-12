@@ -7,10 +7,10 @@ import 'package:frontend/common/screen_utils.dart';
 class ForumDiscussionScreen extends StatelessWidget {
   const ForumDiscussionScreen({super.key});
 
-  // Sample data (akan diganti dengan data dari backend)
+  // sample data (nanti diganti backend)
   final List<Map<String, String>> discussionTopics = const [
     {
-      'id': 'disc_001', // Tambahkan ID untuk navigasi
+      'id': 'disc_001',
       'title': 'Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?',
       'description': 'Akhir-akhir ini sering banget ngalamin lesu',
     },
@@ -63,8 +63,8 @@ class ForumDiscussionScreen extends StatelessWidget {
           bottom: 0,
           child: Image.asset(
             'assets/images/yellow_background.png',
-            width: screenWidth, // Gunakan screenWidth
-            height: screenHeight, // Gunakan screenHeight
+            width: screenWidth, 
+            height: screenHeight, 
             fit: BoxFit.cover,
           ),
         ),
@@ -74,7 +74,7 @@ class ForumDiscussionScreen extends StatelessWidget {
           right: 0,
           child: Image.asset(
             'assets/images/blur_top.png',
-            width: screenWidth, // Gunakan screenWidth
+            width: screenWidth, 
             height: context.scaleHeight(88),
             fit: BoxFit.fill,
           ),
@@ -129,17 +129,16 @@ class ForumDiscussionScreen extends StatelessWidget {
                     ),
                     child: GestureDetector(
                       onTap: () {
-                        // Teruskan ID diskusi ke halaman detail
                         Navigator.pushNamed(
                           context,
                           AppRoute.forumDiscussDetail,
-                          arguments: {'discussionId': topic['id']}, // Meneruskan ID diskusi
+                          arguments: {'discussionId': topic['id']}, 
                         );
                       },
                       child: _buildDiscussionCard(
                         topic['title']!,
                         topic['description']!,
-                        context, // Meneruskan context
+                        context, 
                       ),
                     ),
                   );
@@ -154,7 +153,7 @@ class ForumDiscussionScreen extends StatelessWidget {
 
   Widget _buildDiscussionCard(String title, String description, BuildContext context) {
     return Container(
-      width: context.scaleWidth(348), // Gunakan scaled width
+      width: context.scaleWidth(348), 
       decoration: BoxDecoration(
         color: AppColor.hijauTosca.withOpacity(0.8),
         borderRadius: BorderRadius.circular(context.scaleWidth(18)),
