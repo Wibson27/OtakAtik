@@ -228,7 +228,7 @@ class _SettingGeneralScreenState extends State<SettingGeneralScreen> {
                       'assets/images/menu_about_application.png',
                       'About Application',
                       () {
-                        print('About Application Tapped');
+                        Navigator.pushNamed(context, AppRoute.aboutApplication);
                       },
                     ),
                   ],

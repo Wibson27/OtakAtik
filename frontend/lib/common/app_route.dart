@@ -20,4 +20,5 @@ class AppRoute {
   static const String privacySettings = '/settings/privacy';
   static const String dataPrivacyLevel = '/settings/privacy/data-privacy-level';
   static const String voiceJournalSettings = '/settings/voice-journal';
+  static const String aboutApplication = '/settings/general/about-application';
 }

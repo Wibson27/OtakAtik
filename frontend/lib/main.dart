@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/screens/data_privacy_level_screen.dart';
+import 'package:frontend/screens/general_about_application_screen.dart';
 import 'package:frontend/screens/setting_privacy_screen.dart';
 import 'package:frontend/screens/setting_voice_journal_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -114,6 +115,7 @@ class MyApp extends StatelessWidget {
           AppRoute.privacySettings: (context) => const SettingPrivacyScreen(),
           AppRoute.dataPrivacyLevel: (context) => const DataPrivacyLevelScreen(),
           AppRoute.voiceJournalSettings: (context) => const SettingVoiceJournalScreen(),
+          AppRoute.aboutApplication: (context) => const GeneralAboutApplicationScreen(),
         },
       ),
     );
