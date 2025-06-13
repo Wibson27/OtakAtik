@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/common/app_info.dart';
+import 'package:frontend/data/services/auth_service.dart';
+import 'package:frontend/data/services/secure_storage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -12,20 +16,29 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _formKey = GlobalKey<FormState>(); // GlobalKey untuk Form
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  final FocusNode _usernameFocusNode = FocusNode();
-  final FocusNode _passwordFocusNode = FocusNode();
+  // Controller disesuaikan untuk Login
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+
+  // State untuk UI
   bool _isLoginButtonActive = false;
   bool _isGoogleButtonActive = false;
+  bool _isLoading = false;
+
+  // Inisialisasi service
+  final _authService = AuthService();
+  final _storage = SecureStorageService();
+  final _googleSignIn = GoogleSignIn();
 
   @override
   void initState() {
     super.initState();
-    _usernameFocusNode.addListener(_onFocusChange);
+    _emailFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
   }
 
@@ -35,22 +48,73 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
-    _usernameFocusNode.dispose();
+    _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  // Implementasi logika untuk Login biasa
+  Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Logic for authentication (e.g., API call)
-      print('Username: ${_usernameController.text}');
-      print('Password: ${_passwordController.text}');
-      // Simulating successful login
-      Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+      setState(() => _isLoading = true);
+      try {
+        final response = await _authService.login(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        await _storage.saveTokens(
+          accessToken: response.tokens.accessToken,
+          refreshToken: response.tokens.refreshToken,
+        );
+
+        if (mounted) {
+          AppInfo.success(context, response.message);
+          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+        }
+      } catch (e) {
+        if (mounted) AppInfo.error(context, "Login Gagal: ${e.toString()}");
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
+
+    // Implementasi logika untuk Google Sign-In
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('Gagal mendapatkan ID Token dari Google.');
+      }
+
+      final response = await _authService.googleSignIn(idToken: idToken);
+      await _storage.saveTokens(
+        accessToken: response.tokens.accessToken,
+        refreshToken: response.tokens.refreshToken,
+      );
+
+      if (mounted) {
+        AppInfo.success(context, response.message);
+        Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+      }
+    } catch (e) {
+      if (mounted) AppInfo.error(context, "Login dengan Google gagal: ${e.toString()}");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +127,16 @@ class _SignInScreenState extends State<SignInScreen> {
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
-          child: _buildMainContent(context, screenWidth, screenHeight),
-        ),
+          child: Stack(
+            children: [
+              _buildMainContent(context, screenWidth, screenHeight),
+              if (_isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
+                ),
+            ],
+          ),        ),
       ),
     );
   }
@@ -168,15 +240,15 @@ class _SignInScreenState extends State<SignInScreen> {
                     children: [
                       _buildInputField(
                         context: context,
-                        controller: _usernameController,
-                        focusNode: _usernameFocusNode,
-                        hintText: 'username',
+                        controller: _emailController,
+                        focusNode: _emailFocusNode,
+                        hintText: 'email',
                         width: inputFieldWidth,
                         height: inputFieldHeight,
                         obscureText: false,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Username tidak boleh kosong';
+                            return 'Email tidak boleh kosong';
                           }
                           return null;
                         },

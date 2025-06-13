@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  file_picker: ^10.0.0 
+  file_picker: ^10.0.0
   image_picker: ^1.1.2
   permission_handler: ^12.0.0+1
   record: ^6.0.0
@@ -19,7 +19,7 @@ dependencies:
   audioplayers: ^6.4.0
   d_info: ^0.2.0
   d_button: ^0.0.10
-  d_input: ^1.4.0 
+  d_input: ^1.4.0
   d_method: ^0.2.6
   d_session: ^0.0.3
   extended_image: ^10.0.1
@@ -27,11 +27,13 @@ dependencies:
   gap: ^3.0.1
   get: ^4.7.2
   google_fonts: ^6.2.1
+  google_sign_in: ^6.2.1
   http: ^1.4.0
   intl: ^0.20.2
   json_annotation: ^4.9.0
   bloc: ^9.0.0
   timezone: ^0.10.1
+  flutter_secure_storage: ^9.2.2
   flutter_localized_locales: ^2.0.0
   flutter_localizations:
     sdk: flutter
@@ -48,4 +50,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-  

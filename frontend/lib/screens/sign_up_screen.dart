@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/common/app_info.dart';
+import 'package:frontend/data/services/auth_service.dart';
+import 'package:frontend/data/services/secure_storage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -13,21 +17,30 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>(); // GlobalKey for Form
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  final FocusNode _usernameFocusNode = FocusNode();
-  final FocusNode _passwordFocusNode = FocusNode();
-  final FocusNode _confirmPasswordFocusNode = FocusNode();
+  final _fullNameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
 
   bool _isLoginButtonActive = false;
+  bool _isSignUpButtonActive = false;
   bool _isGoogleButtonActive = false;
+  bool _isLoading = false;
+
+  final _authService = AuthService();
+  final _storage = SecureStorageService();
+  final _googleSignIn = GoogleSignIn();
 
   @override
   void initState() {
     super.initState();
-    _usernameFocusNode.addListener(_onFocusChange);
+    _fullNameFocusNode.addListener(_onFocusChange);
+    _emailFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
     _confirmPasswordFocusNode.addListener(_onFocusChange);
   }
@@ -38,23 +51,89 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _fullNameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _usernameFocusNode.dispose();
+    _fullNameFocusNode.dispose();
+    _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
-  void _handleSignUp() {
+  // --- PERUBAHAN: Mengimplementasikan Logika Penuh untuk _handleSignUp ---
+  Future<void> _handleSignUp() async {
+    // Validasi form terlebih dahulu
     if (_formKey.currentState?.validate() ?? false) {
-      // Logic for registration (e.g., API call)
-      print('Username: ${_usernameController.text}');
-      print('Password: ${_passwordController.text}');
-      print('Confirm Password: ${_confirmPasswordController.text}');
-      // Simulating successful registration
-      Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+      setState(() => _isLoading = true); // Tampilkan loading indicator
+
+      try {
+        // Panggil service untuk register ke backend
+        final response = await _authService.register(
+          email: _emailController.text,
+          password: _passwordController.text,
+          fullName: _fullNameController.text,
+        );
+
+        // Jika berhasil, simpan token dengan aman
+        await _storage.saveTokens(
+          accessToken: response.tokens.accessToken,
+          refreshToken: response.tokens.refreshToken,
+        );
+
+        if (mounted) {
+          AppInfo.success(context, 'Registrasi berhasil!');
+          // Navigasi ke dashboard setelah sukses
+          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+        }
+      } catch (e) {
+        // Tangani error dari API
+        if (mounted) {
+          AppInfo.error(context, e.toString());
+        }
+      } finally {
+        // Hentikan loading indicator
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
+  // Logika untuk Sign In/Up dengan Google
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('Gagal mendapatkan ID Token dari Google.');
+      }
+
+      final response = await _authService.googleSignIn(idToken: idToken);
+
+      await _storage.saveTokens(
+        accessToken: response.tokens.accessToken,
+        refreshToken: response.tokens.refreshToken,
+      );
+
+      if (mounted) {
+        AppInfo.success(context, response.message);
+        Navigator.pushReplacementNamed(context, AppRoute.dashboard);
+      }
+    } catch (e) {
+      if (mounted) AppInfo.error(context, "Login dengan Google gagal: ${e.toString()}");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -69,7 +148,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: SizedBox(
           width: screenWidth,
           height: screenHeight,
-          child: _buildMainContent(context, screenWidth, screenHeight),
+          // Menambahkan Loading Overlay
+          child: Stack(
+            children: [
+              _buildMainContent(context, screenWidth, screenHeight),
+              if (_isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -119,29 +212,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildSignUpForm(BuildContext context) {
-    final double formAreaWidth = context.scaleWidth(360);
-    final double formAreaHeight = context.scaleHeight(665);
-
     return SizedBox(
-      width: formAreaWidth,
-      height: formAreaHeight,
+      width: context.scaleWidth(360),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: context.scaleWidth(273),
             height: context.scaleHeight(144),
-            child: Center(
-              child: Text(
-                'SIGN UP',
-                style: GoogleFonts.fredoka(
-                  color: AppColor.hijauTosca,
-                  fontSize: context.scaleWidth(64),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
+            child: Center(child: Text('SIGN UP', style: GoogleFonts.fredoka(color: AppColor.hijauTosca, fontSize: context.scaleWidth(64), fontWeight: FontWeight.bold, letterSpacing: 2))),
           ),
           SizedBox(height: context.scaleHeight(22)),
           Stack(
@@ -149,29 +228,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
             children: [
               SizedBox(
                 width: context.scaleWidth(265 * 1.30),
-                height: context.scaleHeight(215 * 1.30),
-                child: Image.asset(
-                  'assets/images/blue_background.png',
-                  fit: BoxFit.cover,
-                ),
+                // --- PERUBAHAN DI SINI: Memperpanjang sedikit kotak biru ---
+                height: context.scaleHeight(278 * 1.30),
+                child: Image.asset('assets/images/blue_background.png', fit: BoxFit.fill),
               ),
               Positioned(
                 child: Form(
-                  key: _formKey, // Attach GlobalKey to Form
+                  key: _formKey,
                   child: Column(
                     children: [
+                      // --- PERUBAHAN DI SINI: Menambahkan Input Field Full Name ---
                       _buildInputField(
                         context: context,
-                        controller: _usernameController,
-                        focusNode: _usernameFocusNode,
-                        hintText: 'username',
+                        controller: _fullNameController,
+                        focusNode: _fullNameFocusNode,
+                        hintText: 'Full Name',
                         width: context.scaleWidth(230 * 1.30),
                         height: context.scaleHeight(33 * 1.30),
-                        obscureText: false,
+                        validator: (value) => (value?.isEmpty ?? true) ? 'Nama lengkap tidak boleh kosong' : null,
+                      ),
+                      SizedBox(height: context.scaleHeight(15)),
+                      _buildInputField(
+                        context: context,
+                        controller: _emailController, // Sebelumnya _usernameController
+                        focusNode: _emailFocusNode,
+                        hintText: 'email', // Hint text diubah ke email
+                        width: context.scaleWidth(230 * 1.30),
+                        height: context.scaleHeight(33 * 1.30),
+                        // keyboardType: TextInputType.emailAddress,
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Username tidak boleh kosong';
-                          }
+                          if (value == null || value.isEmpty) return 'Email tidak boleh kosong';
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return 'Format email tidak valid';
                           return null;
                         },
                       ),
@@ -184,36 +271,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         width: context.scaleWidth(230 * 1.30),
                         height: context.scaleHeight(33 * 1.30),
                         obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password tidak boleh kosong';
-                          }
-                          if (value.length < 6) {
-                            return 'Password minimal 6 karakter';
-                          }
-                          return null;
-                        },
+                        validator: (value) => (value?.length ?? 0) < 8 ? 'Password minimal 8 karakter' : null,
                       ),
                       SizedBox(height: context.scaleHeight(15)),
                       _buildInputField(
                         context: context,
                         controller: _confirmPasswordController,
                         focusNode: _confirmPasswordFocusNode,
-                        hintText: 'password correct',
+                        hintText: 'confirm password', // Hint text diubah
                         width: context.scaleWidth(230 * 1.30),
                         height: context.scaleHeight(33 * 1.30),
                         obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Konfirmasi password tidak boleh kosong';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Password tidak cocok';
-                          }
-                          return null;
-                        },
+                        validator: (value) => value != _passwordController.text ? 'Password tidak cocok' : null,
                       ),
-                      SizedBox(height: context.scaleHeight(18)),
+                      Padding(
+                        padding: EdgeInsets.only(top: context.scaleHeight(25)),
+                        child: SizedBox(height: context.scaleHeight(18)),
+                      ),
                       SizedBox(
                         width: context.scaleWidth(230 * 1.30),
                         child: Row(
@@ -223,10 +297,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               onTapDown: (_) => setState(() => _isGoogleButtonActive = true),
                               onTapUp: (_) => setState(() => _isGoogleButtonActive = false),
                               onTapCancel: () => setState(() => _isGoogleButtonActive = false),
-                              onTap: () {
-                                // Logic for Google Sign Up/Sign In
-                                Navigator.pushNamed(context, AppRoute.signIn);
-                              },
+                              onTap: _isLoading ? null : _handleGoogleSignIn,
+                              // onTap: () {
+                              //   // Logic for Google Sign Up/Sign In
+                              //   Navigator.pushNamed(context, AppRoute.signIn);
+                              // },
                               child: AnimatedScale(
                                 scale: _isGoogleButtonActive ? 0.95 : 1.0,
                                 duration: const Duration(milliseconds: 100),
@@ -251,20 +326,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 bottom: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTapDown: (_) => setState(() => _isLoginButtonActive = true),
-                  onTapUp: (_) => setState(() => _isLoginButtonActive = false),
-                  onTapCancel: () => setState(() => _isLoginButtonActive = false),
-                  onTap: _handleSignUp, // Call the validation method
+                  onTapDown: (_) => setState(() => _isSignUpButtonActive = true),
+                  onTapUp: (_) => setState(() => _isSignUpButtonActive = false),
+                  onTapCancel: () => setState(() => _isSignUpButtonActive = false),
+                  onTap: _isLoading ? null : _handleSignUp,
                   child: AnimatedScale(
-                    scale: _isLoginButtonActive ? 0.95 : 1.0,
+                    scale: _isSignUpButtonActive ? 0.95 : 1.0,
                     duration: const Duration(milliseconds: 100),
                     child: SizedBox(
                       width: context.scaleWidth(126 * 1.30),
                       height: context.scaleHeight(46 * 1.30),
-                      child: Image.asset(
-                        'assets/images/login_button.png',
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.asset('assets/images/login_button.png', fit: BoxFit.contain),
                     ),
                   ),
                 ),
@@ -272,34 +344,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ],
           ),
           SizedBox(height: context.scaleHeight(70)),
-          SizedBox(
-            width: context.scaleWidth(329),
-            height: context.scaleHeight(50),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'you have account? ',
-                  style: GoogleFonts.roboto( // Use GoogleFonts consistently
-                    color: Colors.black,
-                    fontSize: context.scaleWidth(20),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoute.signIn); // Push to SignInScreen
-                  },
-                  child: Text(
-                    'Sign in',
-                    style: GoogleFonts.roboto( // Use GoogleFonts consistently
-                      color: AppColor.biruNormal,
-                      fontSize: context.scaleWidth(20),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('you have account? ', style: GoogleFonts.roboto(color: Colors.black, fontSize: context.scaleWidth(20))),
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, AppRoute.signIn),
+                child: Text('Sign in', style: GoogleFonts.roboto(color: AppColor.biruNormal, fontSize: context.scaleWidth(20), fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
         ],
       ),

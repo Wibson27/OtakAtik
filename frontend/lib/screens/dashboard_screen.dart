@@ -1,12 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/common/app_info.dart';
+import 'package:frontend/data/services/chat_service.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 import 'package:frontend/screens/profile_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
+
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final _chatService = ChatService();
+  bool _isLoading = false;
+
+  // Fungsi untuk memulai sesi chat dan navigasi
+  void _startChat() async {
+    setState(() => _isLoading = true);
+    try {
+      // Panggil API untuk membuat sesi baru
+      final newSession = await _chatService.createChatSession();
+      if (mounted) {
+        // Kirim ID sesi ke halaman chatbot
+        Navigator.pushNamed(context, AppRoute.chatbot, arguments: newSession.id);
+      }
+    } catch (e) {
+      if (mounted) {
+        AppInfo.error(context, "Gagal memulai chat: ${e.toString()}");
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +58,7 @@ class DashboardScreen extends StatelessWidget {
                 right: 0,
                 child: Image.asset(
                   'assets/images/wave_dashboard_background.png',
-                  width: screenWidth, 
+                  width: screenWidth,
                   height: context.scaleHeight(832.9),
                   fit: BoxFit.fill,
                 ),
@@ -65,16 +96,14 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     SizedBox(height: context.scaleHeight(43)),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoute.chatbot);
-                      },
-                      child: Image.asset(
-                        'assets/images/menu_chatbot.png',
-                        width: context.scaleWidth(213),
-                        height: context.scaleHeight(90),
-                        fit: BoxFit.fill,
-                      ),
+                    onTap: _isLoading ? null : _startChat, // Panggil fungsi _startChat
+                    child: Image.asset(
+                      'assets/images/menu_chatbot.png',
+                      width: context.scaleWidth(213),
+                      height: context.scaleHeight(90),
+                      fit: BoxFit.fill,
                     ),
+                  ),
                   ],
                 ),
               ),
@@ -101,7 +130,7 @@ class DashboardScreen extends StatelessWidget {
                 left: context.scaleWidth(107),
                 child: GestureDetector(
                   onTap: () {
-                    
+
                   },
                   child: Image.asset(
                     'assets/images/home_button.png',
@@ -115,7 +144,7 @@ class DashboardScreen extends StatelessWidget {
                 right: context.scaleWidth(76),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.profile); // 
+                    Navigator.pushNamed(context, AppRoute.profile); //
                   },
                   child: Image.asset(
                     'assets/images/profile_button.png',
@@ -123,6 +152,12 @@ class DashboardScreen extends StatelessWidget {
                     height: context.scaleHeight(68),
                   ),
                 ),
+              ),
+              // Tambahkan loading overlay
+              if (_isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(child: CircularProgressIndicator()),
               ),
             ],
           ),

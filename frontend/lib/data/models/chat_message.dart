@@ -1,5 +1,5 @@
 import 'package:frontend/common/enums.dart';
-import 'package:frontend/data/models/attachment_file.dart'; 
+import 'package:frontend/data/models/attachment_file.dart';
 
 class ChatMessage {
   final String id;
@@ -14,12 +14,12 @@ class ChatMessage {
   final DateTime? createdAt;
 
   // untuk kebutuhan UI di forum_discussion_post.dart
-  final String senderId; 
+  final String senderId;
   final String senderName;
-  final DateTime timestamp; 
-  final MessageType type; 
-  final bool isOwner; 
-  final List<AttachmentFile> attachments; 
+  final DateTime timestamp;
+  final MessageType type;
+  final bool isOwner;
+  final List<AttachmentFile> attachments;
 
   ChatMessage({
     required this.id,
@@ -37,35 +37,24 @@ class ChatMessage {
     required this.senderId,
     required this.senderName,
     required this.timestamp,
-    this.type = MessageType.text, 
+    this.type = MessageType.text,
     required this.isOwner,
     this.attachments = const [],
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    // Sesuaikan dengan response dari backend ChatMessageResponse DTO
     return ChatMessage(
-      id: json['id'] as String,
-      chatSessionId: json['chat_session_id'] as String,
-      senderType: json['sender_type'] as String,
-      messageContent: json['message_content'] as String,
-      messageMetadata: json['message_metadata'] as Map<String, dynamic>?,
-      sentimentScore: (json['sentiment_score'] as num?)?.toDouble(),
-      emotionDetected: json['emotion_detected'] as String?,
-      responseTimeMs: json['response_time_ms'] as int?,
-      isEncrypted: json['is_encrypted'] as bool?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-
-      senderId: json['sender_id'] as String? ?? json['sender_type'], 
-      senderName: json['sender_name'] as String? ?? (json['sender_type'] == 'user' ? 'Anda' : 'Bot'), 
-      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
-      type: MessageType.values.firstWhere(
-          (e) => e.toString().split('.').last == json['type'],
-          orElse: () => MessageType.text),
-      isOwner: json['is_owner'] as bool? ?? (json['sender_type'] == 'user' ? true : false), 
-      attachments: (json['attachments'] as List<dynamic>?)
-              ?.map((e) => AttachmentFile.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
+      id: json['id'],
+      chatSessionId: json['chat_session_id'],
+      senderType: json['sender_type'],
+      messageContent: json['message_content'],
+      createdAt: DateTime.parse(json['created_at']),
+      // Properti UI diisi dengan logika default
+      senderId: json['sender_type'] == 'user' ? 'user_main' : 'ai_bot_001',
+      senderName: json['sender_type'] == 'user' ? 'Saya' : 'Tenang Assistant',
+      timestamp: DateTime.parse(json['created_at']),
+      isOwner: json['sender_type'] == 'user',
     );
   }
 

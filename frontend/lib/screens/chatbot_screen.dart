@@ -199,7 +199,7 @@ class ChatDataService {
       _allMessages[message.chatSessionId] = [];
     }
     _allMessages[message.chatSessionId]!.add(message);
-    
+
     // Update discussion content/last message
     final discussionIndex = _allDiscussions.indexWhere(
       (disc) => disc.id == message.chatSessionId,
