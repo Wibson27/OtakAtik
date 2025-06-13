@@ -16,6 +16,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+
   final _formKey = GlobalKey<FormState>(); // GlobalKey for Form
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -367,7 +368,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required double width,
     required double height,
     bool obscureText = false,
-    String? Function(String?)? validator, // Add validator
+    String? Function(String?)? validator,
   }) {
     Color boxColor = AppColor.hijauTosca;
     Color borderColor = focusNode.hasFocus ? AppColor.biruNormal : AppColor.hijauTosca;
@@ -428,7 +429,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 contentPadding: EdgeInsets.zero,
                 isDense: true,
               ),
-              validator: validator, // Assign the validator
+              validator: validator,
             ),
           ),
         ),

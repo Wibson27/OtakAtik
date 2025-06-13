@@ -17,4 +17,8 @@ class AppRoute {
   static const String generalSettings = '/settings/general';
   static const String timeZone = '/settings/general/timezone';
   static const String language = '/settings/general/language';
+  static const String privacySettings = '/settings/privacy';
+  static const String dataPrivacyLevel = '/settings/privacy/data-privacy-level';
+  static const String voiceJournalSettings = '/settings/voice-journal';
+  static const String aboutApplication = '/settings/general/about-application';
 }

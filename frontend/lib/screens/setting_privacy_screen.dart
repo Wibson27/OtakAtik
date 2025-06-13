@@ -4,11 +4,65 @@ import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
-class ProfileSettingScreen extends StatelessWidget {
-  const ProfileSettingScreen({super.key});
+class SettingPrivacyScreen extends StatefulWidget {
+  const SettingPrivacyScreen({super.key});
 
-  // Widget pembangun item menu setting menggunakan gambar PNG
-  Widget _buildSettingMenuItem(
+  @override
+  State<SettingPrivacyScreen> createState() => _SettingPrivacyScreenState();
+}
+
+class _SettingPrivacyScreenState extends State<SettingPrivacyScreen> {
+  bool _anonymousModeEnabled = true;
+  bool _socialMediaMonitoringEnabled = true; 
+
+  Widget _buildToggleItem(
+    BuildContext context,
+    String assetPath, 
+    bool isEnabled,
+    ValueSetter<bool> onChanged, 
+  ) {
+    return GestureDetector(
+      onTap: () {
+        onChanged(!isEnabled);
+      },
+      child: Container(
+        width: context.scaleWidth(380),
+        height: context.scaleHeight(62),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.fill,
+              ),
+            ),
+            // Toggle
+            Positioned(
+              right: context.scaleWidth(15),
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: SizedBox( 
+                  width: context.scaleWidth(46),
+                  height: context.scaleHeight(29), 
+                  child: Switch(
+                    value: isEnabled,
+                    onChanged: onChanged,
+                    activeColor: AppColor.putihNormal, 
+                    activeTrackColor: AppColor.hijauToggle, 
+                    inactiveThumbColor: AppColor.putihNormal, 
+                    inactiveTrackColor: AppColor.abuAbuNormal, 
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
     BuildContext context,
     String assetPath, 
     VoidCallback onTap,
@@ -17,9 +71,9 @@ class ProfileSettingScreen extends StatelessWidget {
       onTap: onTap,
       child: Image.asset(
         assetPath,
-        width: context.scaleWidth(380), 
-        height: context.scaleHeight(62), 
-        fit: BoxFit.fill, 
+        width: context.scaleWidth(380),
+        height: context.scaleHeight(62),
+        fit: BoxFit.fill,
       ),
     );
   }
@@ -37,7 +91,7 @@ class ProfileSettingScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png
+              // wave_top.png 
               Positioned(
                 top: 0,
                 left: 0,
@@ -50,7 +104,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png
+              // arrow.png 
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -67,14 +121,14 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'Settings'
+              // Text 'Privacy' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Settings',
+                    'Privacy',
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -84,43 +138,43 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Daftar menu setting ada 4 (General, Notifikasi, Privacy, Voice Journal)
+              // list menu privacy
               Positioned(
-                top: context.scaleHeight(230),
+                top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
                     SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
+                    _buildToggleItem(
                       context,
-                      'assets/images/menu_setting_general.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.generalSettings);
-                      },
-                    ),
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_notifikasi.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.notificationSettings);
+                      'assets/images/menu_anonym_mode.png', 
+                      _anonymousModeEnabled,
+                      (bool newValue) {
+                        setState(() {
+                          _anonymousModeEnabled = newValue;
+                        });
+                        print('Anonymous Mode: $newValue');
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
+                    _buildToggleItem(
                       context,
-                      'assets/images/menu_setting_privacy.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.privacySettings);
+                      'assets/images/menu_sosmed_monitor.png',
+                      _socialMediaMonitoringEnabled,
+                      (bool newValue) {
+                        setState(() {
+                          _socialMediaMonitoringEnabled = newValue;
+                        });
+                        print('Social Media Monitoring: $newValue');
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
+                    _buildMenuItem(
                       context,
-                      'assets/images/menu_setting_voice_journal.png',
+                      'assets/images/menu_data_privacy.png', 
                       () {
-                        Navigator.pushNamed(context, AppRoute.voiceJournalSettings);
+                        Navigator.pushNamed(context, AppRoute.dataPrivacyLevel);
                       },
                     ),
                   ],
@@ -149,8 +203,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -161,8 +214,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',

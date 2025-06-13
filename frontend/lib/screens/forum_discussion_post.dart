@@ -8,7 +8,6 @@ import 'package:frontend/data/models/chat_message.dart';
 import 'package:frontend/data/models/attachment_file.dart';
 import 'package:frontend/data/models/discussion.dart';
 import 'package:frontend/common/enums.dart'; 
-import 'package:frontend/common/screen_utils.dart';
 
 // Time formatter 
 class TimeFormatter {

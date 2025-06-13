@@ -4,22 +4,60 @@ import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
 
-class ProfileSettingScreen extends StatelessWidget {
-  const ProfileSettingScreen({super.key});
+class SettingVoiceJournalScreen extends StatefulWidget {
+  const SettingVoiceJournalScreen({super.key});
 
-  // Widget pembangun item menu setting menggunakan gambar PNG
-  Widget _buildSettingMenuItem(
+  @override
+  State<SettingVoiceJournalScreen> createState() => _SettingVoiceJournalScreenState();
+}
+
+class _SettingVoiceJournalScreenState extends State<SettingVoiceJournalScreen> {
+  bool _enableTranscriptionEnabled = true; 
+  bool _saveVoiceEnabled = true; 
+
+  Widget _buildToggleItem(
     BuildContext context,
     String assetPath, 
-    VoidCallback onTap,
+    bool isEnabled,
+    ValueSetter<bool> onChanged,
   ) {
     return GestureDetector(
-      onTap: onTap,
-      child: Image.asset(
-        assetPath,
-        width: context.scaleWidth(380), 
-        height: context.scaleHeight(62), 
-        fit: BoxFit.fill, 
+      onTap: () {
+        onChanged(!isEnabled); 
+      },
+      child: Container(
+        width: context.scaleWidth(380),
+        height: context.scaleHeight(62),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.fill,
+              ),
+            ),
+            // Toggle
+            Positioned(
+              right: context.scaleWidth(15), 
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: SizedBox( 
+                  width: context.scaleWidth(46), 
+                  height: context.scaleHeight(29), 
+                  child: Switch(
+                    value: isEnabled,
+                    onChanged: onChanged, 
+                    activeColor: AppColor.putihNormal, 
+                    activeTrackColor: AppColor.hijauToggle, 
+                    inactiveThumbColor: AppColor.putihNormal, 
+                    inactiveTrackColor: AppColor.abuAbuNormal,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -37,7 +75,7 @@ class ProfileSettingScreen extends StatelessWidget {
           height: screenHeight,
           child: Stack(
             children: [
-              // wave_top.png
+              // wave_top.png 
               Positioned(
                 top: 0,
                 left: 0,
@@ -50,7 +88,7 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // arrow.png
+              // arrow.png 
               Positioned(
                 top: context.scaleHeight(16),
                 left: context.scaleWidth(8),
@@ -67,14 +105,14 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Text 'Settings'
+              // Text 'Voice Journal' 
               Positioned(
                 top: context.scaleHeight(35),
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Settings',
+                    'Voice Journal',
                     style: GoogleFonts.roboto(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -84,50 +122,42 @@ class ProfileSettingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Daftar menu setting ada 4 (General, Notifikasi, Privacy, Voice Journal)
+              // menu voice journal
               Positioned(
-                top: context.scaleHeight(230),
+                top: context.scaleHeight(230), 
                 left: context.scaleWidth(25),
                 right: context.scaleWidth(25),
                 child: Column(
                   children: [
                     SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
+                    _buildToggleItem(
                       context,
-                      'assets/images/menu_setting_general.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.generalSettings);
-                      },
-                    ),
-                    SizedBox(height: context.scaleHeight(20)), 
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_notifikasi.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.notificationSettings);
+                      'assets/images/menu_enable_transcription.png', 
+                      _enableTranscriptionEnabled,
+                      (bool newValue) {
+                        setState(() {
+                          _enableTranscriptionEnabled = newValue;
+                        });
+                        print('Enable Transcription: $newValue');
                       },
                     ),
                     SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
+                    _buildToggleItem(
                       context,
-                      'assets/images/menu_setting_privacy.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.privacySettings);
-                      },
-                    ),
-                    SizedBox(height: context.scaleHeight(20)),
-                    _buildSettingMenuItem(
-                      context,
-                      'assets/images/menu_setting_voice_journal.png',
-                      () {
-                        Navigator.pushNamed(context, AppRoute.voiceJournalSettings);
+                      'assets/images/menu_save_voice.png',
+                      _saveVoiceEnabled,
+                      (bool newValue) {
+                        setState(() {
+                          _saveVoiceEnabled = newValue;
+                        });
+                        print('Save Voice: $newValue');
                       },
                     ),
                   ],
                 ),
               ),
 
-              // Navigation Bar Bawah
+              // Navigation Bar Bawah 
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -149,8 +179,7 @@ class ProfileSettingScreen extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.dashboard);
+                          Navigator.pushReplacementNamed(context, AppRoute.dashboard);
                         },
                         child: Image.asset(
                           'assets/images/home_button_profile.png',
@@ -161,8 +190,7 @@ class ProfileSettingScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, AppRoute.profile);
+                          Navigator.pushReplacementNamed(context, AppRoute.profile);
                         },
                         child: Image.asset(
                           'assets/images/button_profile.png',
