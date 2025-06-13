@@ -1,3 +1,5 @@
+// frontend/lib/data/models/chat_session.dart
+
 class ChatSession {
   final String id;
   final String userId;
@@ -29,14 +31,15 @@ class ChatSession {
 
   factory ChatSession.fromJson(Map<String, dynamic> json) {
     return ChatSession(
-      id: json['id'],
-      userId: json['user_id'],
-      sessionTitle: json['session_title'],
-      triggerType: json['trigger_type'],
-      triggerSourceId: json['trigger_source_id'],
-      sessionStatus: json['session_status'],
-      messageCount: json['message_count'],
-      sessionDurationSeconds: json['session_duration_seconds'],
+      // PERBAIKAN: Menambahkan fallback untuk semua field non-nullable
+      id: json['id'] as String? ?? 'invalid_session_id',
+      userId: json['user_id'] as String? ?? 'unknown_user',
+      sessionTitle: json['session_title'] as String?,
+      triggerType: json['trigger_type'] as String? ?? 'unknown',
+      triggerSourceId: json['trigger_source_id'] as String?,
+      sessionStatus: json['session_status'] as String?,
+      messageCount: json['message_count'] as int?,
+      sessionDurationSeconds: json['session_duration_seconds'] as int?,
       startedAt: json['started_at'] != null ? DateTime.parse(json['started_at']) : null,
       endedAt: json['ended_at'] != null ? DateTime.parse(json['ended_at']) : null,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,

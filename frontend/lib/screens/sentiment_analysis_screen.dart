@@ -1,36 +1,30 @@
+// frontend/lib/screens/sentiment_analysis_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
-import 'package:frontend/common/color_utils.dart'; 
+import 'package:frontend/common/color_utils.dart';
 import 'package:frontend/data/models/vocal_sentiment_analysis.dart';
 
 class SentimentAnalysisScreen extends StatelessWidget {
-  final String audioPath;
+  // PERBAIKAN 1: Widget ini sekarang menerima objek VocalSentimentAnalysis yang asli.
+  final VocalSentimentAnalysis analysisResult;
 
-  final VocalSentimentAnalysis dummyAnalysisResult = VocalSentimentAnalysis(
-    id: 'analysis_result_001',
-    vocalEntryId: 'entry_dummy',
-    overallWellbeingScore: 7.5,
-    wellbeingCategory: 'Kesejahteraan Positif dan Stabil',
-    reflectionPrompt: 'Berdasarkan rekaman suara Anda, sistem kami mendeteksi bahwa kondisi emosional Anda saat ini cenderung positif dan stabil. Angka ini merefleksikan suasana hati yang baik dan adanya keseimbangan. Kami menemukan beberapa tema yang menunjukkan adanya rasa tenang dan kepuasan dalam narasi Anda. Ini adalah indikasi yang baik dari well-being Anda.',
-    createdAt: DateTime.now(),
-    emotionalValence: 0.6, emotionalArousal: 0.3, emotionalDominance: 0.4,
-    processingDurationMs: 2500, analysisModelVersion: 'v1.1',
-  );
+  // PERBAIKAN 2: Constructor diubah untuk menerima 'analysisResult', bukan 'audioPath'.
+  const SentimentAnalysisScreen({Key? key, required this.analysisResult}) : super(key: key);
 
-  SentimentAnalysisScreen({Key? key, required this.audioPath}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     final screenWidth = context.screenWidth;
     final screenHeight = context.screenHeight;
 
-    // ini data dari dummyAnalysisResult
-    final itemScore = dummyAnalysisResult.overallWellbeingScore ?? 0.0;
-    final itemCategory = dummyAnalysisResult.wellbeingCategory ?? 'Analisis Tidak Tersedia';
-    final itemReflection = dummyAnalysisResult.reflectionPrompt ?? 'Tidak ada penjelasan.';
+    // PERBAIKAN 3: HAPUS 'dummyAnalysisResult' dan gunakan 'analysisResult' yang diterima.
+    final itemScore = analysisResult.overallWellbeingScore ?? 0.0;
+    final itemCategory = analysisResult.wellbeingCategory ?? 'Analisis Tidak Tersedia';
+    final itemReflection = analysisResult.reflectionPrompt ?? 'Tidak ada penjelasan dari hasil analisis.';
     final Color scoreColor = ColorUtils.getScoreColor(itemScore);
 
     return Scaffold(
@@ -53,18 +47,18 @@ class SentimentAnalysisScreen extends StatelessWidget {
               right: 0,
               child: Image.asset(
                 'assets/images/blur_top_history.png',
-                width: context.scaleWidth(429),
+                width: context.screenWidth,
                 height: context.scaleHeight(88),
                 fit: BoxFit.fill,
               ),
             ),
 
-            // Header: Back Button
+            // Header: Tombol kembali ke Dashboard
             Positioned(
               top: context.scaleHeight(16),
               left: context.scaleWidth(8),
               child: GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.pushNamedAndRemoveUntil(context, AppRoute.dashboard, (route) => false),
                 child: Image.asset(
                   'assets/images/arrow.png',
                   width: context.scaleWidth(66),
@@ -73,6 +67,7 @@ class SentimentAnalysisScreen extends StatelessWidget {
               ),
             ),
 
+            // Konten utama yang sekarang dinamis
             Positioned.fill(
               top: context.scaleHeight(88),
               child: SingleChildScrollView(
@@ -106,28 +101,20 @@ class SentimentAnalysisScreen extends StatelessWidget {
 
                     SizedBox(height: context.scaleHeight(25)),
 
-
+                    // Bagian Skor
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Box Score
                         Container(
                           width: context.scaleWidth(100),
                           height: context.scaleHeight(50),
                           decoration: BoxDecoration(
                             color: scoreColor,
                             borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: Center(
                             child: Text(
-                              itemScore.round().toString(),
+                              itemScore.toStringAsFixed(1), // Menampilkan skor asli
                               style: GoogleFonts.roboto(
                                 fontSize: 28,
                                 color: AppColor.putihNormal,
@@ -136,70 +123,30 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
-                        SizedBox(width: context.scaleWidth(15)),
-
-
-                        Container(
-                          width: context.scaleWidth(100),
-                          height: context.scaleHeight(50),
-                          decoration: BoxDecoration(
-                            color: scoreColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(context.scaleWidth(12)),
-                            border: Border.all(color: scoreColor, width: 1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 3,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              'assets/images/info_symbol.png',
-                              width: context.scaleWidth(30),
-                              height: context.scaleHeight(30),
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
 
                     SizedBox(height: context.scaleHeight(25)),
 
+                    // Kategori
                     Text(
-                      itemCategory,
+                      itemCategory, // Menampilkan kategori asli
                       textAlign: TextAlign.center,
                       style: GoogleFonts.fredoka(
                         fontSize: 22,
                         color: AppColor.navyText,
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
 
                     SizedBox(height: context.scaleHeight(25)),
 
+                    // Box Penjelasan/Refleksi
                     Container(
                       width: screenWidth - context.scaleWidth(40),
                       decoration: BoxDecoration(
                         color: scoreColor.withOpacity(0.8),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(context.scaleWidth(30)),
-                          topRight: Radius.circular(context.scaleWidth(30)),
-                          bottomLeft: Radius.circular(context.scaleWidth(10)),
-                          bottomRight: Radius.circular(context.scaleWidth(10)),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(context.scaleWidth(18)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,19 +160,12 @@ class SentimentAnalysisScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: scoreColor,
                               borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(context.scaleWidth(30)),
-                                topRight: Radius.circular(context.scaleWidth(30)),
+                                topLeft: Radius.circular(context.scaleWidth(18)),
+                                topRight: Radius.circular(context.scaleWidth(18)),
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
                             child: Text(
-                              'Penjelasan',
+                              'Refleksi untuk Anda',
                               style: GoogleFonts.fredoka(
                                 fontSize: 24,
                                 color: AppColor.putihNormal,
@@ -233,31 +173,20 @@ class SentimentAnalysisScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
-                          Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: AppColor.putihNormal.withOpacity(0.5),
-                            indent: context.scaleWidth(20),
-                            endIndent: context.scaleWidth(20),
-                          ),
-
                           Padding(
                             padding: EdgeInsets.all(context.scaleWidth(20)),
                             child: Text(
-                              itemReflection,
+                              itemReflection, // Menampilkan refleksi dinamis dari AI
                               style: GoogleFonts.roboto(
                                 fontSize: 16,
                                 color: AppColor.putihNormal,
                                 height: 1.5,
                               ),
-                              textAlign: TextAlign.left,
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     SizedBox(height: context.scaleHeight(40)),
                   ],
                 ),

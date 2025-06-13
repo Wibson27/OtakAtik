@@ -3,106 +3,67 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/common/app_color.dart';
 import 'package:frontend/common/app_route.dart';
 import 'package:frontend/common/screen_utils.dart';
+import 'package:frontend/data/models/community_post.dart'; // Import model baru
+import 'package:frontend/data/services/community_service.dart'; // Import service baru
 
-class ForumDiscussionScreen extends StatelessWidget {
+class ForumDiscussionScreen extends StatefulWidget {
   const ForumDiscussionScreen({super.key});
 
-  // Sample data (akan diganti dengan data dari backend)
-  final List<Map<String, String>> discussionTopics = const [
-    {
-      'id': 'disc_001', // Tambahkan ID untuk navigasi
-      'title': 'Susah Bangun Pagi dan Merasa Tidak Semangat, Ada yang Punya Tips?',
-      'description': 'Akhir-akhir ini sering banget ngalamin lesu',
-    },
-    {
-      'id': 'disc_002',
-      'title': 'Cara Mengatasi Kecemasan Saat Berinteraksi Sosial?',
-      'description': 'Setiap kali harus ketemu orang banyak atau presentasi',
-    },
-    {
-      'id': 'disc_003',
-      'title': 'Merasa Kesepian Meskipun Dikelilingi Banyak Orang',
-      'description': 'Akhir-akhir ini sering banget ngalamin lesu',
-    },
-    {
-      'id': 'disc_004',
-      'title': 'Mencari Jalur Karir Baru Setelah Resign, Butuh Masukan!',
-      'description': 'Baru saja resign dari pekerjaan sebelumnya dan',
-    },
-    {
-      'id': 'disc_005',
-      'title': 'Tips Meningkatkan Produktivitas Saat WFH?',
-      'description': 'Sejak WFH kadang suka hilang fokus dan',
-    },
-  ];
+  @override
+  State<ForumDiscussionScreen> createState() => _ForumDiscussionScreenState();
+}
+
+class _ForumDiscussionScreenState extends State<ForumDiscussionScreen> {
+  final CommunityService _communityService = CommunityService();
+  late Future<List<CommunityPost>> _postsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _postsFuture = _communityService.getPublicPosts();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = context.screenWidth;
-    final screenHeight = context.screenHeight;
-
     return Scaffold(
       backgroundColor: AppColor.putihNormal,
       body: SafeArea(
-        child: SizedBox(
-          width: screenWidth,
-          height: screenHeight,
-          child: _buildMainContent(context, screenWidth, screenHeight),
-        ),
+        child: _buildMainContent(context),
       ),
     );
   }
 
-  Widget _buildMainContent(BuildContext context, double screenWidth, double screenHeight) {
+  Widget _buildMainContent(BuildContext context) {
     return Stack(
       children: [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Image.asset(
-            'assets/images/yellow_background.png',
-            width: screenWidth, // Gunakan screenWidth
-            height: screenHeight, // Gunakan screenHeight
-            fit: BoxFit.cover,
-          ),
+        Positioned.fill(
+          child: Image.asset('assets/images/yellow_background.png', fit: BoxFit.cover),
         ),
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          child: Image.asset(
-            'assets/images/blur_top.png',
-            width: screenWidth, // Gunakan screenWidth
-            height: context.scaleHeight(88),
-            fit: BoxFit.fill,
-          ),
+          child: Image.asset('assets/images/blur_top.png', height: context.scaleHeight(88), fit: BoxFit.fill),
         ),
         Positioned(
           top: context.scaleHeight(16),
           left: context.scaleWidth(8),
           child: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
+            onTap: () => Navigator.pop(context),
             child: SizedBox(
               width: context.scaleWidth(66),
               height: context.scaleHeight(66),
-              child: Image.asset(
-                'assets/images/arrow.png',
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset('assets/images/arrow.png', fit: BoxFit.contain),
             ),
           ),
         ),
         Positioned(
-          top: context.scaleHeight(16),
+          top: context.scaleHeight(40), // Adjusted for better centering
           left: 0,
           right: 0,
           child: Center(
             child: Text(
-              'Forum Discuss',
+              'Forum Diskusi',
               style: GoogleFonts.fredoka(
                 color: AppColor.navyText,
                 fontSize: context.scaleWidth(24),
@@ -112,51 +73,54 @@ class ForumDiscussionScreen extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: context.scaleHeight(94),
-          left: context.scaleWidth(40),
-          right: context.scaleWidth(41),
+          top: context.scaleHeight(100), // Adjusted top position
+          left: context.scaleWidth(20),  // Adjusted side padding
+          right: context.scaleWidth(20),
           bottom: 0,
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: Column(
-              children: [
-                ...discussionTopics.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final topic = entry.value;
+          child: FutureBuilder<List<CommunityPost>>(
+            future: _postsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('Belum ada diskusi.'));
+              }
+
+              final posts = snapshot.data!;
+              return ListView.builder(
+                padding: EdgeInsets.only(top: 10, bottom: context.scaleHeight(20)),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  final post = posts[index];
                   return Container(
-                    margin: EdgeInsets.only(
-                      bottom: index == discussionTopics.length - 1 ? context.scaleHeight(20) : context.scaleHeight(12),
-                    ),
+                    margin: EdgeInsets.only(bottom: context.scaleHeight(16)),
                     child: GestureDetector(
                       onTap: () {
-                        // Teruskan ID diskusi ke halaman detail
                         Navigator.pushNamed(
                           context,
-                          AppRoute.forumDiscussDetail,
-                          arguments: {'discussionId': topic['id']}, // Meneruskan ID diskusi
+                          AppRoute.forumDiscussPost,
+                          arguments: post.id, // Mengirim ID post asli
                         );
                       },
-                      child: _buildDiscussionCard(
-                        topic['title']!,
-                        topic['description']!,
-                        context, // Meneruskan context
-                      ),
+                      child: _buildDiscussionCard(post),
                     ),
                   );
-                }),
-              ],
-            ),
+                },
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDiscussionCard(String title, String description, BuildContext context) {
+  Widget _buildDiscussionCard(CommunityPost post) {
     return Container(
-      width: context.scaleWidth(348), // Gunakan scaled width
+      width: context.scaleWidth(348),
       decoration: BoxDecoration(
-        color: AppColor.hijauTosca.withOpacity(0.8),
+        color: AppColor.hijauTosca.withOpacity(0.85),
         borderRadius: BorderRadius.circular(context.scaleWidth(18)),
         boxShadow: [
           BoxShadow(
@@ -166,65 +130,79 @@ class ForumDiscussionScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(context.scaleWidth(15.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(context.scaleWidth(6)),
-              decoration: BoxDecoration(
+      padding: EdgeInsets.all(context.scaleWidth(15.0)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title Box
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(context.scaleWidth(10)),
+            decoration: BoxDecoration(
+              color: AppColor.putihNormal,
+              borderRadius: BorderRadius.circular(context.scaleWidth(8)),
+            ),
+            child: Text(
+              post.title, // Data asli
+              style: GoogleFonts.fredoka(
+                color: AppColor.navyText,
+                fontSize: context.scaleWidth(18),
+                fontWeight: FontWeight.w500,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(height: context.scaleHeight(12)),
+          // Description Box
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: context.scaleWidth(10), vertical: context.scaleHeight(8)),
+            child: Text(
+              post.contentSnippet, // Data asli
+              style: GoogleFonts.roboto(
                 color: AppColor.putihNormal,
-                borderRadius: BorderRadius.circular(context.scaleWidth(3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: context.scaleWidth(4),
-                    offset: Offset(0, context.scaleHeight(2)),
+                fontSize: context.scaleWidth(13),
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(height: context.scaleHeight(10)),
+          // Footer (Author, Replies, etc.)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'oleh ${post.authorName}',
+                style: GoogleFonts.roboto(
+                  color: AppColor.putihNormal.withOpacity(0.8),
+                  fontSize: context.scaleWidth(11),
+                ),
+              ),
+              Row(
+                children: [
+                  Icon(Icons.comment, color: AppColor.putihNormal.withOpacity(0.8), size: context.scaleWidth(14)),
+                  SizedBox(width: context.scaleWidth(4)),
+                  Text(
+                    post.replyCount.toString(),
+                     style: GoogleFonts.roboto(color: AppColor.putihNormal.withOpacity(0.8), fontSize: context.scaleWidth(11)),
+                  ),
+                  SizedBox(width: context.scaleWidth(10)),
+                  Icon(Icons.favorite_border, color: AppColor.putihNormal.withOpacity(0.8), size: context.scaleWidth(14)),
+                   SizedBox(width: context.scaleWidth(4)),
+                  Text(
+                    post.reactionCount.toString(),
+                     style: GoogleFonts.roboto(color: AppColor.putihNormal.withOpacity(0.8), fontSize: context.scaleWidth(11)),
                   ),
                 ],
-              ),
-              child: Text(
-                title,
-                style: GoogleFonts.fredoka(
-                  color: AppColor.navyText,
-                  fontSize: context.scaleWidth(20),
-                  fontWeight: FontWeight.w400,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.left,
-              ),
-            ),
-            SizedBox(height: context.scaleHeight(12)),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(context.scaleWidth(6)),
-              margin: EdgeInsets.only(left: context.scaleWidth(17)),
-              decoration: BoxDecoration(
-                color: AppColor.putihNormal,
-                borderRadius: BorderRadius.circular(context.scaleWidth(3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: context.scaleWidth(4),
-                    offset: Offset(0, context.scaleHeight(2)),
-                  ),
-                ],
-              ),
-              child: Text(
-                description,
-                style: GoogleFonts.fredoka(
-                  color: AppColor.navyText,
-                  fontSize: context.scaleWidth(12),
-                  fontWeight: FontWeight.w400,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.left,
-              ),
-            ),
-          ],
-        ),
+              )
+            ],
+          )
+        ],
       ),
     );
   }

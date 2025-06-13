@@ -1,10 +1,7 @@
 package controllers
 
 import (
-	"errors"
-	"math"
 	"net/http"
-	"strconv"
 	"time"
 
 	"backend/middleware"
@@ -12,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -24,476 +20,200 @@ func NewCommunityController(db *gorm.DB) *CommunityController {
 	return &CommunityController{DB: db}
 }
 
-// --- DTOs (Data Transfer Objects) for Community Controller ---
+// --- DTOs (Data Transfer Objects) ---
 
-type UserSummaryResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Username *string   `json:"username"`
-	FullName *string   `json:"full_name"`
+type CommunityPostSummaryResponse struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	ContentSnippet string    `json:"content_snippet"`
+	AuthorName     string    `json:"author_name"`
+	ReplyCount     int       `json:"reply_count"`
+	ReactionCount  int       `json:"reaction_count"`
+	LastActivityAt time.Time `json:"last_activity_at"`
 }
 
-type ReplyResponse struct {
-	ID                   uuid.UUID            `json:"id"`
-	PostID               uuid.UUID            `json:"post_id"`
-	ParentReplyID        *uuid.UUID           `json:"parent_reply_id,omitempty"`
-	Author               *UserSummaryResponse `json:"author,omitempty"`
-	AnonymousDisplayName *string              `json:"anonymous_display_name,omitempty"`
-	IsAnonymous          bool                 `json:"is_anonymous"`
-	ReplyContent         string               `json:"reply_content"`
-	ReplyLevel           int                  `json:"reply_level"`
-	ReactionCount        int                  `json:"reaction_count"`
-	CreatedAt            time.Time            `json:"created_at"`
-	UpdatedAt            time.Time            `json:"updated_at"`
+type CommunityPostReplyResponse struct {
+	ID            uuid.UUID `json:"ID"`
+	AuthorName    string    `json:"author_name"`
+	AuthorID      uuid.UUID `json:"author_id"`
+	Content       string    `json:"content"`
+	IsAnonymous   bool      `json:"is_anonymous"`
+	ReactionCount int       `json:"reaction_count"`
+	CreatedAt     time.Time `json:"CreatedAt"`
 }
 
-type PostResponse struct {
-	ID                   uuid.UUID                `json:"id"`
-	Category             models.CommunityCategory `json:"category"` // Diperbaiki di mapping
-	Author               *UserSummaryResponse     `json:"author,omitempty"`
-	AnonymousDisplayName *string                  `json:"anonymous_display_name,omitempty"`
-	IsAnonymous          bool                     `json:"is_anonymous"`
-	PostTitle            string                   `json:"post_title"`
-	PostContent          string                   `json:"post_content"`
-	PostStatus           string                   `json:"post_status"`
-	SentimentScore       float64                  `json:"sentiment_score"` // Diperbaiki di mapping
-	ContentWarnings      pq.StringArray           `json:"content_warnings"`
-	ViewCount            int                      `json:"view_count"`
-	ReplyCount           int                      `json:"reply_count"`
-	ReactionCount        int                      `json:"reaction_count"`
-	IsPinned             bool                     `json:"is_pinned"`
-	LastActivityAt       time.Time                `json:"last_activity_at"`
-	CreatedAt            time.Time                `json:"created_at"`
-	UpdatedAt            time.Time                `json:"updated_at"`
-	Replies              []ReplyResponse          `json:"replies,omitempty"`
+type CommunityPostDetailResponse struct {
+	ID            uuid.UUID                    `json:"ID"`
+	Title         string                       `json:"title"`
+	Content       string                       `json:"content"`
+	AuthorName    string                       `json:"author_name"`
+	AuthorID      uuid.UUID                    `json:"author_id"`
+	IsAnonymous   bool                         `json:"is_anonymous"`
+	ReplyCount    int                          `json:"reply_count"`
+	ReactionCount int                          `json:"reaction_count"`
+	CreatedAt     time.Time                    `json:"CreatedAt"`
+	Replies       []CommunityPostReplyResponse `json:"replies"`
 }
-
-// --- Request Body Structs ---
 
 type CreatePostRequest struct {
-	CategoryID      uuid.UUID      `json:"category_id" binding:"required"`
-	PostTitle       string         `json:"post_title" binding:"required,min=5,max=200"`
-	PostContent     string         `json:"post_content" binding:"required,min=10"`
-	IsAnonymous     bool           `json:"is_anonymous"`
-	ContentWarnings pq.StringArray `json:"content_warnings" gorm:"type:text[]"`
+	CategoryID  string   `json:"category_id" binding:"required"`
+	Title       string   `json:"title" binding:"required,min=5"`
+	Content     string   `json:"content" binding:"required,min=10"`
+	IsAnonymous bool     `json:"is_anonymous"`
+	Tags        []string `json:"tags"`
 }
 
 type CreateReplyRequest struct {
-	PostID        uuid.UUID  `json:"post_id" binding:"required"`
-	ParentReplyID *uuid.UUID `json:"parent_reply_id"`
-	ReplyContent  string     `json:"reply_content" binding:"required,min=1"`
-	IsAnonymous   bool       `json:"is_anonymous"`
+	PostID      string `json:"post_id" binding:"required"`
+	Content     string `json:"content" binding:"required,min=1"`
+	IsAnonymous bool   `json:"is_anonymous"`
 }
 
-type AddReactionRequest struct {
-	TargetType   string    `json:"target_type" binding:"required,oneof=post reply"`
-	TargetID     uuid.UUID `json:"target_id" binding:"required"`
-	ReactionType string    `json:"reaction_type" binding:"required,oneof=support relate inspired sending_love"`
-}
+// --- Implementasi Fungsi Controller ---
 
-type ReportRequest struct {
-	Reason string `json:"reason" binding:"required"`
-	Notes  string `json:"notes"`
-}
-
-type ModerationRequest struct {
-	NewStatus string `json:"new_status" binding:"required,oneof=published hidden deleted"`
-	Notes     string `json:"notes" binding:"required"`
-	IsPinned  *bool  `json:"is_pinned"`
-}
-
-type UpdatePostRequest struct {
-	PostTitle       *string        `json:"post_title" binding:"omitempty,min=5,max=200"`
-	PostContent     *string        `json:"post_content" binding:"omitempty,min=10"`
-	ContentWarnings pq.StringArray `json:"content_warnings" gorm:"type:text[]"`
-}
-
-// --- Controller Handlers (Kode fungsi tidak berubah, hanya perbaikan di DTO dan helper) ---
-
-// GetCategories returns all active community categories.
-// ROUTE: GET /api/v1/community/categories
-func (co *CommunityController) GetCategories(c *gin.Context) {
-	var categories []models.CommunityCategory
-	if err := co.DB.Where("is_active = ?", true).Order("display_order ASC").Find(&categories).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch categories", "code": "db_error"})
+func (cc *CommunityController) GetPublicPosts(c *gin.Context) {
+	var posts []models.CommunityPost
+	err := cc.DB.Preload("User").Order("last_activity_at DESC").Limit(20).Find(&posts, "post_status = ?", "published").Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data postingan"})
 		return
 	}
-	c.JSON(http.StatusOK, categories)
+	var response []CommunityPostSummaryResponse
+	for _, post := range posts {
+		authorName := "Pengguna Anonim"
+		if !post.IsAnonymous && post.User != nil && post.User.Username != nil {
+			authorName = *post.User.Username
+		}
+		snippet := post.PostContent
+		if len(snippet) > 100 {
+			snippet = snippet[:100] + "..."
+		}
+		response = append(response, CommunityPostSummaryResponse{
+			ID: post.ID, Title: post.PostTitle, ContentSnippet: snippet, AuthorName: authorName,
+			ReplyCount: post.ReplyCount, ReactionCount: post.ReactionCount, LastActivityAt: post.LastActivityAt,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// UpdatePost allows an author to update their own post.
-// ROUTE: PUT /api/v1/community/posts/:postId
-func (co *CommunityController) UpdatePost(c *gin.Context) {
+func (cc *CommunityController) GetPost(c *gin.Context) {
 	postID, err := uuid.Parse(c.Param("postId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format", "code": "invalid_post_id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Post ID"})
 		return
 	}
-
-	var req UpdatePostRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "code": "validation_failed"})
-		return
-	}
-
-	authedUser, _ := middleware.GetFullUserFromContext(c)
 
 	var post models.CommunityPost
-	if err := co.DB.Where("id = ? AND user_id = ?", postID, authedUser.ID).First(&post).Error; err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Post not found or you are not the author", "code": "forbidden"})
-		return
-	}
+	err = cc.DB.Preload("User").Preload("Replies", func(db *gorm.DB) *gorm.DB {
+		return db.Order("community_post_replies.created_at ASC")
+	}).Preload("Replies.User").First(&post, "id = ?", postID).Error
 
-	if req.PostTitle != nil {
-		post.PostTitle = *req.PostTitle
-	}
-	if req.PostContent != nil {
-		post.PostContent = *req.PostContent
-	}
-	if req.ContentWarnings != nil {
-		post.ContentWarnings = req.ContentWarnings
-	}
-
-	if err := co.DB.Save(&post).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post", "code": "db_update_failed"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully", "post_id": post.ID})
-}
-
-// DeletePost allows an author to soft-delete their own post.
-// ROUTE: DELETE /api/v1/community/posts/:postId
-func (co *CommunityController) DeletePost(c *gin.Context) {
-	postID, err := uuid.Parse(c.Param("postId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format", "code": "invalid_post_id"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 		return
 	}
 
-	authedUser, _ := middleware.GetFullUserFromContext(c)
-
-	var post models.CommunityPost
-	if err := co.DB.Where("id = ? AND user_id = ?", postID, authedUser.ID).First(&post).Error; err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Post not found or you are not the author", "code": "forbidden"})
-		return
+	var replyResponses []CommunityPostReplyResponse
+	for _, reply := range post.Replies {
+		replyAuthorName := "Pengguna Anonim"
+		if !reply.IsAnonymous && reply.User != nil {
+			replyAuthorName = *reply.User.FullName
+		}
+		replyResponses = append(replyResponses, CommunityPostReplyResponse{
+			ID: reply.ID, AuthorName: replyAuthorName, AuthorID: reply.UserID,
+			Content: reply.ReplyContent, IsAnonymous: reply.IsAnonymous,
+			ReactionCount: reply.ReactionCount, CreatedAt: reply.CreatedAt,
+		})
 	}
 
-	// Soft delete dengan mengubah status, sesuai skema database
-	post.PostStatus = "deleted"
-	if err := co.DB.Save(&post).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post", "code": "db_delete_failed"})
-		return
+	authorName := "Pengguna Anonim"
+	if !post.IsAnonymous && post.User != nil {
+		authorName = *post.User.FullName
 	}
-	c.Status(http.StatusNoContent)
+
+	response := CommunityPostDetailResponse{
+		ID: post.ID, Title: post.PostTitle, Content: post.PostContent, AuthorName: authorName,
+		AuthorID: post.UserID, IsAnonymous: post.IsAnonymous, ReplyCount: post.ReplyCount,
+		ReactionCount: post.ReactionCount, CreatedAt: post.CreatedAt, Replies: replyResponses,
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// CreatePost creates a new community post.
-// ROUTE: POST /api/v1/community/posts
-func (co *CommunityController) CreatePost(c *gin.Context) {
+func (cc *CommunityController) CreatePost(c *gin.Context) {
 	var req CreatePostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error(), "code": "validation_failed"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	authedUser, err := middleware.GetFullUserFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required", "code": "auth_required"})
-		return
-	}
+	authedUser, _ := middleware.GetFullUserFromContext(c)
+	categoryID, _ := uuid.Parse(req.CategoryID)
 
 	post := models.CommunityPost{
-		UserID:          authedUser.ID,
-		CategoryID:      req.CategoryID,
-		PostTitle:       req.PostTitle,
-		PostContent:     req.PostContent,
-		IsAnonymous:     req.IsAnonymous,
-		PostStatus:      "published",
-		ContentWarnings: req.ContentWarnings,
+		UserID:      authedUser.ID,
+		CategoryID:  categoryID,
+		PostTitle:   req.Title,
+		PostContent: req.Content,
+		IsAnonymous: req.IsAnonymous,
 	}
-
-	if post.IsAnonymous {
-		name := generateAnonymousName()
-		post.AnonymousDisplayName = &name
-	}
-
-	if err := co.DB.Create(&post).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post", "code": "db_creation_failed"})
+	if err := cc.DB.Create(&post).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
 		return
 	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Post created successfully", "post_id": post.ID})
+	c.JSON(http.StatusCreated, gin.H{"data": post})
 }
 
-// GetPublicPosts returns a paginated list of posts, can be called without authentication.
-// ROUTE: GET /api/v1/community/posts/public
-func (co *CommunityController) GetPublicPosts(c *gin.Context) {
-	co.getPaginatedPosts(c)
-}
-
-// GetUserPosts returns posts created by a specific user.
-// ROUTE: GET /api/v1/community/posts
-func (co *CommunityController) GetUserPosts(c *gin.Context) {
-	co.getPaginatedPosts(c)
-}
-
-// GetPost returns a single detailed post with its replies.
-// ROUTE: GET /api/v1/community/posts/:postId
-func (co *CommunityController) GetPost(c *gin.Context) {
-	postID, err := uuid.Parse(c.Param("postId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format", "code": "invalid_post_id"})
-		return
-	}
-
-	var post models.CommunityPost
-	if err := co.DB.Preload("Category").Preload("User").
-		Where("id = ? AND post_status = ?", postID, "published").
-		First(&post).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found", "code": "post_not_found"})
-		return
-	}
-
-	go func() {
-		co.DB.Model(&models.CommunityPost{}).Where("id = ?", postID).UpdateColumn("view_count", gorm.Expr("view_count + 1"))
-	}()
-
-	var replies []models.CommunityPostReply
-	co.DB.Preload("User").Where("post_id = ? AND is_deleted = ?", postID, false).Order("created_at ASC").Find(&replies)
-
-	postResponse := co.mapPostToResponse(post, replies)
-
-	c.JSON(http.StatusOK, postResponse)
-}
-
-// CreateReply adds a reply to a post.
-// ROUTE: POST /api/v1/community/replies
-func (co *CommunityController) CreateReply(c *gin.Context) {
+func (cc *CommunityController) CreateReply(c *gin.Context) {
 	var req CreateReplyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "code": "validation_failed"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
-
 	authedUser, _ := middleware.GetFullUserFromContext(c)
-
-	var post models.CommunityPost
-	if err := co.DB.Where("id = ? AND post_status = 'published'", req.PostID).First(&post).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or has been hidden", "code": "post_not_found"})
-		return
-	}
+	postID, _ := uuid.Parse(req.PostID)
 
 	reply := models.CommunityPostReply{
-		PostID:       req.PostID,
-		UserID:       authedUser.ID,
-		ReplyContent: req.ReplyContent,
-		IsAnonymous:  req.IsAnonymous,
+		PostID: postID, UserID: authedUser.ID, ReplyContent: req.Content, IsAnonymous: req.IsAnonymous,
 	}
-
-	if req.IsAnonymous {
-		name := generateAnonymousName()
-		reply.AnonymousDisplayName = &name
-	}
-
-	if err := co.DB.Create(&reply).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reply", "code": "db_error"})
+	if err := cc.DB.Create(&reply).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reply"})
 		return
 	}
 
-	co.DB.Model(&post).Update("last_activity_at", time.Now())
+	cc.DB.Model(&reply).Preload("User").First(&reply)
+	authorName := "Pengguna Anonim"
+	if !reply.IsAnonymous && reply.User != nil {
+		authorName = *reply.User.FullName
+	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Reply added successfully", "reply_id": reply.ID})
+	response := CommunityPostReplyResponse{
+		ID: reply.ID, AuthorName: authorName, AuthorID: authedUser.ID,
+		Content: reply.ReplyContent, CreatedAt: reply.CreatedAt,
+	}
+	c.JSON(http.StatusCreated, gin.H{"data": response})
 }
 
-// AddReaction adds or removes a reaction to a post or reply.
-// ROUTE: POST /api/v1/community/reactions
-func (co *CommunityController) AddReaction(c *gin.Context) {
-	var req AddReactionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "code": "validation_failed"})
-		return
-	}
-
-	authedUser, _ := middleware.GetFullUserFromContext(c)
-
-	reaction := models.CommunityReaction{
-		UserID: authedUser.ID, TargetType: req.TargetType, TargetID: req.TargetID, ReactionType: req.ReactionType,
-	}
-
-	var existing models.CommunityReaction
-	err := co.DB.Where(&reaction).First(&existing).Error
-
-	if err == nil {
-		co.DB.Delete(&existing)
-		c.JSON(http.StatusOK, gin.H{"message": "Reaction removed", "action": "removed"})
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		co.DB.Create(&reaction)
-		c.JSON(http.StatusCreated, gin.H{"message": "Reaction added", "action": "added"})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error", "code": "db_error"})
-	}
+// --- Placeholder untuk fungsi lainnya ---
+func (cc *CommunityController) GetCategories(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-// --- Moderation & Admin Handlers ---
-
-// ReportPost allows a user to report a post for review.
-// ROUTE: POST /api/v1/community/posts/:postId/report
-func (co *CommunityController) ReportPost(c *gin.Context) {
-	postID, _ := uuid.Parse(c.Param("postId"))
-	authedUser, _ := middleware.GetFullUserFromContext(c)
-
-	var req ReportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request, reason is required", "code": "validation_failed"})
-		return
-	}
-
-	note := "Reported by " + authedUser.ID.String() + " for: " + req.Reason + ". Notes: " + req.Notes
-
-	result := co.DB.Model(&models.CommunityPost{}).Where("id = ?", postID).Update("moderation_notes", gorm.Expr("moderation_notes || ? || '\n'", note))
-	if result.Error != nil || result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found", "code": "post_not_found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Post reported successfully. Our team will review it shortly."})
+func (cc *CommunityController) GetUserPosts(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-// ModeratePost allows an admin to change the status of a post.
-// ROUTE: POST /api/v1/admin/community/posts/:postId/moderate
-func (co *CommunityController) ModeratePost(c *gin.Context) {
-	postID, _ := uuid.Parse(c.Param("postId"))
-	var req ModerationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "code": "validation_failed"})
-		return
-	}
-
-	updates := map[string]interface{}{
-		"post_status":      req.NewStatus,
-		"moderation_notes": gorm.Expr("moderation_notes || ? || '\n'", req.Notes),
-	}
-	if req.IsPinned != nil {
-		updates["is_pinned"] = *req.IsPinned
-	}
-
-	result := co.DB.Model(&models.CommunityPost{}).Where("id = ?", postID).Updates(updates)
-	if result.Error != nil || result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found", "code": "post_not_found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Post moderated successfully"})
+func (cc *CommunityController) UpdatePost(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-// GetReportedPosts retrieves posts that have moderation notes.
-// ROUTE: GET /api/v1/admin/community/reported-posts
-func (co *CommunityController) GetReportedPosts(c *gin.Context) {
-	c.Request.URL.RawQuery += "&status=reported"
-	co.getPaginatedPosts(c)
+func (cc *CommunityController) DeletePost(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-// --- Helper Functions ---
-
-func (co *CommunityController) getPaginatedPosts(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset := (page - 1) * limit
-
-	query := co.DB.Model(&models.CommunityPost{}).Preload("Category").Preload("User")
-
-	if catIDStr := c.Query("categoryId"); catIDStr != "" {
-		query = query.Where("category_id = ?", catIDStr)
-	}
-	if search := c.Query("search"); search != "" {
-		query = query.Where("post_title ILIKE ?", "%"+search+"%")
-	}
-	if status := c.Query("status"); status == "reported" {
-		query = query.Where("moderation_notes IS NOT NULL AND moderation_notes != ''")
-	} else {
-		query = query.Where("post_status = 'published'")
-	}
-
-	switch c.DefaultQuery("sortBy", "activity") {
-	case "popular":
-		query = query.Order("reaction_count DESC, created_at DESC")
-	case "latest":
-		query = query.Order("created_at DESC")
-	default: // activity
-		query = query.Order("is_pinned DESC, last_activity_at DESC")
-	}
-
-	var posts []models.CommunityPost
-	var totalCount int64
-
-	query.Count(&totalCount)
-	query.Limit(limit).Offset(offset).Find(&posts)
-
-	responsePosts := []PostResponse{}
-	for _, post := range posts {
-		responsePosts = append(responsePosts, co.mapPostToResponse(post, nil))
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": responsePosts,
-		"pagination": gin.H{
-			"total_records": totalCount, "current_page": page, "page_size": limit,
-			"total_pages": int(math.Ceil(float64(totalCount) / float64(limit))),
-		},
-	})
+func (cc *CommunityController) AddReaction(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-func (co *CommunityController) mapPostToResponse(post models.CommunityPost, replies []models.CommunityPostReply) PostResponse {
-	resp := PostResponse{
-		ID: post.ID, IsAnonymous: post.IsAnonymous,
-		PostTitle: post.PostTitle, PostContent: post.PostContent, PostStatus: post.PostStatus,
-		ContentWarnings: post.ContentWarnings, ViewCount: post.ViewCount, ReplyCount: post.ReplyCount,
-		ReactionCount: post.ReactionCount, IsPinned: post.IsPinned, LastActivityAt: post.LastActivityAt,
-		CreatedAt: post.CreatedAt, UpdatedAt: post.UpdatedAt,
-	}
-
-	// Perbaikan: Penanganan pointer untuk Category dan SentimentScore
-	if post.Category != nil {
-		resp.Category = *post.Category
-	}
-	if post.SentimentScore != nil {
-		resp.SentimentScore = *post.SentimentScore
-	}
-
-	if post.IsAnonymous {
-		resp.Author = nil
-		resp.AnonymousDisplayName = post.AnonymousDisplayName
-	} else if post.User != nil {
-		resp.Author = &UserSummaryResponse{ID: post.User.ID, Username: post.User.Username, FullName: post.User.FullName}
-	}
-
-	if replies != nil {
-		resp.Replies = []ReplyResponse{}
-		for _, reply := range replies {
-			replyResp := ReplyResponse{
-				ID: reply.ID, PostID: reply.PostID, ParentReplyID: reply.ParentReplyID, IsAnonymous: reply.IsAnonymous,
-				ReplyContent: reply.ReplyContent, ReplyLevel: reply.ReplyLevel, ReactionCount: reply.ReactionCount,
-				CreatedAt: reply.CreatedAt, UpdatedAt: reply.UpdatedAt,
-			}
-			if reply.IsAnonymous {
-				replyResp.Author = nil
-				replyResp.AnonymousDisplayName = reply.AnonymousDisplayName
-			} else if reply.User != nil {
-				replyResp.Author = &UserSummaryResponse{ID: reply.User.ID, Username: reply.User.Username, FullName: reply.User.FullName}
-			}
-			resp.Replies = append(resp.Replies, replyResp)
-		}
-	}
-	return resp
+func (cc *CommunityController) ReportPost(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }
-
-func generateAnonymousName() string {
-	adjectives := []string{"Harapan", "Berani", "Baik", "Damai", "Kuat", "Lembut", "Bijak", "Tenang", "Ceria", "Peduli"}
-	nouns := []string{"Jiwa", "Hati", "Semangat", "Sahabat", "Penolong", "Pendengar", "Pejuang", "Malaikat"}
-
-	adjIndex := time.Now().UnixNano() % int64(len(adjectives))
-	nounIndex := (time.Now().UnixNano() / int64(time.Second)) % int64(len(nouns))
-	number := time.Now().Unix() % 1000
-
-	return adjectives[adjIndex] + nouns[nounIndex] + strconv.Itoa(int(number))
+func (cc *CommunityController) GetReportedPosts(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
+}
+func (cc *CommunityController) ModeratePost(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "not implemented"})
 }

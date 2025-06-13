@@ -18,19 +18,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _chatService = ChatService();
   bool _isLoading = false;
 
-  // Fungsi untuk memulai sesi chat dan navigasi
+  /// Fungsi untuk memulai sesi chat baru via API dan navigasi ke chatbot.
   void _startChat() async {
+    if (_isLoading) return; // 🔧 PERBAIKAN: Prevent double-tap
+
     setState(() => _isLoading = true);
+
     try {
+      print("📤 Starting new chat session...");
+
       // Panggil API untuk membuat sesi baru
       final newSession = await _chatService.createChatSession();
+
+      print("✅ Chat session created: ${newSession.id}");
+
       if (mounted) {
-        // Kirim ID sesi ke halaman chatbot
-        Navigator.pushNamed(context, AppRoute.chatbot, arguments: newSession.id);
+        // 🔧 PERBAIKAN: Validasi session ID sebelum navigasi
+        if (newSession.id.isNotEmpty) {
+          Navigator.pushNamed(
+            context,
+            AppRoute.chatbot,
+            arguments: newSession.id,
+          );
+        } else {
+          throw Exception("Session ID kosong");
+        }
       }
     } catch (e) {
+      print("❌ Error starting chat: $e");
+
       if (mounted) {
-        AppInfo.error(context, "Gagal memulai chat: ${e.toString()}");
+        // 🔧 PERBAIKAN: Error message yang lebih user-friendly
+        String errorMessage = "Gagal memulai chat";
+
+        if (e.toString().contains('Sesi tidak valid')) {
+          errorMessage = "Sesi login tidak valid. Silakan login ulang.";
+        } else if (e.toString().contains('network') || e.toString().contains('connection')) {
+          errorMessage = "Masalah koneksi internet. Silakan coba lagi.";
+        } else {
+          errorMessage = "Gagal memulai chat. Silakan coba lagi.";
+        }
+
+        AppInfo.error(context, errorMessage);
       }
     } finally {
       if (mounted) {
@@ -52,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           height: screenHeight,
           child: Stack(
             children: [
+              // Background
               Positioned(
                 top: 0,
                 left: 0,
@@ -63,6 +93,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fit: BoxFit.fill,
                 ),
               ),
+
+              // Menu buttons
               Positioned(
                 top: context.scaleHeight(224),
                 left: 0,
@@ -71,6 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Forum Discussion
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, AppRoute.forumDiscussList);
@@ -83,6 +116,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     SizedBox(height: context.scaleHeight(43)),
+
+                    // Voice Sentiment
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, AppRoute.voiceSentiment);
@@ -95,19 +130,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     SizedBox(height: context.scaleHeight(43)),
+
+                    // Chatbot - 🔧 PERBAIKAN: Better interaction feedback
                     GestureDetector(
-                    onTap: _isLoading ? null : _startChat, // Panggil fungsi _startChat
-                    child: Image.asset(
-                      'assets/images/menu_chatbot.png',
-                      width: context.scaleWidth(213),
-                      height: context.scaleHeight(90),
-                      fit: BoxFit.fill,
+                      onTap: _isLoading ? null : _startChat,
+                      child: Stack(
+                        children: [
+                          // 🔧 PERBAIKAN: Opacity saat loading
+                          Opacity(
+                            opacity: _isLoading ? 0.6 : 1.0,
+                            child: Image.asset(
+                              'assets/images/menu_chatbot.png',
+                              width: context.scaleWidth(213),
+                              height: context.scaleHeight(90),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+
+                          // 🔧 PERBAIKAN: Loading indicator overlay
+                          if (_isLoading)
+                            Positioned.fill(
+                              child: Center(
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.0,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColor.putihNormal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
                   ],
                 ),
               ),
-              // Navigation bawah
+
+              // Bottom navigation
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -125,12 +188,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+
+              // Home button
               Positioned(
                 bottom: context.scaleHeight(23),
                 left: context.scaleWidth(107),
                 child: GestureDetector(
                   onTap: () {
-
+                    // Already on dashboard, no action needed
                   },
                   child: Image.asset(
                     'assets/images/home_button.png',
@@ -139,12 +204,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+
+              // Profile button
               Positioned(
                 bottom: context.scaleHeight(16),
                 right: context.scaleWidth(76),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoute.profile); //
+                    Navigator.pushNamed(context, AppRoute.profile);
                   },
                   child: Image.asset(
                     'assets/images/profile_button.png',
@@ -153,12 +220,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-              // Tambahkan loading overlay
+
+              // 🔧 PERBAIKAN: Loading overlay yang lebih baik
               if (_isLoading)
-              Container(
-                color: Colors.black.withOpacity(0.5),
-                child: const Center(child: CircularProgressIndicator()),
-              ),
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.all(context.scaleWidth(20)),
+                      decoration: BoxDecoration(
+                        color: AppColor.putihNormal,
+                        borderRadius: BorderRadius.circular(context.scaleWidth(12)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColor.hijauTosca,
+                            ),
+                          ),
+                          SizedBox(height: context.scaleHeight(12)),
+                          Text(
+                            'Memulai sesi chat...',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColor.navyText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

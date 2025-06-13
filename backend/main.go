@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/sashabaranov/go-openai"
 
 	"backend/config"
 	"backend/controllers"
@@ -105,6 +109,8 @@ func setupTenangRouter(cfg *config.Config, db *gorm.DB) *gin.Engine {
 func setupTenangRoutes(router *gin.Engine, c *TenangControllers) {
 	router.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"status": "healthy"}) })
 
+	setupDebugRoutes(router, c)
+
 	v1 := router.Group("/api/v1")
 	setupPublicRoutes(v1, c)
 
@@ -115,6 +121,141 @@ func setupTenangRoutes(router *gin.Engine, c *TenangControllers) {
 	admin := v1.Group("/admin")
 	admin.Use(middleware.TenangAuthMiddleware(), middleware.RequireAdmin())
 	setupAdminRoutes(admin, c)
+}
+
+func setupDebugRoutes(router *gin.Engine, c *TenangControllers) {
+	debug := router.Group("/debug")
+	{
+		debug.GET("/env", func(ctx *gin.Context) {
+			cfg := config.AppConfig // Ambil dari global config
+			if cfg == nil {
+				ctx.JSON(500, gin.H{"error": "Config not loaded"})
+				return
+			}
+
+			apiKey := cfg.Azure.OpenAIAPIKey
+			masked := ""
+			if len(apiKey) > 8 {
+				masked = apiKey[:4] + "..." + apiKey[len(apiKey)-4:]
+			}
+
+			debugInfo := map[string]interface{}{
+				"azure_config": map[string]string{
+					"api_key_masked":  masked,
+					"endpoint":        cfg.Azure.OpenAIEndpoint,
+					"deployment_name": cfg.Azure.OpenAIDeploymentName,
+					"api_version":     cfg.Azure.OpenAIAPIVersion,
+				},
+				"config_status": map[string]bool{
+					"api_key_set":    len(cfg.Azure.OpenAIAPIKey) > 0,
+					"endpoint_set":   len(cfg.Azure.OpenAIEndpoint) > 0,
+					"deployment_set": len(cfg.Azure.OpenAIDeploymentName) > 0,
+					"version_set":    len(cfg.Azure.OpenAIAPIVersion) > 0,
+				},
+				"timestamp": time.Now(),
+			}
+
+			ctx.JSON(200, gin.H{"debug": debugInfo})
+		})
+
+		debug.GET("/test-openai", func(ctx *gin.Context) {
+			cfg := config.AppConfig
+			if cfg == nil {
+				ctx.JSON(500, gin.H{"error": "Config not loaded"})
+				return
+			}
+
+			// Test Azure OpenAI connection langsung
+			testAzureOpenAI(ctx, cfg)
+		})
+	}
+}
+
+// 🔧 FUNCTION YANG DIPERBAIKI - SEKARANG LENGKAP
+func testAzureOpenAI(c *gin.Context, cfg *config.Config) {
+	apiKey := cfg.Azure.OpenAIAPIKey
+	endpoint := cfg.Azure.OpenAIEndpoint
+	deploymentName := cfg.Azure.OpenAIDeploymentName
+	apiVersion := cfg.Azure.OpenAIAPIVersion
+
+	log.Printf("🔍 Testing Azure OpenAI Connection...")
+	log.Printf("   Endpoint: %s", endpoint)
+	log.Printf("   Deployment: %s", deploymentName)
+	log.Printf("   API Version: %s", apiVersion)
+	log.Printf("   API Key length: %d", len(apiKey))
+
+	if apiKey == "" || endpoint == "" || deploymentName == "" {
+		c.JSON(400, gin.H{
+			"error": "Missing Azure OpenAI configuration",
+			"missing": map[string]bool{
+				"api_key":    apiKey == "",
+				"endpoint":   endpoint == "",
+				"deployment": deploymentName == "",
+			},
+		})
+		return
+	}
+
+	// 🔧 IMPLEMENTASI AZURE OPENAI YANG LENGKAP
+	config := openai.DefaultAzureConfig(apiKey, endpoint)
+	config.APIVersion = apiVersion
+	client := openai.NewClientWithConfig(config)
+
+	req := openai.ChatCompletionRequest{
+		Model: deploymentName,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "You are a helpful assistant.",
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: "Say 'Hello from Azure OpenAI test' in Indonesian.",
+			},
+		},
+		MaxTokens:   50,
+		Temperature: 0.7,
+	}
+
+	log.Printf("🚀 Sending request to Azure OpenAI...")
+	start := time.Now()
+	resp, err := client.CreateChatCompletion(context.Background(), req)
+	duration := time.Since(start)
+
+	if err != nil {
+		log.Printf("❌ Azure OpenAI Error: %v", err)
+		c.JSON(500, gin.H{
+			"error":    "Azure OpenAI connection failed",
+			"details":  err.Error(),
+			"duration": duration.String(),
+		})
+		return
+	}
+
+	if len(resp.Choices) == 0 {
+		log.Printf("❌ No response choices from Azure OpenAI")
+		c.JSON(500, gin.H{
+			"error":    "No response choices from Azure OpenAI",
+			"duration": duration.String(),
+		})
+		return
+	}
+
+	response := resp.Choices[0].Message.Content
+	log.Printf("✅ Azure OpenAI Response: %s", response)
+	log.Printf("✅ Request completed in: %s", duration)
+
+	c.JSON(200, gin.H{
+		"success":  true,
+		"response": response,
+		"duration": duration.String(),
+		"usage": map[string]interface{}{
+			"prompt_tokens":     resp.Usage.PromptTokens,
+			"completion_tokens": resp.Usage.CompletionTokens,
+			"total_tokens":      resp.Usage.TotalTokens,
+		},
+		"model": resp.Model,
+	})
 }
 
 // setupPublicRoutes untuk endpoint yang tidak memerlukan otentikasi.
@@ -190,11 +331,11 @@ func setupProtectedRoutes(protected *gin.RouterGroup, c *TenangControllers) {
 	vocal := protected.Group("/vocal")
 	{
 		vocal.POST("/entries", c.Vocal.CreateEntry)
-		vocal.GET("/entries", c.Vocal.GetEntries)
-		vocal.GET("/entries/:entryId", c.Vocal.GetEntry)
-		vocal.DELETE("/entries/:entryId", c.Vocal.DeleteEntry)
-		vocal.GET("/entries/:entryId/audio", c.Vocal.GetAudioFile)
-		vocal.GET("/trends", c.Vocal.GetWellbeingTrends)
+		// vocal.GET("/entries", c.Vocal.GetEntries)
+		// vocal.GET("/entries/:entryId", c.Vocal.GetEntry)
+		// vocal.DELETE("/entries/:entryId", c.Vocal.DeleteEntry)
+		// vocal.GET("/entries/:entryId/audio", c.Vocal.GetAudioFile)
+		// vocal.GET("/trends", c.Vocal.GetWellbeingTrends)
 	}
 
 	social := protected.Group("/social")

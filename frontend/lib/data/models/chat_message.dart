@@ -1,4 +1,6 @@
-import 'package:frontend/common/enums.dart';
+// PERBAIKAN UTAMA untuk ChatMessage Model
+// File: data/models/chat_message.dart
+
 import 'package:frontend/data/models/attachment_file.dart';
 
 class ChatMessage {
@@ -6,77 +8,183 @@ class ChatMessage {
   final String chatSessionId;
   final String senderType;
   final String messageContent;
-  final Map<String, dynamic>? messageMetadata;
-  final double? sentimentScore;
-  final String? emotionDetected;
-  final int? responseTimeMs;
-  final bool? isEncrypted;
-  final DateTime? createdAt;
-
-  // untuk kebutuhan UI di forum_discussion_post.dart
-  final String senderId;
-  final String senderName;
   final DateTime timestamp;
-  final MessageType type;
+  final String senderName;
   final bool isOwner;
-  final List<AttachmentFile> attachments;
+  final List<AttachmentFile>? attachments;
 
   ChatMessage({
     required this.id,
     required this.chatSessionId,
     required this.senderType,
     required this.messageContent,
-    this.messageMetadata,
-    this.sentimentScore,
-    this.emotionDetected,
-    this.responseTimeMs,
-    this.isEncrypted,
-    this.createdAt,
-
-    // Properti tambahan (wajib diisi dari UI)
-    required this.senderId,
-    required this.senderName,
     required this.timestamp,
-    this.type = MessageType.text,
+    required this.senderName,
     required this.isOwner,
-    this.attachments = const [],
+    this.attachments,
   });
 
+  // 🔧 PERBAIKAN: fromJson yang lebih robust
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    // Sesuaikan dengan response dari backend ChatMessageResponse DTO
+    try {
+      // Validasi field wajib
+      if (json['id'] == null) {
+        throw Exception('ChatMessage: id field is required');
+      }
+
+      if (json['message_content'] == null) {
+        throw Exception('ChatMessage: message_content field is required');
+      }
+
+      // Parse timestamp dengan fallback
+      DateTime parsedTimestamp;
+      try {
+        if (json['created_at'] != null) {
+          parsedTimestamp = DateTime.parse(json['created_at']);
+        } else if (json['timestamp'] != null) {
+          parsedTimestamp = DateTime.parse(json['timestamp']);
+        } else {
+          parsedTimestamp = DateTime.now();
+        }
+      } catch (e) {
+        print("⚠️ Error parsing timestamp, using current time: $e");
+        parsedTimestamp = DateTime.now();
+      }
+
+      // Determine sender info dengan fallback
+      final senderType = json['sender_type']?.toString() ?? 'user';
+      final isOwner = senderType.toLowerCase() == 'user';
+
+      String senderName;
+      if (isOwner) {
+        senderName = json['sender_name']?.toString() ?? 'You';
+      } else {
+        senderName = json['sender_name']?.toString() ?? 'Tenang Assistant';
+      }
+
+      // Parse attachments jika ada
+      List<AttachmentFile>? attachments;
+      if (json['attachments'] != null && json['attachments'] is List) {
+        try {
+          attachments = (json['attachments'] as List)
+              .map((attachment) => AttachmentFile.fromJson(attachment))
+              .toList();
+        } catch (e) {
+          print("⚠️ Error parsing attachments: $e");
+          attachments = null;
+        }
+      }
+
+      return ChatMessage(
+        id: json['id'].toString(),
+        chatSessionId: json['chat_session_id']?.toString() ??
+                      json['session_id']?.toString() ??
+                      '',
+        senderType: senderType,
+        messageContent: json['message_content'].toString().trim(),
+        timestamp: parsedTimestamp,
+        senderName: senderName,
+        isOwner: isOwner,
+        attachments: attachments,
+      );
+
+    } catch (e) {
+      print("❌ Error in ChatMessage.fromJson: $e");
+      print("❌ JSON data: $json");
+      rethrow;
+    }
+  }
+
+  // 🔧 PERBAIKAN: Factory untuk membuat pesan user dengan data valid
+  factory ChatMessage.fromUser({
+    required String content,
+    required String sessionId,
+    List<AttachmentFile>? attachments,
+  }) {
     return ChatMessage(
-      id: json['id'],
-      chatSessionId: json['chat_session_id'],
-      senderType: json['sender_type'],
-      messageContent: json['message_content'],
-      createdAt: DateTime.parse(json['created_at']),
-      // Properti UI diisi dengan logika default
-      senderId: json['sender_type'] == 'user' ? 'user_main' : 'ai_bot_001',
-      senderName: json['sender_type'] == 'user' ? 'Saya' : 'Tenang Assistant',
-      timestamp: DateTime.parse(json['created_at']),
-      isOwner: json['sender_type'] == 'user',
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+      chatSessionId: sessionId,
+      senderType: 'user',
+      messageContent: content.trim(),
+      timestamp: DateTime.now(),
+      senderName: 'You',
+      isOwner: true,
+      attachments: attachments,
     );
   }
 
+  // 🔧 PERBAIKAN: Factory untuk membuat pesan AI dengan data valid
+  factory ChatMessage.fromAI({
+    required String content,
+    required String sessionId,
+    String? messageId,
+  }) {
+    return ChatMessage(
+      id: messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      chatSessionId: sessionId,
+      senderType: 'ai_bot',
+      messageContent: content.trim(),
+      timestamp: DateTime.now(),
+      senderName: 'Tenang Assistant',
+      isOwner: false,
+      attachments: null,
+    );
+  }
+
+  // Utility methods
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'chat_session_id': chatSessionId,
       'sender_type': senderType,
       'message_content': messageContent,
-      'message_metadata': messageMetadata,
-      'sentiment_score': sentimentScore,
-      'emotion_detected': emotionDetected,
-      'response_time_ms': responseTimeMs,
-      'is_encrypted': isEncrypted,
-      'created_at': createdAt?.toIso8601String(),
-
-      'sender_id': senderId,
+      'created_at': timestamp.toIso8601String(),
       'sender_name': senderName,
-      'timestamp': timestamp.toIso8601String(),
-      'type': type.toString().split('.').last,
-      'is_owner': isOwner,
-      'attachments': attachments.map((e) => e.toJson()).toList(),
+      'attachments': attachments?.map((a) => a.toJson()).toList(),
     };
   }
+
+  // 🔧 PERBAIKAN: Method untuk validasi pesan
+  bool get isValid {
+    return id.isNotEmpty &&
+           chatSessionId.isNotEmpty &&
+           messageContent.trim().isNotEmpty;
+  }
+
+  // 🔧 PERBAIKAN: Method untuk copy dengan perubahan
+  ChatMessage copyWith({
+    String? id,
+    String? chatSessionId,
+    String? senderType,
+    String? messageContent,
+    DateTime? timestamp,
+    String? senderName,
+    bool? isOwner,
+    List<AttachmentFile>? attachments,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      chatSessionId: chatSessionId ?? this.chatSessionId,
+      senderType: senderType ?? this.senderType,
+      messageContent: messageContent ?? this.messageContent,
+      timestamp: timestamp ?? this.timestamp,
+      senderName: senderName ?? this.senderName,
+      isOwner: isOwner ?? this.isOwner,
+      attachments: attachments ?? this.attachments,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ChatMessage(id: $id, sender: $senderName, content: "${messageContent.length > 50 ? messageContent.substring(0, 50) + "..." : messageContent}")';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ChatMessage && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

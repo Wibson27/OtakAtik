@@ -1,67 +1,31 @@
 class CommunityPostReply {
   final String id;
-  final String postId;
-  final String? parentReplyId;
-  final String userId;
-  final String replyContent;
-  final bool? isAnonymous;
-  final String? anonymousDisplayName;
-  final int? replyLevel;
-  final double? sentimentScore;
-  final int? reactionCount;
-  final bool? isDeleted;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final String authorName;
+  final String authorId;
+  final String content;
+  final bool isAnonymous;
+  final int reactionCount;
+  final DateTime createdAt;
 
   CommunityPostReply({
     required this.id,
-    required this.postId,
-    this.parentReplyId,
-    required this.userId,
-    required this.replyContent,
-    this.isAnonymous,
-    this.anonymousDisplayName,
-    this.replyLevel,
-    this.sentimentScore,
-    this.reactionCount,
-    this.isDeleted,
-    this.createdAt,
-    this.updatedAt,
+    required this.authorName,
+    required this.authorId,
+    required this.content,
+    required this.isAnonymous,
+    required this.reactionCount,
+    required this.createdAt,
   });
 
   factory CommunityPostReply.fromJson(Map<String, dynamic> json) {
     return CommunityPostReply(
-      id: json['id'],
-      postId: json['post_id'],
-      parentReplyId: json['parent_reply_id'],
-      userId: json['user_id'],
-      replyContent: json['reply_content'],
-      isAnonymous: json['is_anonymous'],
-      anonymousDisplayName: json['anonymous_display_name'],
-      replyLevel: json['reply_level'],
-      sentimentScore: (json['sentiment_score'] as num?)?.toDouble(),
-      reactionCount: json['reaction_count'],
-      isDeleted: json['is_deleted'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      id: json['ID'] as String? ?? '',
+      authorName: json['author_name'] as String? ?? 'Anonim',
+      authorId: json['author_id'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      isAnonymous: json['is_anonymous'] as bool? ?? false,
+      reactionCount: json['reaction_count'] as int? ?? 0,
+      createdAt: DateTime.tryParse(json['CreatedAt'] as String? ?? '') ?? DateTime.now(),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'post_id': postId,
-      'parent_reply_id': parentReplyId,
-      'user_id': userId,
-      'reply_content': replyContent,
-      'is_anonymous': isAnonymous,
-      'anonymous_display_name': anonymousDisplayName,
-      'reply_level': replyLevel,
-      'sentiment_score': sentimentScore,
-      'reaction_count': reactionCount,
-      'is_deleted': isDeleted,
-      'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
-    };
   }
 }

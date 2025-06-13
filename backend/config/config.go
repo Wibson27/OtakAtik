@@ -50,6 +50,11 @@ type AzureConfig struct {
 	BlobStorageAccount  string
 	BlobStorageKey      string
 	BlobContainerName   string
+	BlobContainerAudio  string // Nama diubah agar sesuai .env
+	OpenAIDeploymentName string // Ditambahkan
+	OpenAIAPIVersion     string // Ditambahkan
+	OpenAIModelName      string // Ditambahkan
+	OpenAIModelVersion   string // Ditambahkan
 }
 
 type HuggingFaceConfig struct {
@@ -95,7 +100,7 @@ type StorageConfig struct {
 }
 
 type SecurityConfig struct {
-	EncryptionKey    []byte 
+	EncryptionKey    []byte
 	RateLimitPerMin  int
 	MaxLoginAttempts int
 	LockoutDuration  time.Duration
@@ -141,15 +146,20 @@ func LoadConfig() *Config {
 		},
 
 		Azure: AzureConfig{
-			OpenAIAPIKey:        getEnv("AZURE_OPENAI_API_KEY", ""),
-			OpenAIEndpoint:      getEnv("AZURE_OPENAI_ENDPOINT", ""),
-			SpeechAPIKey:        getEnv("AZURE_SPEECH_API_KEY", ""),
-			SpeechRegion:        getEnv("AZURE_SPEECH_REGION", ""),
-			TextAnalyticsKey:    getEnv("AZURE_TEXT_ANALYTICS_KEY", ""),
+			OpenAIAPIKey:         getEnv("AZURE_OPENAI_API_KEY", ""),
+			OpenAIEndpoint:       getEnv("AZURE_OPENAI_ENDPOINT", ""),
+			OpenAIDeploymentName: getEnv("AZURE_OPENAI_DEPLOYMENT_NAME", ""),
+			OpenAIAPIVersion:     getEnv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
+
+			SpeechAPIKey: getEnv("AZURE_SPEECH_API_KEY", ""),
+			SpeechRegion: getEnv("AZURE_SPEECH_REGION", ""),
+
+			TextAnalyticsKey:      getEnv("AZURE_TEXT_ANALYTICS_KEY", ""),
 			TextAnalyticsEndpoint: getEnv("AZURE_TEXT_ANALYTICS_ENDPOINT", ""),
+
 			BlobStorageAccount:  getEnv("AZURE_BLOB_STORAGE_ACCOUNT", ""),
 			BlobStorageKey:      getEnv("AZURE_BLOB_STORAGE_KEY", ""),
-			BlobContainerName:   getEnv("AZURE_BLOB_CONTAINER", "audio-files"),
+			BlobContainerAudio:  getEnv("AZURE_BLOB_CONTAINER_AUDIO", "audio-files"),
 		},
 
 		HuggingFace: HuggingFaceConfig{

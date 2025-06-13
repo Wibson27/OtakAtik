@@ -1,79 +1,60 @@
+// frontend/lib/data/models/vocal_sentiment_analysis.dart
+
+import 'package:flutter/material.dart';
+
 class VocalSentimentAnalysis {
   final String id;
   final String vocalEntryId;
   final double? overallWellbeingScore;
   final String? wellbeingCategory;
+  final String? reflectionPrompt;
+  final DateTime? createdAt;
+
+  // Anda bisa menyimpan data mentah ini jika perlu, atau hapus jika tidak digunakan di UI
   final double? emotionalValence;
   final double? emotionalArousal;
   final double? emotionalDominance;
-  final Map<String, dynamic>? detectedEmotions;
-  final List<String>? detectedThemes;
-  final Map<String, dynamic>? stressIndicators;
-  final Map<String, dynamic>? voiceFeatures;
-  final String? analysisModelVersion;
-  final double? confidenceScore;
   final int? processingDurationMs;
-  final String? reflectionPrompt;
-  final DateTime? createdAt;
+  final String? analysisModelVersion;
 
   VocalSentimentAnalysis({
     required this.id,
     required this.vocalEntryId,
     this.overallWellbeingScore,
     this.wellbeingCategory,
+    this.reflectionPrompt,
+    this.createdAt,
     this.emotionalValence,
     this.emotionalArousal,
     this.emotionalDominance,
-    this.detectedEmotions,
-    this.detectedThemes,
-    this.stressIndicators,
-    this.voiceFeatures,
-    this.analysisModelVersion,
-    this.confidenceScore,
     this.processingDurationMs,
-    this.reflectionPrompt,
-    this.createdAt,
+    this.analysisModelVersion,
   });
 
   factory VocalSentimentAnalysis.fromJson(Map<String, dynamic> json) {
-    return VocalSentimentAnalysis(
-      id: json['id'],
-      vocalEntryId: json['vocal_entry_id'],
-      overallWellbeingScore: (json['overall_wellbeing_score'] as num?)?.toDouble(),
-      wellbeingCategory: json['wellbeing_category'],
-      emotionalValence: (json['emotional_valence'] as num?)?.toDouble(),
-      emotionalArousal: (json['emotional_arousal'] as num?)?.toDouble(),
-      emotionalDominance: (json['emotional_dominance'] as num?)?.toDouble(),
-      detectedEmotions: json['detected_emotions'],
-      detectedThemes: (json['detected_themes'] as List?)?.map((e) => e.toString()).toList(),
-      stressIndicators: json['stress_indicators'],
-      voiceFeatures: json['voice_features'],
-      analysisModelVersion: json['analysis_model_version'],
-      confidenceScore: (json['confidence_score'] as num?)?.toDouble(),
-      processingDurationMs: json['processing_duration_ms'],
-      reflectionPrompt: json['reflection_prompt'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-    );
-  }
+    // Helper untuk parsing tanggal dengan aman
+    DateTime? parseDate(String? dateStr) {
+      return dateStr != null ? DateTime.tryParse(dateStr) : null;
+    }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'vocal_entry_id': vocalEntryId,
-      'overall_wellbeing_score': overallWellbeingScore,
-      'wellbeing_category': wellbeingCategory,
-      'emotional_valence': emotionalValence,
-      'emotional_arousal': emotionalArousal,
-      'emotional_dominance': emotionalDominance,
-      'detected_emotions': detectedEmotions,
-      'detected_themes': detectedThemes,
-      'stress_indicators': stressIndicators,
-      'voice_features': voiceFeatures,
-      'analysis_model_version': analysisModelVersion,
-      'confidence_score': confidenceScore,
-      'processing_duration_ms': processingDurationMs,
-      'reflection_prompt': reflectionPrompt,
-      'created_at': createdAt?.toIso8601String(),
-    };
+    return VocalSentimentAnalysis(
+      // PERBAIKAN UTAMA: Tambahkan null-safety checks '??' dengan nilai default
+      // untuk semua properti non-nullable yang berasal dari JSON.
+      id: json['ID'] as String? ?? 'fallback_id_${DateTime.now().millisecondsSinceEpoch}',
+      vocalEntryId: json['VocalEntryID'] as String? ?? '',
+
+      // Parsing aman untuk properti nullable
+      overallWellbeingScore: (json['OverallWellbeingScore'] as num?)?.toDouble(),
+      wellbeingCategory: json['WellbeingCategory'] as String?,
+      reflectionPrompt: json['ReflectionPrompt'] as String?,
+      createdAt: parseDate(json['CreatedAt'] as String?),
+
+      // Parsing data opsional lainnya
+      emotionalValence: (json['EmotionalValence'] as num?)?.toDouble(),
+      emotionalArousal: (json['EmotionalArousal'] as num?)?.toDouble(),
+      emotionalDominance: (json['EmotionalDominance'] as num?)?.toDouble(),
+      processingDurationMs: json['ProcessingDurationMs'] as int?,
+      analysisModelVersion: json['AnalysisModelVersion'] as String?,
+    );
   }
 }

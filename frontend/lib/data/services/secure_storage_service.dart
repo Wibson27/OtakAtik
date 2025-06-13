@@ -5,6 +5,7 @@ class SecureStorageService {
 
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
+  static const _userIdKey = 'user_id';
 
   Future<void> saveTokens({
     required String accessToken,
@@ -12,6 +13,20 @@ class SecureStorageService {
   }) async {
     await _storage.write(key: _accessTokenKey, value: accessToken);
     await _storage.write(key: _refreshTokenKey, value: refreshToken);
+  }
+
+  Future<void> persistAuthData({
+    required String accessToken,
+    required String refreshToken,
+    required String userId,
+  }) async {
+    await _storage.write(key: _accessTokenKey, value: accessToken);
+    await _storage.write(key: _refreshTokenKey, value: refreshToken);
+    await _storage.write(key: _userIdKey, value: userId);
+  }
+
+  Future<String?> getUserId() async {
+    return await _storage.read(key: _userIdKey);
   }
 
   Future<String?> getAccessToken() async {
